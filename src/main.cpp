@@ -106,9 +106,10 @@ static void MX_USART1_UART_Init(void);
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart);
 
 
-void BT_send_msg(int msg);
-void BT_send_msg(int msg, char* nev);
+/*void BT_send_msg(int msg);
+void BT_send_msg(int msg, char* nev);*/
 void BT_send_msg(int msg, string nev);
+void BT_send_msg(float msg, string nev);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
@@ -260,7 +261,7 @@ void SystemClock_Config(void)
 }
 
 
-
+/*
 void BT_send_msg(int msg){
 	struct BT_MSG msg_int;
 	int2msg(&msg_int, msg, "unnamed\n");
@@ -274,15 +275,22 @@ void BT_send_msg(int msg, char* nev){
 	xQueueSend( xQueue_BT, &msg_int, portMAX_DELAY);
 
 }
+*/
 
 void BT_send_msg(int msg, string nev){
-	struct BT_MSG msg_int;
-	char* nev_ptr = string(nev).c_str();
-	int2msg(&msg_int, msg, nev_ptr);
-	xQueueSend( xQueue_BT, &msg_int, portMAX_DELAY);
-
+	// type: 1=int, 3=float, 4=double
+	xQueueSend( xQueue_BT, &number2msg(msg, string(nev).c_str(), (uint8_t)1), portMAX_DELAY);
 }
 
+void BT_send_msg(float msg, string nev){
+	// type: 1=int, 3=float, 4=double
+	xQueueSend( xQueue_BT, &number2msg(msg, string(nev).c_str(), (uint8_t)3), portMAX_DELAY);
+}
+
+void BT_send_msg(double msg, string nev){
+	// type: 1=int, 3=float, 4=double
+	xQueueSend( xQueue_BT, &number2msg(msg, string(nev).c_str(), (uint8_t)4), portMAX_DELAY);
+}
 
 
 
@@ -307,10 +315,10 @@ void StartButtonTask()
 {
 	uint8_t wasPressed = 0;
 	char buffer[10];
-	string aa;
 
 	for (;;){
 
+		// TODO: ez blokkol mindent?????
 		while (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0)  == 1) {
 			wasPressed = 1;
 		}
@@ -323,12 +331,9 @@ void StartButtonTask()
 
 
 			for(int i=0; i<15; i++){
-				//itoa(i,buffer,10);
-				//aa = string(buffer);
-				//aa = "juhe_" + aa + "\n";
-
-				//string bb = "asdf\n";
-				BT_send_msg(i+444464, "xx_" + string(itoa(i,buffer,10)) + "_xx\n");
+				BT_send_msg((float)((float)i + 444464.543), "xx_" + string(itoa(i,buffer,10)) + "_xx\n");
+				//BT_send_msg(i+444464, "xx_" + string(itoa(i,buffer,10)) + "_xx\n");
+				//BT_send_msg((double)((double)i + 4423464.54323), "xx_" + string(itoa(i,buffer,10)) + "_xx\n");
 			}
 
 			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14); // piros led, debug
@@ -368,11 +373,6 @@ void SendRemoteVarTask()
 {
 
 	// minden remote változóhez külen kellenek ezek
-	struct BT_MSG msg_int;
-	struct BT_MSG * msg_int_ptr = &msg_int;
-	extern int szuper_szamlalo; // változó másik fileban
-
-
 	osThreadSuspend(SendRemoteVar_TaskHandle);
 
 	for(;;)
@@ -381,8 +381,7 @@ void SendRemoteVarTask()
 
 
 		// minden változóhoz konverzió és küldés
-		int2msg(msg_int_ptr, szuper_szamlalo, "szamlalo_int32\n");
-		osMessagePut(xQueue_BT,(uint32_t) msg_int_ptr, osWaitForever);
+	BT_send_msg(123456,"teszt");
 
 
 		osThreadSuspend(SendRemoteVar_TaskHandle); // minden elküldve, pihenünk (osThreadResume-ra megint elküld mindent)

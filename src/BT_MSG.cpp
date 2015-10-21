@@ -8,6 +8,7 @@
 
 #include "BT_MSG.h"
 
+using namespace std;
 
 int szuper_szamlalo = 2342345;
 
@@ -15,7 +16,7 @@ int szuper_szamlalo = 2342345;
 
 void int2msg(struct BT_MSG * btmsg, int ertek, char* nev)
 {
-szuper_szamlalo++;	// enélkül kiegyszerûsíti és hard fault.....
+
 	uint8_t i;
 	uint8_t * ptr;
 
@@ -42,6 +43,8 @@ szuper_szamlalo++;	// enélkül kiegyszerûsíti és hard fault.....
 	btmsg->datasize = sizeof(int);
 	btmsg->size = i+1;
 }
+
+
 
 void float2msg(struct BT_MSG * btmsg, float ertek, char* nev)
 {
@@ -74,7 +77,7 @@ void double2msg(struct BT_MSG * btmsg, double ertek, char* nev)
 	uint8_t i;
 	uint8_t * ptr;
 
-	btmsg->data[0] = 4;		// 3 = float
+	btmsg->data[0] = 4;		// 4 = double
 	btmsg->data[1] = 8;		// 64 bit
 
 	ptr = (uint8_t *)&ertek;
@@ -96,3 +99,53 @@ void double2msg(struct BT_MSG * btmsg, double ertek, char* nev)
 }
 
 // TODO: értelmesebben, egy függvénnyel vagy valami
+
+/*template<class T>
+struct BT_MSG number2msg(T number, char* name, uint8_t type)
+{
+	uint8_t i;
+	uint8_t * ptr;
+	BT_MSG btmsg;
+
+	btmsg.data[0] = type;	//1:int, 3:float, 4:double
+
+	btmsg.data[1] = sizeof(T);
+
+	ptr = (uint8_t*)&number;
+
+	//osThreadSuspendAll();
+	for( i=2 ; i<(sizeof(int)+2) ; i++)
+	{
+		btmsg.data[i] = *ptr;
+		ptr++;
+	}
+	//osThreadResumeAll();
+
+	while (*name)
+	{
+		btmsg.data[i] = *name;
+		name++;
+		i++;
+		if(i == sizeof(btmsg.data)-1)	// utolsó hely, oda a lezáró karakter jön
+		{
+			break;
+		}
+	}
+	btmsg.data[i] = '\0';
+	btmsg.datasize = sizeof(T);
+	btmsg.size = i+1;
+}*/
+
+/*template<class T>
+void number22msg(T number)
+{
+	int a = 6;
+	//number2msg(123,"asd",(uint8_t)3);
+}*/
+
+
+
+
+
+
+
