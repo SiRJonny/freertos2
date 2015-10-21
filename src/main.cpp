@@ -38,7 +38,8 @@ extern "C"
 #include "cmsis_os.h"
 }
 
-//#include <string>
+#include <string>
+#include <stdlib.h>
 
 
 
@@ -107,6 +108,7 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart);
 
 void BT_send_msg(int msg);
 void BT_send_msg(int msg, char* nev);
+void BT_send_msg(int msg, string nev);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
@@ -273,6 +275,17 @@ void BT_send_msg(int msg, char* nev){
 
 }
 
+void BT_send_msg(int msg, string nev){
+	struct BT_MSG msg_int;
+	char* nev_ptr = string(nev).c_str();
+	int2msg(&msg_int, msg, nev_ptr);
+	xQueueSend( xQueue_BT, &msg_int, portMAX_DELAY);
+
+}
+
+
+
+
 /* StartDefaultTask function */
 // default tastk, csak egy villogó led
 void StartDefaultTask()
@@ -293,7 +306,8 @@ void StartDefaultTask()
 void StartButtonTask()
 {
 	uint8_t wasPressed = 0;
-	int i;
+	char buffer[10];
+	string aa;
 
 	for (;;){
 
@@ -308,8 +322,13 @@ void StartButtonTask()
 			//osThreadResume(SendRemoteVar_TaskHandle);
 
 
-			for(i=0; i<15; i++){
-				BT_send_msg(i+444464, "juhee\n");
+			for(int i=0; i<15; i++){
+				//itoa(i,buffer,10);
+				//aa = string(buffer);
+				//aa = "juhe_" + aa + "\n";
+
+				//string bb = "asdf\n";
+				BT_send_msg(i+444464, "xx_" + string(itoa(i,buffer,10)) + "_xx\n");
 			}
 
 			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14); // piros led, debug
