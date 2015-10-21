@@ -258,6 +258,150 @@ void SystemClock_Config(void)
 }
 
 
+
+void BT_send_msg(int msg){
+	struct BT_MSG msg_int;
+	int2msg(&msg_int, msg, "unnamed\n");
+	xQueueSend( xQueue_BT, &msg_int, portMAX_DELAY);
+
+}
+
+void BT_send_msg(int msg, char* nev){
+	struct BT_MSG msg_int;
+	int2msg(&msg_int, msg, nev);
+	xQueueSend( xQueue_BT, &msg_int, portMAX_DELAY);
+
+}
+
+/* StartDefaultTask function */
+// default tastk, csak egy villogó led
+void StartDefaultTask()
+{
+
+  /* USER CODE BEGIN 5 */
+  /* Infinite loop */
+  for(;;)
+  {
+
+    osDelay(500);
+    HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
+
+  }
+  /* USER CODE END 5 */
+}
+
+void StartButtonTask()
+{
+	uint8_t wasPressed = 0;
+	int i;
+
+	for (;;){
+
+		while (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0)  == 1) {
+			wasPressed = 1;
+		}
+
+		if (wasPressed){
+
+
+			// remote változók elküldése
+			//osThreadResume(SendRemoteVar_TaskHandle);
+
+
+			for(i=0; i<15; i++){
+				BT_send_msg(i+444464, "juhee\n");
+			}
+
+			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14); // piros led, debug
+
+			wasPressed = 0;
+		}
+		osDelay(30);
+	}
+}
+
+// bluetooth küldő task, xQueue_BT-n keresztül kapja a struct BT_MSG pointereket, abból küldi az adatokat
+// ha minden igaz csak akkor fut, ha tényleg van dolga
+void SendBluetoothTask()
+{
+	struct BT_MSG msg;
+	osEvent evt;
+
+	for( ;; )
+	{
+		if(xQueue_BT != 0)
+		{
+			if (xQueueReceive(xQueue_BT, &msg, portMAX_DELAY))// blokk amíg nincs adat
+			{
+
+				HAL_UART_Transmit_IT(&huart3, (uint8_t*) msg.data, msg.size);
+
+
+				osSignalWait(0x0001,osWaitForever);
+
+			}
+
+		}
+	}
+}
+
+void SendRemoteVarTask()
+{
+
+	// minden remote változóhez külen kellenek ezek
+	struct BT_MSG msg_int;
+	struct BT_MSG * msg_int_ptr = &msg_int;
+	extern int szuper_szamlalo; // változó másik fileban
+
+
+	osThreadSuspend(SendRemoteVar_TaskHandle);
+
+	for(;;)
+	{
+
+
+
+		// minden változóhoz konverzió és küldés
+		int2msg(msg_int_ptr, szuper_szamlalo, "szamlalo_int32\n");
+		osMessagePut(xQueue_BT,(uint32_t) msg_int_ptr, osWaitForever);
+
+
+		osThreadSuspend(SendRemoteVar_TaskHandle); // minden elküldve, pihenünk (osThreadResume-ra megint elküld mindent)
+	}
+
+}
+
+
+// hal uart callback, TODO: nézni, hogy melyik uart lett kész?
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart){
+	if(huart->Instance == USART3)
+	{
+		//osMailFree(mailbox_bt,)
+		//osSemaphoreRelease(xSem_USART_rdy_to_send);
+
+		osSignalSet(BT_TaskHandle,0x0001);
+
+
+	}
+}
+
+// interrupt f�ggv�nyek csak �gy mennek
+extern "C"
+{
+
+// uart2 megszakítás kezelő, meghívjuk a HAL irq kezelőjét
+void USART3_IRQHandler(void){
+	HAL_UART_IRQHandler(&huart3);
+}
+/* USER CODE BEGIN 4 */
+
+/* USER CODE END 4 */
+
+}
+
+
+
+
 // ADC init
 void MX_ADC1_Init(void)
 {
@@ -465,150 +609,6 @@ void USART3_UART_Init()
   HAL_NVIC_SetPriority(USART3_IRQn,14,0);
   HAL_NVIC_EnableIRQ(USART3_IRQn);
 }
-
-
-
-void BT_send_msg(int msg){
-	struct BT_MSG msg_int;
-	int2msg(&msg_int, msg, "unnamed\n");
-	xQueueSend( xQueue_BT, &msg_int, portMAX_DELAY);
-
-}
-
-void BT_send_msg(int msg, char* nev){
-	struct BT_MSG msg_int;
-	int2msg(&msg_int, msg, nev);
-	xQueueSend( xQueue_BT, &msg_int, portMAX_DELAY);
-
-}
-
-/* StartDefaultTask function */
-// default tastk, csak egy villogó led
-void StartDefaultTask()
-{
-
-  /* USER CODE BEGIN 5 */
-  /* Infinite loop */
-  for(;;)
-  {
-
-    osDelay(500);
-    HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
-
-  }
-  /* USER CODE END 5 */ 
-}
-
-void StartButtonTask()
-{
-	uint8_t wasPressed = 0;
-	int i;
-
-	for (;;){
-
-		while (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0)  == 1) {
-			wasPressed = 1;
-		}
-
-		if (wasPressed){
-
-
-			// remote változók elküldése
-			//osThreadResume(SendRemoteVar_TaskHandle);
-
-
-			for(i=0; i<15; i++){
-				BT_send_msg(i+444464, "juhee\n");
-			}
-
-			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14); // piros led, debug
-
-			wasPressed = 0;
-		}
-		osDelay(30);
-	}
-}
-
-// bluetooth küldő task, xQueue_BT-n keresztül kapja a struct BT_MSG pointereket, abból küldi az adatokat
-// ha minden igaz csak akkor fut, ha tényleg van dolga
-void SendBluetoothTask()
-{
-	struct BT_MSG msg;
-	osEvent evt;
-
-	for( ;; )
-	{
-		if(xQueue_BT != 0)
-		{
-			if (xQueueReceive(xQueue_BT, &msg, portMAX_DELAY))// blokk amíg nincs adat
-			{
-
-				HAL_UART_Transmit_IT(&huart3, (uint8_t*) msg.data, msg.size);
-
-
-				osSignalWait(0x0001,osWaitForever);
-
-			}
-
-		}
-	}
-}
-
-void SendRemoteVarTask()
-{
-
-	// minden remote változóhez külen kellenek ezek
-	struct BT_MSG msg_int;
-	struct BT_MSG * msg_int_ptr = &msg_int;
-	extern int szuper_szamlalo; // változó másik fileban
-
-
-	osThreadSuspend(SendRemoteVar_TaskHandle);
-
-	for(;;)
-	{
-
-
-
-		// minden változóhoz konverzió és küldés
-		int2msg(msg_int_ptr, szuper_szamlalo, "szamlalo_int32\n");
-		osMessagePut(xQueue_BT,(uint32_t) msg_int_ptr, osWaitForever);
-
-
-		osThreadSuspend(SendRemoteVar_TaskHandle); // minden elküldve, pihenünk (osThreadResume-ra megint elküld mindent)
-	}
-
-}
-
-
-// hal uart callback, TODO: nézni, hogy melyik uart lett kész?
-void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart){
-	if(huart->Instance == USART3)
-	{
-		//osMailFree(mailbox_bt,)
-		//osSemaphoreRelease(xSem_USART_rdy_to_send);
-
-		osSignalSet(BT_TaskHandle,0x0001);
-
-
-	}
-}
-
-// interrupt f�ggv�nyek csak �gy mennek
-extern "C"
-{
-
-// uart2 megszakítás kezelő, meghívjuk a HAL irq kezelőjét
-void USART3_IRQHandler(void){
-	HAL_UART_IRQHandler(&huart3);
-}
-/* USER CODE BEGIN 4 */
-
-/* USER CODE END 4 */
-
-}
-
-
 
 
 
