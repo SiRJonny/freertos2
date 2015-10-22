@@ -292,17 +292,17 @@ void BT_send_msg(double msg, string nev){
 	xQueueSend( xQueue_BT, &number2msg(msg, string(nev).c_str(), (uint8_t)4), portMAX_DELAY);
 }
 
-uint16_t ADC1_read()
+void ADC1_read(int result[])
 {
-	uint16_t result = 111;
 
 	HAL_ADC_Start(&hadc1);
-	HAL_ADC_PollForConversion(&hadc1,1000);
-	result = HAL_ADC_GetValue(&hadc1);
+
+	for(int i = 0; i<4; i++){
+		HAL_ADC_PollForConversion(&hadc1,1000);
+		result[i] = HAL_ADC_GetValue(&hadc1);
+	}
+
 	HAL_ADC_Stop(&hadc1);
-
-
-	return result;
 }
 
 /* StartDefaultTask function */
@@ -325,7 +325,7 @@ void StartDefaultTask()
 void StartButtonTask()
 {
 	uint8_t wasPressed = 0;
-	int adc_result = 222;
+	int adc_result[4];
 	char buffer[10];
 
 	for (;;){
@@ -341,8 +341,11 @@ void StartButtonTask()
 			// remote változók elküldése
 			//osThreadResume(SendRemoteVar_TaskHandle);
 
-			adc_result = ADC1_read();
-			BT_send_msg(adc_result, "adc1:" + string(itoa(adc_result,buffer,10)) + "\n");
+			ADC1_read(adc_result);
+			for(int i = 0; i<4; i++)
+			{
+				BT_send_msg(adc_result[i], "adc1: " + string(itoa(adc_result[i],buffer,10)) + "\n");
+			}
 
 			for(int i=0; i<15; i++){
 				//BT_send_msg((float)((float)i + 444464.543), "xx_" + string(itoa(i,buffer,10)) + "_xx\n");
@@ -444,12 +447,12 @@ void MX_ADC1_Init(void)
   hadc1.Instance = ADC1;
   hadc1.Init.ClockPrescaler = ADC_CLOCKPRESCALER_PCLK_DIV4;
   hadc1.Init.Resolution = ADC_RESOLUTION12b;
-  hadc1.Init.ScanConvMode = DISABLE;
+  hadc1.Init.ScanConvMode = ENABLE;
   hadc1.Init.ContinuousConvMode = DISABLE;
   hadc1.Init.DiscontinuousConvMode = DISABLE;
   hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
   hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
-  hadc1.Init.NbrOfConversion = 1;
+  hadc1.Init.NbrOfConversion = 4;
   hadc1.Init.DMAContinuousRequests = DISABLE;
   hadc1.Init.EOCSelection = EOC_SINGLE_CONV;
   HAL_ADC_Init(&hadc1);
@@ -458,25 +461,23 @@ void MX_ADC1_Init(void)
     */
   sConfig.Channel = ADC_CHANNEL_1;
   sConfig.Rank = 1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+  sConfig.SamplingTime = ADC_SAMPLETIME_112CYCLES;
   HAL_ADC_ConfigChannel(&hadc1, &sConfig);
 
-
-
-  /*sConfig.Channel = ADC_CHANNEL_2;
+  sConfig.Channel = ADC_CHANNEL_2;
   sConfig.Rank = 2;
-  sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+  sConfig.SamplingTime = ADC_SAMPLETIME_112CYCLES;
   HAL_ADC_ConfigChannel(&hadc1, &sConfig);
 
   sConfig.Channel = ADC_CHANNEL_3;
   sConfig.Rank = 3;
-  sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+  sConfig.SamplingTime = ADC_SAMPLETIME_112CYCLES;
   HAL_ADC_ConfigChannel(&hadc1, &sConfig);
 
   sConfig.Channel = ADC_CHANNEL_4;
   sConfig.Rank = 4;
-  sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
-  HAL_ADC_ConfigChannel(&hadc1, &sConfig);*/
+  sConfig.SamplingTime = ADC_SAMPLETIME_112CYCLES;
+  HAL_ADC_ConfigChannel(&hadc1, &sConfig);
 
 }
 
