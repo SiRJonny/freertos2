@@ -292,7 +292,18 @@ void BT_send_msg(double msg, string nev){
 	xQueueSend( xQueue_BT, &number2msg(msg, string(nev).c_str(), (uint8_t)4), portMAX_DELAY);
 }
 
+uint16_t ADC1_read()
+{
+	uint16_t result = 111;
 
+	HAL_ADC_Start(&hadc1);
+	HAL_ADC_PollForConversion(&hadc1,1000);
+	result = HAL_ADC_GetValue(&hadc1);
+	HAL_ADC_Stop(&hadc1);
+
+
+	return result;
+}
 
 /* StartDefaultTask function */
 // default tastk, csak egy villogó led
@@ -314,6 +325,7 @@ void StartDefaultTask()
 void StartButtonTask()
 {
 	uint8_t wasPressed = 0;
+	int adc_result = 222;
 	char buffer[10];
 
 	for (;;){
@@ -329,9 +341,11 @@ void StartButtonTask()
 			// remote változók elküldése
 			//osThreadResume(SendRemoteVar_TaskHandle);
 
+			adc_result = ADC1_read();
+			BT_send_msg(adc_result, "adc1:" + string(itoa(adc_result,buffer,10)) + "\n");
 
 			for(int i=0; i<15; i++){
-				BT_send_msg((float)((float)i + 444464.543), "xx_" + string(itoa(i,buffer,10)) + "_xx\n");
+				//BT_send_msg((float)((float)i + 444464.543), "xx_" + string(itoa(i,buffer,10)) + "_xx\n");
 				//BT_send_msg(i+444464, "xx_" + string(itoa(i,buffer,10)) + "_xx\n");
 				//BT_send_msg((double)((double)i + 4423464.54323), "xx_" + string(itoa(i,buffer,10)) + "_xx\n");
 			}
@@ -419,8 +433,7 @@ void USART3_IRQHandler(void){
 
 
 
-
-// ADC init
+// ADC init (szenzorsor 4 jele)
 void MX_ADC1_Init(void)
 {
 
@@ -447,6 +460,23 @@ void MX_ADC1_Init(void)
   sConfig.Rank = 1;
   sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
   HAL_ADC_ConfigChannel(&hadc1, &sConfig);
+
+
+
+  /*sConfig.Channel = ADC_CHANNEL_2;
+  sConfig.Rank = 2;
+  sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+  HAL_ADC_ConfigChannel(&hadc1, &sConfig);
+
+  sConfig.Channel = ADC_CHANNEL_3;
+  sConfig.Rank = 3;
+  sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+  HAL_ADC_ConfigChannel(&hadc1, &sConfig);
+
+  sConfig.Channel = ADC_CHANNEL_4;
+  sConfig.Rank = 4;
+  sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+  HAL_ADC_ConfigChannel(&hadc1, &sConfig);*/
 
 }
 
