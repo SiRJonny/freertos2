@@ -63,6 +63,7 @@ UART_HandleTypeDef huart3;
 
 ADC_HandleTypeDef hadc1;
 ADC_HandleTypeDef hadc2;
+DMA_HandleTypeDef hdma_adc1;
 
 SPI_HandleTypeDef hspi2;
 SPI_HandleTypeDef hspi3;
@@ -72,6 +73,9 @@ TIM_HandleTypeDef htim2;
 
 osSemaphoreId xSem_USART_rdy_to_send;
 osSemaphoreDef(xSem_USART_rdy_to_send);
+
+osSemaphoreId ADC1_complete;
+osSemaphoreDef(ADC1_complete);
 
 QueueHandle_t xQueue_BT;
 
@@ -85,6 +89,9 @@ osMailQId  mailbox_bt;
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 
+uint32_t ADC1_BUFFER[4];
+
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -95,6 +102,7 @@ void SendBluetoothTask();
 void SendRemoteVarTask();
 
 void USART3_UART_Init();
+static void MX_DMA_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_ADC2_Init(void);
 static void MX_SPI2_Init(void);
@@ -123,6 +131,7 @@ void BT_send_msg(float msg, string nev);
 int main(void)
 {
 
+
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
@@ -140,6 +149,7 @@ int main(void)
 
   /* USER CODE BEGIN 2 */
   GPIO_Init();
+  MX_DMA_Init();
   USART3_UART_Init();
   MX_ADC1_Init();
   MX_ADC2_Init();
@@ -159,7 +169,8 @@ int main(void)
 
 
   xSem_USART_rdy_to_send = osSemaphoreCreate(osSemaphore(xSem_USART_rdy_to_send),1);
-
+  ADC1_complete = osSemaphoreCreate(osSemaphore(ADC1_complete),1);
+  osSemaphoreWait(ADC1_complete,osWaitForever);
 
 	// itt, hogy BT tasknak már kész legyen
   xQueue_BT = xQueueCreate(10, sizeof(struct BT_MSG));
@@ -186,7 +197,6 @@ int main(void)
 
   osThreadDef(SendRemoteVarTask, SendRemoteVarTask, osPriorityNormal, 0, 128);
   SendRemoteVar_TaskHandle = osThreadCreate(osThread(SendRemoteVarTask), NULL);
-
 
 
 
@@ -292,17 +302,21 @@ void BT_send_msg(double msg, string nev){
 	xQueueSend( xQueue_BT, &number2msg(msg, string(nev).c_str(), (uint8_t)4), portMAX_DELAY);
 }
 
+// szenzorsor 4 jel�nek beolvas�sa
+// TODO: lehet, hogy nem is kell visszaadni, ott az ADC1_BUFFER?
+// TODO: id�m�r�s?
 void ADC1_read(int result[])
 {
 
-	HAL_ADC_Start(&hadc1);
+	HAL_ADC_Start_DMA(&hadc1, ADC1_BUFFER, 4);
+	osSemaphoreWait(ADC1_complete,osWaitForever);
 
-	for(int i = 0; i<4; i++){
-		HAL_ADC_PollForConversion(&hadc1,1000);
-		result[i] = HAL_ADC_GetValue(&hadc1);
+	for(int i = 0; i < 4; i++)
+	{
+		result[i] = ADC1_BUFFER[i];
 	}
 
-	HAL_ADC_Stop(&hadc1);
+	HAL_ADC_Stop_DMA(&hadc1);
 }
 
 /* StartDefaultTask function */
@@ -316,7 +330,7 @@ void StartDefaultTask()
   {
 
     osDelay(500);
-    HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
+    HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
 
   }
   /* USER CODE END 5 */
@@ -344,7 +358,7 @@ void StartButtonTask()
 			ADC1_read(adc_result);
 			for(int i = 0; i<4; i++)
 			{
-				BT_send_msg(adc_result[i], "adc1: " + string(itoa(adc_result[i],buffer,10)) + "\n");
+				BT_send_msg(adc_result[i], "adc1: " + string(itoa(ADC1_BUFFER[i],buffer,10)) + "\n");
 			}
 
 			for(int i=0; i<15; i++){
@@ -407,34 +421,42 @@ void SendRemoteVarTask()
 }
 
 
-// hal uart callback, TODO: nézni, hogy melyik uart lett kész?
+// hal uart callback
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart){
 	if(huart->Instance == USART3)
 	{
-		//osMailFree(mailbox_bt,)
-		//osSemaphoreRelease(xSem_USART_rdy_to_send);
-
 		osSignalSet(BT_TaskHandle,0x0001);
-
-
 	}
 }
+
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* AdcHandle)
+{
+    if(AdcHandle->Instance == ADC1)	// szenzorsor 4 jele
+    {
+    	osSemaphoreRelease(ADC1_complete);
+    }
+}
+
+
 
 // interrupt f�ggv�nyek csak �gy mennek
 extern "C"
 {
+	// uart2 megszakítás kezelő, meghívjuk a HAL irq kezelőjét
+	void USART3_IRQHandler(void){
+		HAL_UART_IRQHandler(&huart3);
+	}
 
-// uart2 megszakítás kezelő, meghívjuk a HAL irq kezelőjét
-void USART3_IRQHandler(void){
-	HAL_UART_IRQHandler(&huart3);
+    void DMA2_Stream0_IRQHandler()
+    {
+        HAL_DMA_IRQHandler(&hdma_adc1);
+    }
+
+    void ADC_IRQHandler()
+    {
+        HAL_ADC_IRQHandler(&hadc1);
+    }
 }
-/* USER CODE BEGIN 4 */
-
-/* USER CODE END 4 */
-
-}
-
-
 
 // ADC init (szenzorsor 4 jele)
 void MX_ADC1_Init(void)
@@ -476,7 +498,7 @@ void MX_ADC1_Init(void)
 
   sConfig.Channel = ADC_CHANNEL_4;
   sConfig.Rank = 4;
-  sConfig.SamplingTime = ADC_SAMPLETIME_112CYCLES;
+  sConfig.SamplingTime = ADC_SAMPLETIME_15CYCLES;
   HAL_ADC_ConfigChannel(&hadc1, &sConfig);
 
 }
@@ -640,6 +662,16 @@ void MX_USART1_UART_Init(void)
 
 }
 
+void MX_DMA_Init(void)
+{
+  /* DMA controller clock enable */
+  __DMA2_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
+
+}
 
 // uart2 és hozzátartozó interruptok inicializálása
 // azért main-ben, mert á kell adni neki a handle-t

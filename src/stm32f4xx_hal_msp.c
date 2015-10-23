@@ -32,9 +32,12 @@
   ******************************************************************************
   */
 /* Includes ------------------------------------------------------------------*/
-#include "stm32f4xx_hal.h"
+
+
+#include <stm32f4xx_hal.h>
 
 /* USER CODE BEGIN 0 */
+extern DMA_HandleTypeDef hdma_adc1;
 
 /* USER CODE END 0 */
 
@@ -80,6 +83,30 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+
+    /* Peripheral DMA init*/
+
+	hdma_adc1.Instance = DMA2_Stream0;
+	hdma_adc1.Init.Channel = DMA_CHANNEL_0;
+	hdma_adc1.Init.Direction = DMA_PERIPH_TO_MEMORY;
+	hdma_adc1.Init.PeriphInc = DMA_PINC_DISABLE;
+	hdma_adc1.Init.MemInc = DMA_MINC_ENABLE;
+	hdma_adc1.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
+	hdma_adc1.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
+	hdma_adc1.Init.Mode = DMA_NORMAL;
+	hdma_adc1.Init.Priority = DMA_PRIORITY_MEDIUM;
+	hdma_adc1.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
+	hdma_adc1.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_FULL;
+	hdma_adc1.Init.MemBurst = DMA_MBURST_SINGLE;
+	hdma_adc1.Init.PeriphBurst = DMA_PBURST_SINGLE;
+	HAL_DMA_Init(&hdma_adc1);
+
+	__HAL_LINKDMA(hadc,DMA_Handle,hdma_adc1);
+
+  /* Peripheral interrupt init*/
+	HAL_NVIC_SetPriority(ADC_IRQn, 5, 0);
+	HAL_NVIC_EnableIRQ(ADC_IRQn);
 
   /* USER CODE BEGIN ADC1_MspInit 1 */
 
