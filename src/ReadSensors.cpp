@@ -7,8 +7,46 @@
 
 #include "ReadSensors.h"
 
+extern int ADC1_BUFFER[4];
+extern int szenzorsor_1[32];
+extern int szenzorsor_2[32];
+
+
 void ReadSensors()
 {
+	uint16_t pattern = 0x0101;
+
+	EnableMUX();
+
+	for (int i = 0; i<8; i++)
+	{
+
+
+		SetLeds(pattern);	// ez felfüggesztõs legyen? vagy idõbeosztást máshogy
+		LATCHLeds();
+		pattern <<= 1;
+
+		// TODO: várni a szenzorra
+		SetMUX((uint8_t)i);
+		//ADC1_read();
+
+		// 16on belül az elsõ
+		szenzorsor_1[i] = ADC1_BUFFER[1];		// PA2 -> bal elsõ csoport
+		szenzorsor_1[i+16] = ADC1_BUFFER[0];	// PA1 -> jobb elsõ csoport
+		szenzorsor_2[i] = ADC1_BUFFER[3];		// PA4 -> bal hátsó
+		szenzorsor_2[i+16] = ADC1_BUFFER[2];	// bal hátsó
+
+		SetMUX((uint8_t)i+8);
+
+		// 16on belül a másik
+		szenzorsor_1[i+8] = ADC1_BUFFER[1];		// PA2 -> bal elsõ csoport
+		szenzorsor_1[i+16+8] = ADC1_BUFFER[0];	// PA1 -> jobb elsõ csoport
+		szenzorsor_2[i+8] = ADC1_BUFFER[3];		// PA4 -> bal hátsó
+		szenzorsor_2[i+16+8] = ADC1_BUFFER[2];	// bal hátsó
+
+	}
+
+	DisableMUX();
 
 }
 
@@ -22,13 +60,22 @@ void DisableDrivers()
 }
 void SetLeds(uint16_t pattern)
 {
-
+	//TODO: set leds
+	// send SPI
+	// LATCH
 }
 
 // nincs 1bit küldés SPI-on, ez lehet kimarad
 void ShiftLeds(uint8_t amount)
 {
 
+}
+
+void LATCHLeds()
+{
+	HAL_GPIO_WritePin(GPIOD,GPIO_PIN_6,GPIO_PIN_SET);
+	// TODO: ez mennyi idõ lesz?
+	HAL_GPIO_WritePin(GPIOD,GPIO_PIN_6,GPIO_PIN_RESET);
 }
 
 void EnableMUX()

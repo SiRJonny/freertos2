@@ -90,7 +90,8 @@ osMailQId  mailbox_bt;
 /* Private variables ---------------------------------------------------------*/
 
 uint32_t ADC1_BUFFER[4];
-
+uint32_t szenzorsor_1[32];
+uint32_t szenzorsor_2[32];
 
 /* USER CODE END PV */
 
@@ -319,6 +320,16 @@ void ADC1_read(int result[])
 	HAL_ADC_Stop_DMA(&hadc1);
 }
 
+// szenzorsor 4 jelÈnek beolvas·sa
+// TODO: lehet, hogy nem is kell visszaadni, ott az ADC1_BUFFER?
+// TODO: idımÈrÈs?
+void ADC1_read()
+{
+	HAL_ADC_Start_DMA(&hadc1, ADC1_BUFFER, 4);
+	osSemaphoreWait(ADC1_complete,osWaitForever);
+	HAL_ADC_Stop_DMA(&hadc1);
+}
+
 /* StartDefaultTask function */
 // default tastk, csak egy villog√≥ led
 void StartDefaultTask()
@@ -355,7 +366,7 @@ void StartButtonTask()
 			// remote v√°ltoz√≥k elk√ºld√©se
 			//osThreadResume(SendRemoteVar_TaskHandle);
 
-			ADC1_read(adc_result);
+			ADC1_read();
 			for(int i = 0; i<4; i++)
 			{
 				BT_send_msg(adc_result[i], "adc1: " + string(itoa(ADC1_BUFFER[i],buffer,10)) + "\n");
