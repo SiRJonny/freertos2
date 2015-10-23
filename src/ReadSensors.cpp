@@ -6,10 +6,14 @@
  */
 
 #include "ReadSensors.h"
+#include "cmsis_os.h"
 
 extern int ADC1_BUFFER[4];
 extern int szenzorsor_1[32];
 extern int szenzorsor_2[32];
+
+extern ADC_HandleTypeDef hadc1;
+extern osSemaphoreId ADC1_complete;
 
 
 void ReadSensors()
@@ -28,7 +32,7 @@ void ReadSensors()
 
 		// TODO: várni a szenzorra
 		SetMUX((uint8_t)i);
-		//ADC1_read();
+		ADC1_read();
 
 		// 16on belül az elsõ
 		szenzorsor_1[i] = ADC1_BUFFER[1];		// PA2 -> bal elsõ csoport
@@ -48,6 +52,17 @@ void ReadSensors()
 
 	DisableMUX();
 
+}
+
+
+// szenzorsor 4 jelének beolvasása
+// TODO: lehet, hogy nem is kell visszaadni, ott az ADC1_BUFFER?
+// TODO: idõmérés?
+void ADC1_read()
+{
+	HAL_ADC_Start_DMA(&hadc1, ADC1_BUFFER, 4);
+	osSemaphoreWait(ADC1_complete,osWaitForever);
+	HAL_ADC_Stop_DMA(&hadc1);
 }
 
 void EnableDrivers()
@@ -110,13 +125,6 @@ void SetMUX(uint8_t ch)
 	}
 	
 }
-
-
-uint16_t ReadADC()
-{
-	return 1;
-}
-
 
 
 

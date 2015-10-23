@@ -46,6 +46,7 @@ extern "C"
 #include "GPIO_setup.h"
 //#include "stm32f4xx_hal_uart.h"
 #include "BT_MSG.h"
+#include "ReadSensors.h"
 
 using namespace std;
 
@@ -119,6 +120,8 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart);
 void BT_send_msg(int msg, char* nev);*/
 void BT_send_msg(int msg, string nev);
 void BT_send_msg(float msg, string nev);
+
+
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
@@ -303,32 +306,7 @@ void BT_send_msg(double msg, string nev){
 	xQueueSend( xQueue_BT, &number2msg(msg, string(nev).c_str(), (uint8_t)4), portMAX_DELAY);
 }
 
-// szenzorsor 4 jelének beolvasása
-// TODO: lehet, hogy nem is kell visszaadni, ott az ADC1_BUFFER?
-// TODO: idõmérés?
-void ADC1_read(int result[])
-{
 
-	HAL_ADC_Start_DMA(&hadc1, ADC1_BUFFER, 4);
-	osSemaphoreWait(ADC1_complete,osWaitForever);
-
-	for(int i = 0; i < 4; i++)
-	{
-		result[i] = ADC1_BUFFER[i];
-	}
-
-	HAL_ADC_Stop_DMA(&hadc1);
-}
-
-// szenzorsor 4 jelének beolvasása
-// TODO: lehet, hogy nem is kell visszaadni, ott az ADC1_BUFFER?
-// TODO: idõmérés?
-void ADC1_read()
-{
-	HAL_ADC_Start_DMA(&hadc1, ADC1_BUFFER, 4);
-	osSemaphoreWait(ADC1_complete,osWaitForever);
-	HAL_ADC_Stop_DMA(&hadc1);
-}
 
 /* StartDefaultTask function */
 // default tastk, csak egy villogÃ³ led

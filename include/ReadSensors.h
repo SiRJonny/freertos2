@@ -13,6 +13,7 @@
 
 
 void ReadSensors();
+void ADC1_read();
 void EnableDrivers();
 void DisableDrivers();
 void SetLeds(uint16_t pattern);
@@ -23,6 +24,6 @@ void EnableMUX();
 void DisableMUX();
 void SetMUX(uint8_t);
 
-uint16_t ReadADC();
+
 
 #endif /* INCLUDE_READSENSORS_H_ */
