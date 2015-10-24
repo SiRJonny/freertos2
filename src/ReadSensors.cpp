@@ -34,6 +34,7 @@ void ReadSensors()
 
 		// TODO: várni a szenzorra
 		SetMUX((uint8_t)i);
+		// TODO: várni muxra?
 		ADC1_read();
 
 		// 16on belül az elsõ
@@ -43,6 +44,7 @@ void ReadSensors()
 		szenzorsor_2[i+16] = ADC1_BUFFER[2];	// bal hátsó
 
 		SetMUX((uint8_t)i+8);
+		ADC1_read();
 
 		// 16on belül a másik
 		szenzorsor_1[i+8] = ADC1_BUFFER[1];		// PA2 -> bal elsõ csoport

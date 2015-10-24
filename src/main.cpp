@@ -47,6 +47,7 @@ extern "C"
 //#include "stm32f4xx_hal_uart.h"
 #include "BT_MSG.h"
 #include "ReadSensors.h"
+#include "ProcessSensors.h"
 
 using namespace std;
 
@@ -350,6 +351,7 @@ void StartButtonTask()
 
 			//ADC1_read();
 			ReadSensors();
+			float pos = getLinePos();
 			for(int i = 0; i<4; i++)
 			{
 				BT_send_msg(adc_result[i], "adc1: " + string(itoa(ADC1_BUFFER[i],buffer,10)) + "\n");
