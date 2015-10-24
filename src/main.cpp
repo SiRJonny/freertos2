@@ -58,6 +58,7 @@ using namespace std;
 osThreadId defaultTaskHandle;
 osThreadId BT_TaskHandle;
 osThreadId SendRemoteVar_TaskHandle;
+osThreadId ADC1_read_TaskHandle;
 
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart3;
@@ -102,13 +103,13 @@ void StartDefaultTask();
 void StartButtonTask();
 void SendBluetoothTask();
 void SendRemoteVarTask();
+void ADC1ReadTask();
 
 void USART3_UART_Init();
 static void MX_DMA_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_ADC2_Init(void);
 static void MX_SPI2_Init(void);
-static void MX_SPI3_Init(void);
 static void MX_SPI3_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_TIM2_Init(void);
@@ -201,6 +202,9 @@ int main(void)
 
   osThreadDef(SendRemoteVarTask, SendRemoteVarTask, osPriorityNormal, 0, 128);
   SendRemoteVar_TaskHandle = osThreadCreate(osThread(SendRemoteVarTask), NULL);
+
+  osThreadDef(ADC1ReadTask, ADC1ReadTask, osPriorityHigh, 0, 128);
+  ADC1_read_TaskHandle = osThreadCreate(osThread(ADC1ReadTask), NULL);
 
 
 
@@ -344,7 +348,8 @@ void StartButtonTask()
 			// remote v√°ltoz√≥k elk√ºld√©se
 			//osThreadResume(SendRemoteVar_TaskHandle);
 
-			ADC1_read();
+			//ADC1_read();
+			ReadSensors();
 			for(int i = 0; i<4; i++)
 			{
 				BT_send_msg(adc_result[i], "adc1: " + string(itoa(ADC1_BUFFER[i],buffer,10)) + "\n");
@@ -355,6 +360,8 @@ void StartButtonTask()
 				//BT_send_msg(i+444464, "xx_" + string(itoa(i,buffer,10)) + "_xx\n");
 				//BT_send_msg((double)((double)i + 4423464.54323), "xx_" + string(itoa(i,buffer,10)) + "_xx\n");
 			}
+
+
 
 			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14); // piros led, debug
 
@@ -409,6 +416,18 @@ void SendRemoteVarTask()
 
 }
 
+// szenzorsorok beolvas·sa, ha kÈsz, sz¸neteli mag·t
+void ADC1ReadTask()
+{
+
+	osThreadSuspend(ADC1_read_TaskHandle);
+
+	for(;;)
+	{
+		ReadSensors();
+		osThreadSuspend(ADC1_read_TaskHandle);
+	}
+}
 
 // hal uart callback
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart){
@@ -457,7 +476,7 @@ void MX_ADC1_Init(void)
     */
   hadc1.Instance = ADC1;
   hadc1.Init.ClockPrescaler = ADC_CLOCKPRESCALER_PCLK_DIV4;
-  hadc1.Init.Resolution = ADC_RESOLUTION12b;
+  hadc1.Init.Resolution = ADC_RESOLUTION8b;
   hadc1.Init.ScanConvMode = ENABLE;
   hadc1.Init.ContinuousConvMode = DISABLE;
   hadc1.Init.DiscontinuousConvMode = DISABLE;
@@ -542,18 +561,18 @@ void MX_SPI2_Init(void)
 
 }
 
-/* SPI3 init function */
+// LED driver vezÈrlÈs
 void MX_SPI3_Init(void)
 {
 
   hspi3.Instance = SPI3;
   hspi3.Init.Mode = SPI_MODE_MASTER;
-  hspi3.Init.Direction = SPI_DIRECTION_2LINES;
-  hspi3.Init.DataSize = SPI_DATASIZE_8BIT;
+  hspi3.Init.Direction = SPI_DIRECTION_1LINE;
+  hspi3.Init.DataSize = SPI_DATASIZE_16BIT;
   hspi3.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi3.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi3.Init.NSS = SPI_NSS_SOFT;
-  hspi3.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
+  hspi3.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4;
   hspi3.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi3.Init.TIMode = SPI_TIMODE_DISABLED;
   hspi3.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLED;
@@ -606,31 +625,32 @@ void MX_TIM1_Init(void)
 
 }
 
-/* TIM2 init function */
+// encoder sz·ml·lÛ
 void MX_TIM2_Init(void)
 {
 
+  TIM_Encoder_InitTypeDef sConfig;
   TIM_MasterConfigTypeDef sMasterConfig;
-  TIM_IC_InitTypeDef sConfigIC;
 
   htim2.Instance = TIM2;
   htim2.Init.Prescaler = 0;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim2.Init.Period = 0;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  HAL_TIM_IC_Init(&htim2);
+  sConfig.EncoderMode = TIM_ENCODERMODE_TI12;
+  sConfig.IC1Polarity = TIM_ICPOLARITY_BOTHEDGE;
+  sConfig.IC1Selection = TIM_ICSELECTION_DIRECTTI;
+  sConfig.IC1Prescaler = TIM_ICPSC_DIV1;
+  sConfig.IC1Filter = 2;
+  sConfig.IC2Polarity = TIM_ICPOLARITY_BOTHEDGE;
+  sConfig.IC2Selection = TIM_ICSELECTION_DIRECTTI;
+  sConfig.IC2Prescaler = TIM_ICPSC_DIV1;
+  sConfig.IC2Filter = 2;
+  HAL_TIM_Encoder_Init(&htim2, &sConfig);
 
   sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
   sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
   HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig);
-
-  sConfigIC.ICPolarity = TIM_INPUTCHANNELPOLARITY_RISING;
-  sConfigIC.ICSelection = TIM_ICSELECTION_DIRECTTI;
-  sConfigIC.ICPrescaler = TIM_ICPSC_DIV1;
-  sConfigIC.ICFilter = 0;
-  HAL_TIM_IC_ConfigChannel(&htim2, &sConfigIC, TIM_CHANNEL_1);
-
-  HAL_TIM_IC_ConfigChannel(&htim2, &sConfigIC, TIM_CHANNEL_2);
 
 }
 
@@ -662,8 +682,7 @@ void MX_DMA_Init(void)
 
 }
 
-// uart2 √©s hozz√°tartoz√≥ interruptok inicializ√°l√°sa
-// az√©rt main-ben, mert √° kell adni neki a handle-t
+// uart3 √©s hozz√°tartoz√≥ interruptok inicializ√°l√°sa BT modulhoz
 void USART3_UART_Init()
 {
   huart3.Instance = USART3;

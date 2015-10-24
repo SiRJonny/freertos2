@@ -14,8 +14,10 @@ extern int szenzorsor_2[32];
 
 extern ADC_HandleTypeDef hadc1;
 extern osSemaphoreId ADC1_complete;
+extern SPI_HandleTypeDef hspi3;
+HAL_StatusTypeDef status;
 
-
+// teljes szenzorsor beolvasás
 void ReadSensors()
 {
 	uint16_t pattern = 0x0101;
@@ -75,9 +77,11 @@ void DisableDrivers()
 }
 void SetLeds(uint16_t pattern)
 {
-	//TODO: set leds
-	// send SPI
-	// LATCH
+	status = HAL_SPI_Transmit(&hspi3,(uint8_t*)&pattern,1,100);
+	if(status != HAL_OK)
+	{
+		while(1); // TODO: ez csak debughoz
+	}
 }
 
 // nincs 1bit küldés SPI-on, ez lehet kimarad
