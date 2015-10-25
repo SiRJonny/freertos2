@@ -7,6 +7,8 @@
 
 #include "ProcessSensors.h"
 
+#define REFINE_RADIUS 2
+
 extern uint32_t szenzorsor_1[32];
 extern uint32_t szenzorsor_2[32];
 
@@ -15,7 +17,7 @@ float getLinePos()
 {
 	int average = calculateAverage(szenzorsor_1,32);
 	int max = findMaxPos(szenzorsor_1, 32);
-	float refined_max = refineMaxPos(szenzorsor_1,max,2);
+	float refined_max = refineMaxPos(szenzorsor_1,max,REFINE_RADIUS);
 
 	return refined_max;
 }

@@ -11,6 +11,9 @@
 #define INCLUDE_BT_MSG_H_
 #include "stm32f4xx_hal.h"
 
+extern "C" {
+#include "FreeRTOS.h"
+}
 
 
 struct BT_MSG
@@ -43,13 +46,13 @@ struct BT_MSG number2msg(T number, const char* name, uint8_t type)
 
 	ptr = (uint8_t*)&number;
 
-	//osThreadSuspendAll();
+
 	for( i=2 ; i<(sizeof(T)+2) ; i++)
 	{
 		btmsg.data[i] = *ptr;
 		ptr++;
 	}
-	//osThreadResumeAll();
+
 
 	while (*name)
 	{

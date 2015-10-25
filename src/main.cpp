@@ -49,6 +49,8 @@ extern "C"
 #include "ReadSensors.h"
 #include "ProcessSensors.h"
 
+#define SERVO_RANGE_MOTOR 500	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a max kiadott jel
+
 using namespace std;
 
 
@@ -60,6 +62,7 @@ osThreadId defaultTaskHandle;
 osThreadId BT_TaskHandle;
 osThreadId SendRemoteVar_TaskHandle;
 osThreadId ADC1_read_TaskHandle;
+osThreadId BT_Receive_TaskHandle;
 
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart3;
@@ -83,8 +86,6 @@ osSemaphoreDef(ADC1_complete);
 QueueHandle_t xQueue_BT;
 
 
-osMailQDef(mailbox_bt, 10, BT_MSG);
-osMailQId  mailbox_bt;
 
 
 
@@ -105,6 +106,7 @@ void StartButtonTask();
 void SendBluetoothTask();
 void SendRemoteVarTask();
 void ADC1ReadTask();
+void BTReceiveTask();
 
 void USART3_UART_Init();
 static void MX_DMA_Init(void);
@@ -120,8 +122,9 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart);
 
 /*void BT_send_msg(int msg);
 void BT_send_msg(int msg, char* nev);*/
-void BT_send_msg(int msg, string nev);
-void BT_send_msg(float msg, string nev);
+void BT_send_msg(int * msg, string nev);
+void BT_send_msg(float * msg, string nev);
+void SetServo_motor(int pos); // 0-1000
 
 
 
@@ -181,7 +184,7 @@ int main(void)
 	// itt, hogy BT tasknak mÃ¡r kÃ©sz legyen
   xQueue_BT = xQueueCreate(10, sizeof(struct BT_MSG));
 
-  mailbox_bt = osMailCreate(osMailQ(mailbox_bt), BT_TaskHandle);
+
 
   /* USER CODE END RTOS_SEMAPHORES */
 
@@ -195,7 +198,7 @@ int main(void)
   osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
-  osThreadDef(ButtonTask, StartButtonTask, osPriorityNormal, 0, 128);
+  osThreadDef(ButtonTask, StartButtonTask, osPriorityBelowNormal, 0, 128);
   defaultTaskHandle = osThreadCreate(osThread(ButtonTask), NULL);
 
   osThreadDef(SendBluetoothTask, SendBluetoothTask, osPriorityNormal, 0, 128);
@@ -207,6 +210,8 @@ int main(void)
   osThreadDef(ADC1ReadTask, ADC1ReadTask, osPriorityHigh, 0, 128);
   ADC1_read_TaskHandle = osThreadCreate(osThread(ADC1ReadTask), NULL);
 
+  osThreadDef(BTReceiveTask, BTReceiveTask, osPriorityNormal, 0, 128);
+  BT_Receive_TaskHandle = osThreadCreate(osThread(BTReceiveTask), NULL);
 
 
 
@@ -296,22 +301,30 @@ void BT_send_msg(int msg, char* nev){
 }
 */
 
-void BT_send_msg(int msg, string nev){
+void BT_send_msg(int * msg, string nev){
 	// type: 1=int, 3=float, 4=double
 	xQueueSend( xQueue_BT, &number2msg(msg, string(nev).c_str(), (uint8_t)1), portMAX_DELAY);
 }
 
-void BT_send_msg(float msg, string nev){
+void BT_send_msg(float * msg, string nev){
 	// type: 1=int, 3=float, 4=double
 	xQueueSend( xQueue_BT, &number2msg(msg, string(nev).c_str(), (uint8_t)3), portMAX_DELAY);
 }
 
-void BT_send_msg(double msg, string nev){
+void BT_send_msg(double * msg, string nev){
 	// type: 1=int, 3=float, 4=double
 	xQueueSend( xQueue_BT, &number2msg(msg, string(nev).c_str(), (uint8_t)4), portMAX_DELAY);
 }
 
+// -500 és 500 közötti értéket fogad
+void SetServo_motor(int pos)
+{
+	if(pos > SERVO_RANGE_MOTOR){pos = SERVO_RANGE_MOTOR;}
+	if(pos < -SERVO_RANGE_MOTOR){pos = -SERVO_RANGE_MOTOR;}
 
+	// 1500 = 1,5ms, ez a 0 pozíció
+	__HAL_TIM_SET_COMPARE(&htim1,1,1500+pos);
+}
 
 /* StartDefaultTask function */
 // default tastk, csak egy villogÃ³ led
@@ -354,7 +367,7 @@ void StartButtonTask()
 			float pos = getLinePos();
 			for(int i = 0; i<4; i++)
 			{
-				BT_send_msg(adc_result[i], "adc1: " + string(itoa(ADC1_BUFFER[i],buffer,10)) + "\n");
+				BT_send_msg(&adc_result[i], "adc1: " + string(itoa(ADC1_BUFFER[i],buffer,10)) + "\n");
 			}
 
 			for(int i=0; i<15; i++){
@@ -378,7 +391,6 @@ void StartButtonTask()
 void SendBluetoothTask()
 {
 	struct BT_MSG msg;
-	osEvent evt;
 
 	for( ;; )
 	{
@@ -398,6 +410,33 @@ void SendBluetoothTask()
 	}
 }
 
+void BTReceiveTask()
+{
+	uint8_t msg[10];
+	int * int_ptr = (int*)&msg[1];
+	for( ;; )
+	{
+		HAL_UART_Receive_IT(&huart3,msg,(uint16_t)5);
+
+		osSignalWait(0x0001,osWaitForever);
+
+		// TODO: változó fogadásnál mi legyen?
+		switch(msg[0])
+		{
+			case 1:	SetServo_motor(0);
+				break;
+			case 2:	SetServo_motor(400);
+				break;
+			case 3:	SetServo_motor(-400);
+				break;
+			case 4:	SetServo_motor(*int_ptr);
+				break;
+			default:
+				break;
+		}
+	}
+}
+
 void SendRemoteVarTask()
 {
 
@@ -410,7 +449,7 @@ void SendRemoteVarTask()
 
 
 		// minden vÃ¡ltozÃ³hoz konverziÃ³ Ã©s kÃ¼ldÃ©s
-	BT_send_msg(123456,"teszt");
+	//BT_send_msg(123456,"teszt");
 
 
 		osThreadSuspend(SendRemoteVar_TaskHandle); // minden elkÃ¼ldve, pihenÃ¼nk (osThreadResume-ra megint elkÃ¼ld mindent)
@@ -436,6 +475,13 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart){
 	if(huart->Instance == USART3)
 	{
 		osSignalSet(BT_TaskHandle,0x0001);
+	}
+}
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
+	if(huart->Instance == USART3)
+	{
+		osSignalSet(BT_Receive_TaskHandle,0x0001);
 	}
 }
 
@@ -591,11 +637,15 @@ void MX_TIM1_Init(void)
   TIM_BreakDeadTimeConfigTypeDef sBreakDeadTimeConfig;
   TIM_OC_InitTypeDef sConfigOC;
 
+  // alap clk = 168MHz
+  // 10ms-es pwm periódus kell, azon belül 1-2ms a pulzus
+
+
   htim1.Instance = TIM1;
-  htim1.Init.Prescaler = 0;
+  htim1.Init.Prescaler = 167;
   htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim1.Init.Period = 0;
-  htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim1.Init.Period = 9999;	// 10/20ms itt állítható
+  htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;	// ez nem mûködik
   htim1.Init.RepetitionCounter = 0;
   HAL_TIM_PWM_Init(&htim1);
 
@@ -613,7 +663,7 @@ void MX_TIM1_Init(void)
   HAL_TIMEx_ConfigBreakDeadTime(&htim1, &sBreakDeadTimeConfig);
 
   sConfigOC.OCMode = TIM_OCMODE_PWM1;
-  sConfigOC.Pulse = 0;
+  sConfigOC.Pulse = 1500;
   sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
   sConfigOC.OCNPolarity = TIM_OCNPOLARITY_HIGH;
   sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
@@ -624,6 +674,8 @@ void MX_TIM1_Init(void)
   HAL_TIM_PWM_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_2);
 
   HAL_TIM_PWM_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_4);
+
+  HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_1);
 
 }
 

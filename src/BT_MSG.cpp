@@ -25,13 +25,13 @@ void int2msg(struct BT_MSG * btmsg, int ertek, char* nev)
 
 	ptr = (uint8_t*)&ertek;
 
-	//osThreadSuspendAll();
+
 	for( i=2 ; i<(sizeof(int)+2) ; i++)
 	{
 		btmsg->data[i] = *ptr;
 		ptr++;
 	}
-	//osThreadResumeAll();
+
 
 	while (*nev)
 	{
