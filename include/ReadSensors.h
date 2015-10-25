@@ -10,7 +10,8 @@
 
 
 #include "stm32f4xx_hal.h"
-
+#include <string>
+#include <stdlib.h>
 
 void ReadSensors();
 void ADC1_read();

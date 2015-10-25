@@ -50,6 +50,7 @@ extern "C"
 #include "ProcessSensors.h"
 
 #define SERVO_RANGE_MOTOR 500	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a max kiadott jel
+#define SERVO_RANGE_STEERING 500	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a max kiadott jel
 
 using namespace std;
 
@@ -76,6 +77,7 @@ SPI_HandleTypeDef hspi3;
 
 TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim2;
+TIM_HandleTypeDef htim5;
 
 osSemaphoreId xSem_USART_rdy_to_send;
 osSemaphoreDef(xSem_USART_rdy_to_send);
@@ -116,6 +118,7 @@ static void MX_SPI2_Init(void);
 static void MX_SPI3_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_TIM2_Init(void);
+static void MX_TIM5_Init(void);
 static void MX_USART1_UART_Init(void);
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart);
 
@@ -124,8 +127,8 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart);
 void BT_send_msg(int msg, char* nev);*/
 void BT_send_msg(int * msg, string nev);
 void BT_send_msg(float * msg, string nev);
-void SetServo_motor(int pos); // 0-1000
-
+void SetServo_motor(int pos); // -SERVO_RANGE_MOTOR +SERVO_RANGE_MOTOR
+void SetServo_steering(int pos); // -SERVO_RANGE_STEERING +SERVO_RANGE_STEERING
 
 
 /* USER CODE BEGIN PFP */
@@ -165,6 +168,7 @@ int main(void)
   MX_SPI3_Init();
   MX_TIM1_Init();
   MX_TIM2_Init();
+  MX_TIM5_Init();
   MX_SPI2_Init();
   MX_USART1_UART_Init();
 
@@ -326,6 +330,16 @@ void SetServo_motor(int pos)
 	__HAL_TIM_SET_COMPARE(&htim1,1,1500+pos);
 }
 
+// -500 és 500 közötti értéket fogad DEFINEolva!
+void SetServo_steering(int pos)
+{
+	if(pos > SERVO_RANGE_STEERING){pos = SERVO_RANGE_STEERING;}
+	if(pos < -SERVO_RANGE_STEERING){pos = -SERVO_RANGE_STEERING;}
+
+	// 1500 = 1,5ms, ez a 0 pozíció
+	__HAL_TIM_SET_COMPARE(&htim1,2,1500+pos);
+}
+
 /* StartDefaultTask function */
 // default tastk, csak egy villogÃ³ led
 void StartDefaultTask()
@@ -349,6 +363,9 @@ void StartButtonTask()
 	int adc_result[4];
 	char buffer[10];
 
+	int timer = 1289173;
+	HAL_TIM_StateTypeDef timstate;
+
 	for (;;){
 
 		// TODO: ez blokkol mindent?????
@@ -363,12 +380,21 @@ void StartButtonTask()
 			//osThreadResume(SendRemoteVar_TaskHandle);
 
 			//ADC1_read();
+
+
+
 			ReadSensors();
+
+
+			//BT_send_msg(&timer, "RS:" + string(itoa(timer,buffer,10)) + "us\n");
+
+
 			float pos = getLinePos();
-			for(int i = 0; i<4; i++)
+
+			/*for(int i = 0; i<4; i++)
 			{
 				BT_send_msg(&adc_result[i], "adc1: " + string(itoa(ADC1_BUFFER[i],buffer,10)) + "\n");
-			}
+			}*/
 
 			for(int i=0; i<15; i++){
 				//BT_send_msg((float)((float)i + 444464.543), "xx_" + string(itoa(i,buffer,10)) + "_xx\n");
@@ -410,6 +436,7 @@ void SendBluetoothTask()
 	}
 }
 
+// uart3 fogadása, BT üzenetek
 void BTReceiveTask()
 {
 	uint8_t msg[10];
@@ -460,6 +487,7 @@ void SendRemoteVarTask()
 // szenzorsorok beolvasása, ha kész, szüneteli magát
 void ADC1ReadTask()
 {
+
 
 	osThreadSuspend(ADC1_read_TaskHandle);
 
@@ -539,17 +567,17 @@ void MX_ADC1_Init(void)
     */
   sConfig.Channel = ADC_CHANNEL_1;
   sConfig.Rank = 1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_112CYCLES;
+  sConfig.SamplingTime = ADC_SAMPLETIME_15CYCLES;
   HAL_ADC_ConfigChannel(&hadc1, &sConfig);
 
   sConfig.Channel = ADC_CHANNEL_2;
   sConfig.Rank = 2;
-  sConfig.SamplingTime = ADC_SAMPLETIME_112CYCLES;
+  sConfig.SamplingTime = ADC_SAMPLETIME_15CYCLES;
   HAL_ADC_ConfigChannel(&hadc1, &sConfig);
 
   sConfig.Channel = ADC_CHANNEL_3;
   sConfig.Rank = 3;
-  sConfig.SamplingTime = ADC_SAMPLETIME_112CYCLES;
+  sConfig.SamplingTime = ADC_SAMPLETIME_15CYCLES;
   HAL_ADC_ConfigChannel(&hadc1, &sConfig);
 
   sConfig.Channel = ADC_CHANNEL_4;
@@ -676,6 +704,8 @@ void MX_TIM1_Init(void)
   HAL_TIM_PWM_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_4);
 
   HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_1);
+  HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_2);
+  HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_4);
 
 }
 
@@ -706,6 +736,30 @@ void MX_TIM2_Init(void)
   sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
   HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig);
 
+}
+
+// idõméréshez, 1MHz-en számol (1us)
+void MX_TIM5_Init(void)
+{
+
+  TIM_ClockConfigTypeDef sClockSourceConfig;
+  TIM_MasterConfigTypeDef sMasterConfig;
+
+  htim5.Instance = TIM5;
+  htim5.Init.Prescaler = 83;
+  htim5.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim5.Init.Period = 4294967295;
+  htim5.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  HAL_TIM_Base_Init(&htim5);
+
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  HAL_TIM_ConfigClockSource(&htim5, &sClockSourceConfig);
+
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  HAL_TIMEx_MasterConfigSynchronization(&htim5, &sMasterConfig);
+
+  HAL_TIM_Base_Start(&htim5);
 }
 
 /* USART1 init function */

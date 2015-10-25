@@ -8,6 +8,9 @@
 #include "ReadSensors.h"
 #include "cmsis_os.h"
 
+
+
+
 extern int ADC1_BUFFER[4];
 extern int szenzorsor_1[32];
 extern int szenzorsor_2[32];
@@ -15,7 +18,14 @@ extern int szenzorsor_2[32];
 extern ADC_HandleTypeDef hadc1;
 extern osSemaphoreId ADC1_complete;
 extern SPI_HandleTypeDef hspi3;
+extern TIM_HandleTypeDef htim5;
 HAL_StatusTypeDef status;
+
+
+extern void BT_send_msg(int*msg,std::string nev);
+
+int timer=0;
+char buffer[10];
 
 // teljes szenzorsor beolvasás
 void ReadSensors()
@@ -26,6 +36,11 @@ void ReadSensors()
 
 	for (int i = 0; i<8; i++)
 	{
+
+
+
+
+
 
 
 		SetLeds(pattern);	// ez felfüggesztõs legyen? vagy idõbeosztást máshogy
@@ -44,13 +59,22 @@ void ReadSensors()
 		szenzorsor_2[i+16] = ADC1_BUFFER[2];	// bal hátsó
 
 		SetMUX((uint8_t)i+8);
+
+		//__HAL_TIM_SET_COUNTER(&htim5,0);
+
 		ADC1_read();
+
+		//timer = __HAL_TIM_GET_COUNTER(&htim5);
+		//BT_send_msg(&timer, "RS:" + std::string(itoa(timer,buffer,10)) + "us\n");
 
 		// 16on belül a másik
 		szenzorsor_1[i+8] = ADC1_BUFFER[1];		// PA2 -> bal elsõ csoport
 		szenzorsor_1[i+16+8] = ADC1_BUFFER[0];	// PA1 -> jobb elsõ csoport
 		szenzorsor_2[i+8] = ADC1_BUFFER[3];		// PA4 -> bal hátsó
 		szenzorsor_2[i+16+8] = ADC1_BUFFER[2];	// bal hátsó
+
+
+
 
 	}
 
