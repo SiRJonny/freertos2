@@ -10,8 +10,10 @@
 
 
 #include "stm32f4xx_hal.h"
+#include <cmath>
 
 float getLinePos();
+float calculateAngle(float pos1, float pos2);
 int calculateAverage(uint32_t * data, int datacount = 32);
 void subtractFromAll(uint32_t * data, int amount, int datacount = 32);
 int findMaxPos(uint32_t * data, int datacount = 32);

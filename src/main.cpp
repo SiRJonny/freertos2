@@ -78,6 +78,8 @@ SPI_HandleTypeDef hspi3;
 TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim5;
+TIM_HandleTypeDef htim6;
+TIM_HandleTypeDef htim7;
 
 osSemaphoreId xSem_USART_rdy_to_send;
 osSemaphoreDef(xSem_USART_rdy_to_send);
@@ -119,6 +121,8 @@ static void MX_SPI3_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_TIM5_Init(void);
+static void MX_TIM6_Init(void);
+static void MX_TIM7_Init(void);
 static void MX_USART1_UART_Init(void);
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart);
 
@@ -169,6 +173,8 @@ int main(void)
   MX_TIM1_Init();
   MX_TIM2_Init();
   MX_TIM5_Init();
+  MX_TIM6_Init();
+  MX_TIM7_Init();
   MX_SPI2_Init();
   MX_USART1_UART_Init();
 
@@ -364,7 +370,7 @@ void StartButtonTask()
 	char buffer[10];
 
 	int timer = 1289173;
-	HAL_TIM_StateTypeDef timstate;
+
 
 	for (;;){
 
@@ -379,17 +385,17 @@ void StartButtonTask()
 			// remote v√°ltoz√≥k elk√ºld√©se
 			//osThreadResume(SendRemoteVar_TaskHandle);
 
-			//ADC1_read();
+
 
 
 
 			ReadSensors();
-
+			float pos = getLinePos();
 
 			//BT_send_msg(&timer, "RS:" + string(itoa(timer,buffer,10)) + "us\n");
 
 
-			float pos = getLinePos();
+
 
 			/*for(int i = 0; i<4; i++)
 			{
@@ -521,6 +527,13 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* AdcHandle)
     }
 }
 
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef * htim)
+{
+	if(htim->Instance == TIM6)
+	{
+		HAL_GPIO_TogglePin(GPIOD,GPIO_PIN_15);
+	}
+}
 
 
 // interrupt f¸ggvÈnyek csak Ìgy mennek
@@ -538,8 +551,18 @@ extern "C"
 
     void ADC_IRQHandler()
     {
-        HAL_ADC_IRQHandler(&hadc1);
+    	HAL_ADC_IRQHandler(&hadc1);
     }
+
+    void TIM6_DAC_IRQHandler()
+    {
+    	HAL_TIM_IRQHandler(&htim6);
+    }
+
+    void TIM7_IRQHandler()
+	{
+		HAL_TIM_IRQHandler(&htim7);
+	}
 }
 
 // ADC init (szenzorsor 4 jele)
@@ -760,6 +783,43 @@ void MX_TIM5_Init(void)
   HAL_TIMEx_MasterConfigSynchronization(&htim5, &sMasterConfig);
 
   HAL_TIM_Base_Start(&htim5);
+}
+
+/* TIM6 init function */
+void MX_TIM6_Init(void)
+{
+
+  TIM_MasterConfigTypeDef sMasterConfig;
+
+  htim6.Instance = TIM6;
+  htim6.Init.Prescaler = 16799;
+  htim6.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim6.Init.Period = 10000;
+  HAL_TIM_Base_Init(&htim6);
+
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  HAL_TIMEx_MasterConfigSynchronization(&htim6, &sMasterConfig);
+
+  HAL_TIM_Base_Start_IT(&htim6);
+}
+
+/* TIM7 init function */
+void MX_TIM7_Init(void)
+{
+
+  TIM_MasterConfigTypeDef sMasterConfig;
+
+  htim7.Instance = TIM7;
+  htim7.Init.Prescaler = 167;
+  htim7.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim7.Init.Period = 200;
+  HAL_TIM_Base_Init(&htim7);
+
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  HAL_TIMEx_MasterConfigSynchronization(&htim7, &sMasterConfig);
+
 }
 
 /* USART1 init function */

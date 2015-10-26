@@ -34,11 +34,13 @@ void ReadSensors()
 
 	EnableMUX();
 
+
+
 	for (int i = 0; i<8; i++)
 	{
 
 
-
+		__HAL_TIM_SET_COUNTER(&htim5,0);
 
 
 
@@ -65,7 +67,7 @@ void ReadSensors()
 		ADC1_read();
 
 		//timer = __HAL_TIM_GET_COUNTER(&htim5);
-		//BT_send_msg(&timer, "RS:" + std::string(itoa(timer,buffer,10)) + "us\n");
+		//BT_send_msg(&timer, "adcTime:" + std::string(itoa(timer,buffer,10)) + "\n");
 
 		// 16on belül a másik
 		szenzorsor_1[i+8] = ADC1_BUFFER[1];		// PA2 -> bal elsõ csoport
@@ -73,10 +75,14 @@ void ReadSensors()
 		szenzorsor_2[i+8] = ADC1_BUFFER[3];		// PA4 -> bal hátsó
 		szenzorsor_2[i+16+8] = ADC1_BUFFER[2];	// bal hátsó
 
-
+		timer = __HAL_TIM_GET_COUNTER(&htim5);
+		BT_send_msg(&timer, "1/8sens" + std::string(itoa(timer,buffer,10)) + "\n");
 
 
 	}
+
+
+
 
 	DisableMUX();
 
@@ -89,8 +95,18 @@ void ReadSensors()
 void ADC1_read()
 {
 	HAL_ADC_Start_DMA(&hadc1, ADC1_BUFFER, 4);
+
 	osSemaphoreWait(ADC1_complete,osWaitForever);
 	HAL_ADC_Stop_DMA(&hadc1);
+
+	/*HAL_ADC_Start(&hadc1);
+	for(int i = 0; i < 4; i++)
+	{
+		HAL_ADC_PollForConversion(&hadc1,1000);
+		ADC1_BUFFER[i] = HAL_ADC_GetValue(&hadc1);
+
+	}
+	HAL_ADC_Stop(&hadc1);*/
 }
 
 void EnableDrivers()

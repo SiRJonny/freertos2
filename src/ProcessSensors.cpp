@@ -19,10 +19,19 @@ float getLinePos()
 	int max = findMaxPos(szenzorsor_1, 32);
 	float refined_max = refineMaxPos(szenzorsor_1,max,REFINE_RADIUS);
 
+	int max2 = findMaxPos(szenzorsor_2, 32);
+	float refined_max2 = refineMaxPos(szenzorsor_2,max2,REFINE_RADIUS);
+
+	float angle = calculateAngle(refined_max,refined_max2);
+
 	return refined_max;
 }
 
-
+float calculateAngle(float pos1, float pos2)
+{
+	float angle = atan( ((pos1-pos2)*5.917) / 56.725 );
+	return angle;
+}
 
 int calculateAverage(uint32_t * data, int datacount)
 {
