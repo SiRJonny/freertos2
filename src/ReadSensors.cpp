@@ -25,8 +25,7 @@ HAL_StatusTypeDef status;
 
 extern void BT_send_msg(int*msg,std::string nev);
 
-int timer=0;
-char buffer[10];
+
 
 // teljes szenzorsor beolvasás
 void ReadSensors()

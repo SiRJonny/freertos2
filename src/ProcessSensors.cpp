@@ -12,19 +12,28 @@
 extern uint32_t szenzorsor_1[32];
 extern uint32_t szenzorsor_2[32];
 
+float refined_max;
+float refined_max2;
+
 
 float getLinePos()
 {
-	int average = calculateAverage(szenzorsor_1,32);
+	//int average = calculateAverage(szenzorsor_1,32);
 	int max = findMaxPos(szenzorsor_1, 32);
-	float refined_max = refineMaxPos(szenzorsor_1,max,REFINE_RADIUS);
+	refined_max = refineMaxPos(szenzorsor_1,max,REFINE_RADIUS);
 
 	int max2 = findMaxPos(szenzorsor_2, 32);
-	float refined_max2 = refineMaxPos(szenzorsor_2,max2,REFINE_RADIUS);
+	refined_max2 = refineMaxPos(szenzorsor_2,max2,REFINE_RADIUS);
 
-	float angle = calculateAngle(refined_max,refined_max2);
+	//float angle = calculateAngle(refined_max,refined_max2);
 
 	return refined_max;
+}
+
+float calculateAngle()
+{
+	float angle = atan( ((refined_max-refined_max2)*5.917) / 56.725 );
+	return angle;
 }
 
 float calculateAngle(float pos1, float pos2)

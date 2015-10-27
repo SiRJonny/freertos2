@@ -14,6 +14,7 @@
 
 float getLinePos();
 float calculateAngle(float pos1, float pos2);
+float calculateAngle(void);
 int calculateAverage(uint32_t * data, int datacount = 32);
 void subtractFromAll(uint32_t * data, int amount, int datacount = 32);
 int findMaxPos(uint32_t * data, int datacount = 32);

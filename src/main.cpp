@@ -48,6 +48,7 @@ extern "C"
 #include "BT_MSG.h"
 #include "ReadSensors.h"
 #include "ProcessSensors.h"
+#include "Controllers.h"
 
 #define SERVO_RANGE_MOTOR 500	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a max kiadott jel
 #define SERVO_RANGE_STEERING 500	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a max kiadott jel
@@ -94,13 +95,23 @@ QueueHandle_t xQueue_BT;
 
 
 
+
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 
 uint32_t ADC1_BUFFER[4];
 uint32_t szenzorsor_1[32];
 uint32_t szenzorsor_2[32];
+
+PID_struct PIDs;
+
 int speed = 0;
+bool TunePID = false;
+char buffer[10];	//bt msg hez
+int timer = 0; // idõméréshez
+
+
+
 
 /* USER CODE END PV */
 
@@ -327,6 +338,7 @@ void BT_send_msg(double * msg, string nev){
 	xQueueSend( xQueue_BT, &number2msg(msg, string(nev).c_str(), (uint8_t)4), portMAX_DELAY);
 }
 
+
 // -500 és 500 közötti értéket fogad
 void SetServo_motor(int pos)
 {
@@ -368,9 +380,7 @@ void StartButtonTask()
 {
 	uint8_t wasPressed = 0;
 	int adc_result[4];
-	char buffer[10];
 
-	int timer = 1289173;
 
 
 	for (;;){
@@ -391,20 +401,13 @@ void StartButtonTask()
 			//float pos = getLinePos();
 
 			//BT_send_msg(&timer, "RS:" + string(itoa(timer,buffer,10)) + "us\n");
+			float aa = 543.3;
+			BT_send_msg(&aa, "pos" + string(itoa(231,buffer,10)));
 
 			osThreadResume(SteerControl_TaskHandle);
 
 
-			/*for(int i = 0; i<4; i++)
-			{
-				BT_send_msg(&adc_result[i], "adc1: " + string(itoa(ADC1_BUFFER[i],buffer,10)) + "\n");
-			}*/
 
-			for(int i=0; i<15; i++){
-				//BT_send_msg((float)((float)i + 444464.543), "xx_" + string(itoa(i,buffer,10)) + "_xx\n");
-				//BT_send_msg(i+444464, "xx_" + string(itoa(i,buffer,10)) + "_xx\n");
-				//BT_send_msg((double)((double)i + 4423464.54323), "xx_" + string(itoa(i,buffer,10)) + "_xx\n");
-			}
 
 
 
@@ -462,6 +465,9 @@ void BTReceiveTask()
 				break;
 			case 4:	SetServo_motor(*int_ptr);
 				break;
+			case 5:	SetServo_motor(100);
+					TunePID = true;
+				break;
 			default:
 				break;
 		}
@@ -491,14 +497,88 @@ void SendRemoteVarTask()
 // szenzorsorok beolvasása, ha kész, szüneteli magát
 void SteerControlTask()
 {
+	int encoderPos, lastEncoderPos = 0;
+	float angle = 0;
+	float linePos = 0;
+	float lastPos = 15.5;
+	float error = 0;
+
+
+	PIDs.pGain = 0;
+	PIDs.iGain = 0;
+	PIDs.dGain = 0;
+	PIDs.iMax = 500;
+	PIDs.iMin = -500;
+	PIDs.iState = 0;
+	PIDs.dState = 0;
+
+	/// PID tune segédváltozók
+	bool tune_started = false;
+	int cntr = 0;
+	float posArray[100];
+	//int PIDsignalArray[100];
+	char buffer[10];
 
 
 	osThreadSuspend(SteerControl_TaskHandle);
 
 	for(;;)
 	{
+		//__HAL_TIM_SET_COUNTER(&htim5,0);
+
 		ReadSensors();
-		osThreadSuspend(SteerControl_TaskHandle);
+
+		linePos = getLinePos();
+		angle = calculateAngle();
+		error = linePos - lastPos;
+		lastPos = linePos;
+
+		encoderPos = __HAL_TIM_GET_COUNTER(&htim2);
+		speed = encoderPos - lastEncoderPos;
+		lastEncoderPos = encoderPos;
+
+		//UpdatePID1(&PIDs, error, linePos);
+
+		// PID
+		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
+
+		//timer = __HAL_TIM_GET_COUNTER(&htim5);
+		//BT_send_msg(&timer, "ctrl:" + std::string(itoa(timer,buffer,10)) + "\n");
+
+		//float aa = 534543.345;
+		//BT_send_msg(&aa, "pos" + string(itoa(231,buffer,10)));
+
+
+		if(TunePID)
+		{
+			if(linePos > 24 || linePos < 8)
+			{
+				tune_started = true;
+			}
+		}
+		if(tune_started)
+		{
+			posArray[cntr] = linePos;
+			//PIDsignalArray =
+			cntr++;
+			if(cntr > 99)
+			{
+				SetServo_motor(0);
+				TunePID = false;
+				tune_started = false;
+				for(int i = 0; i < 100; i++)
+				{
+					//float aa = 534543.345;
+					//BT_send_msg(&aa, "pos" + string(itoa(231,buffer,10)));
+					//BT_send_msg(&(posArray[i]), "pos" + string(itoa(i,buffer,10)));
+					//BT_send_msg(&PIDsignalArray[i], "sig" + string(itoa(i,buffer,10)));
+				}
+			}
+		}
+
+
+
+		osDelay(20);
 	}
 }
 
@@ -761,6 +841,8 @@ void MX_TIM2_Init(void)
   sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
   sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
   HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig);
+
+  HAL_TIM_Encoder_Start(&htim2,TIM_CHANNEL_ALL);
 
 }
 
