@@ -515,12 +515,12 @@ void SteerControlTask()
 	/// PID tune segédváltozók
 	bool tune_started = false;
 	int cntr = 0;
-	float posArray[100];
+	float posArray[10];
 	//int PIDsignalArray[100];
 	char buffer[10];
 
 
-	osThreadSuspend(SteerControl_TaskHandle);
+	//osThreadSuspend(SteerControl_TaskHandle);
 
 	for(;;)
 	{
