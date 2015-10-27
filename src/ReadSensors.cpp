@@ -19,6 +19,7 @@ extern ADC_HandleTypeDef hadc1;
 extern osSemaphoreId ADC1_complete;
 extern SPI_HandleTypeDef hspi3;
 extern TIM_HandleTypeDef htim5;
+extern TIM_HandleTypeDef htim6;
 HAL_StatusTypeDef status;
 
 
@@ -32,15 +33,14 @@ void ReadSensors()
 {
 	uint16_t pattern = 0x0101;
 
+
 	EnableMUX();
-
-
 
 	for (int i = 0; i<8; i++)
 	{
 
 
-		__HAL_TIM_SET_COUNTER(&htim5,0);
+		//__HAL_TIM_SET_COUNTER(&htim5,0);
 
 
 
@@ -49,9 +49,10 @@ void ReadSensors()
 		LATCHLeds();
 		pattern <<= 1;
 
-		// TODO: várni a szenzorra
+		ControlTaskDelay(120);	// szenzor felfutásra várakozás
+
 		SetMUX((uint8_t)i);
-		// TODO: várni muxra?
+		// TODO: várni muxra? 1us-t csak blokkolva lehet
 		ADC1_read();
 
 		// 16on belül az elsõ
@@ -62,12 +63,7 @@ void ReadSensors()
 
 		SetMUX((uint8_t)i+8);
 
-		//__HAL_TIM_SET_COUNTER(&htim5,0);
-
 		ADC1_read();
-
-		//timer = __HAL_TIM_GET_COUNTER(&htim5);
-		//BT_send_msg(&timer, "adcTime:" + std::string(itoa(timer,buffer,10)) + "\n");
 
 		// 16on belül a másik
 		szenzorsor_1[i+8] = ADC1_BUFFER[1];		// PA2 -> bal elsõ csoport
@@ -75,23 +71,21 @@ void ReadSensors()
 		szenzorsor_2[i+8] = ADC1_BUFFER[3];		// PA4 -> bal hátsó
 		szenzorsor_2[i+16+8] = ADC1_BUFFER[2];	// bal hátsó
 
-		timer = __HAL_TIM_GET_COUNTER(&htim5);
-		BT_send_msg(&timer, "1/8sens" + std::string(itoa(timer,buffer,10)) + "\n");
+		//timer = __HAL_TIM_GET_COUNTER(&htim5);
+		//BT_send_msg(&timer, "1/8sens" + std::string(itoa(timer,buffer,10)) + "\n");
 
 
 	}
 
 
 
-
+	HAL_TIM_Base_Stop_IT(&htim6);
 	DisableMUX();
 
 }
 
 
 // szenzorsor 4 jelének beolvasása
-// TODO: lehet, hogy nem is kell visszaadni, ott az ADC1_BUFFER?
-// TODO: idõmérés?
 void ADC1_read()
 {
 	HAL_ADC_Start_DMA(&hadc1, ADC1_BUFFER, 4);
@@ -107,6 +101,15 @@ void ADC1_read()
 
 	}
 	HAL_ADC_Stop(&hadc1);*/
+}
+
+// control task delay microsec (min 20)
+void ControlTaskDelay(int us)
+{
+	HAL_TIM_Base_Start_IT(&htim6);
+	__HAL_TIM_SET_COUNTER(&htim6,60000-us+11); // tim6 nem tud lefele számolni?? // +11 a taskváltás miatt (néha 1us-el hosszabbat vár így)
+	osSignalWait(0x0001,osWaitForever);
+	HAL_TIM_Base_Stop_IT(&htim6);
 }
 
 void EnableDrivers()

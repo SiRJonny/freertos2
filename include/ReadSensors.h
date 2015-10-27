@@ -15,6 +15,7 @@
 
 void ReadSensors();
 void ADC1_read();
+void ControlTaskDelay(int us);
 void EnableDrivers();
 void DisableDrivers();
 void SetLeds(uint16_t pattern);

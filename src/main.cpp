@@ -62,7 +62,7 @@ using namespace std;
 osThreadId defaultTaskHandle;
 osThreadId BT_TaskHandle;
 osThreadId SendRemoteVar_TaskHandle;
-osThreadId ADC1_read_TaskHandle;
+osThreadId SteerControl_TaskHandle;
 osThreadId BT_Receive_TaskHandle;
 
 UART_HandleTypeDef huart1;
@@ -100,6 +100,7 @@ QueueHandle_t xQueue_BT;
 uint32_t ADC1_BUFFER[4];
 uint32_t szenzorsor_1[32];
 uint32_t szenzorsor_2[32];
+int speed = 0;
 
 /* USER CODE END PV */
 
@@ -109,7 +110,7 @@ void StartDefaultTask();
 void StartButtonTask();
 void SendBluetoothTask();
 void SendRemoteVarTask();
-void ADC1ReadTask();
+void SteerControlTask();
 void BTReceiveTask();
 
 void USART3_UART_Init();
@@ -217,8 +218,8 @@ int main(void)
   osThreadDef(SendRemoteVarTask, SendRemoteVarTask, osPriorityNormal, 0, 128);
   SendRemoteVar_TaskHandle = osThreadCreate(osThread(SendRemoteVarTask), NULL);
 
-  osThreadDef(ADC1ReadTask, ADC1ReadTask, osPriorityHigh, 0, 128);
-  ADC1_read_TaskHandle = osThreadCreate(osThread(ADC1ReadTask), NULL);
+  osThreadDef(SteerControlTask, SteerControlTask, osPriorityHigh, 0, 128);
+  SteerControl_TaskHandle = osThreadCreate(osThread(SteerControlTask), NULL);
 
   osThreadDef(BTReceiveTask, BTReceiveTask, osPriorityNormal, 0, 128);
   BT_Receive_TaskHandle = osThreadCreate(osThread(BTReceiveTask), NULL);
@@ -386,15 +387,12 @@ void StartButtonTask()
 			//osThreadResume(SendRemoteVar_TaskHandle);
 
 
-
-
-
-			ReadSensors();
-			float pos = getLinePos();
+			//ReadSensors();
+			//float pos = getLinePos();
 
 			//BT_send_msg(&timer, "RS:" + string(itoa(timer,buffer,10)) + "us\n");
 
-
+			osThreadResume(SteerControl_TaskHandle);
 
 
 			/*for(int i = 0; i<4; i++)
@@ -491,16 +489,16 @@ void SendRemoteVarTask()
 }
 
 // szenzorsorok beolvasása, ha kész, szüneteli magát
-void ADC1ReadTask()
+void SteerControlTask()
 {
 
 
-	osThreadSuspend(ADC1_read_TaskHandle);
+	osThreadSuspend(SteerControl_TaskHandle);
 
 	for(;;)
 	{
 		ReadSensors();
-		osThreadSuspend(ADC1_read_TaskHandle);
+		osThreadSuspend(SteerControl_TaskHandle);
 	}
 }
 
@@ -529,9 +527,12 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* AdcHandle)
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef * htim)
 {
+	// TIM6 -> szenzor felfutás idõzítése
 	if(htim->Instance == TIM6)
 	{
-		HAL_GPIO_TogglePin(GPIOD,GPIO_PIN_15);
+		// SteerControlTask 1-es signal-ja
+		osSignalSet(SteerControl_TaskHandle,0x0001);
+		//HAL_GPIO_TogglePin(GPIOD,GPIO_PIN_15);
 	}
 }
 
@@ -554,6 +555,8 @@ extern "C"
     	HAL_ADC_IRQHandler(&hadc1);
     }
 
+
+    // ezzel várunk a szenzor felfutására
     void TIM6_DAC_IRQHandler()
     {
     	HAL_TIM_IRQHandler(&htim6);
@@ -769,7 +772,7 @@ void MX_TIM5_Init(void)
   TIM_MasterConfigTypeDef sMasterConfig;
 
   htim5.Instance = TIM5;
-  htim5.Init.Prescaler = 83;
+  htim5.Init.Prescaler = 83;	// 1us/1MHz
   htim5.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim5.Init.Period = 4294967295;
   htim5.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
@@ -785,26 +788,27 @@ void MX_TIM5_Init(void)
   HAL_TIM_Base_Start(&htim5);
 }
 
-/* TIM6 init function */
+// szenzor felfutás idõzítése
 void MX_TIM6_Init(void)
 {
 
   TIM_MasterConfigTypeDef sMasterConfig;
 
   htim6.Instance = TIM6;
-  htim6.Init.Prescaler = 16799;
+  htim6.Init.Prescaler = 83;	// 1us/1MHz
   htim6.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim6.Init.Period = 10000;
+  htim6.Init.Period = 60000;
   HAL_TIM_Base_Init(&htim6);
 
   sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
   sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
   HAL_TIMEx_MasterConfigSynchronization(&htim6, &sMasterConfig);
 
-  HAL_TIM_Base_Start_IT(&htim6);
+  //HAL_TIM_Base_Start_IT(&htim6);
+  //HAL_TIM_Base_Stop_IT(&htim6);
 }
 
-/* TIM7 init function */
+// ezzel idõzítjük a szabályozó task lefutását (vagy legyen Delay(10)?)
 void MX_TIM7_Init(void)
 {
 
