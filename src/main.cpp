@@ -401,11 +401,10 @@ void StartButtonTask()
 			//float pos = getLinePos();
 
 			//BT_send_msg(&timer, "RS:" + string(itoa(timer,buffer,10)) + "us\n");
-			float aa = 543.3;
+			/*float aa = 543.3;
 			BT_send_msg(&aa, "pos" + string(itoa(231,buffer,10)));
-
+*/
 			osThreadResume(SteerControl_TaskHandle);
-
 
 
 
@@ -520,13 +519,20 @@ void SteerControlTask()
 	char buffer[10];
 
 
-	//osThreadSuspend(SteerControl_TaskHandle);
+
+
+	osThreadSuspend(SteerControl_TaskHandle);
 
 	for(;;)
 	{
 		//__HAL_TIM_SET_COUNTER(&htim5,0);
 
-		ReadSensors();
+		MeasureSensor();
+
+
+
+
+		//ReadSensors();
 
 		linePos = getLinePos();
 		angle = calculateAngle();
@@ -577,8 +583,8 @@ void SteerControlTask()
 		}
 
 
-
-		osDelay(20);
+		osThreadSuspend(SteerControl_TaskHandle);
+		//osDelay(20);
 	}
 }
 
@@ -660,11 +666,11 @@ void MX_ADC1_Init(void)
   hadc1.Init.ClockPrescaler = ADC_CLOCKPRESCALER_PCLK_DIV4;
   hadc1.Init.Resolution = ADC_RESOLUTION8b;
   hadc1.Init.ScanConvMode = ENABLE;
-  hadc1.Init.ContinuousConvMode = DISABLE;
+  hadc1.Init.ContinuousConvMode = ENABLE;
   hadc1.Init.DiscontinuousConvMode = DISABLE;
   hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
   hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
-  hadc1.Init.NbrOfConversion = 4;
+  hadc1.Init.NbrOfConversion = 1;
   hadc1.Init.DMAContinuousRequests = DISABLE;
   hadc1.Init.EOCSelection = EOC_SINGLE_CONV;
   HAL_ADC_Init(&hadc1);
@@ -673,10 +679,10 @@ void MX_ADC1_Init(void)
     */
   sConfig.Channel = ADC_CHANNEL_1;
   sConfig.Rank = 1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_15CYCLES;
+  sConfig.SamplingTime = ADC_SAMPLETIME_56CYCLES;
   HAL_ADC_ConfigChannel(&hadc1, &sConfig);
 
-  sConfig.Channel = ADC_CHANNEL_2;
+  /*sConfig.Channel = ADC_CHANNEL_2;
   sConfig.Rank = 2;
   sConfig.SamplingTime = ADC_SAMPLETIME_15CYCLES;
   HAL_ADC_ConfigChannel(&hadc1, &sConfig);
@@ -689,7 +695,7 @@ void MX_ADC1_Init(void)
   sConfig.Channel = ADC_CHANNEL_4;
   sConfig.Rank = 4;
   sConfig.SamplingTime = ADC_SAMPLETIME_15CYCLES;
-  HAL_ADC_ConfigChannel(&hadc1, &sConfig);
+  HAL_ADC_ConfigChannel(&hadc1, &sConfig);*/
 
 }
 

@@ -24,7 +24,8 @@ HAL_StatusTypeDef status;
 
 
 extern void BT_send_msg(int*msg,std::string nev);
-
+extern int timer;
+extern char buffer[10];
 
 
 // teljes szenzorsor beolvasás
@@ -109,6 +110,44 @@ void ControlTaskDelay(int us)
 	__HAL_TIM_SET_COUNTER(&htim6,60000-us+11); // tim6 nem tud lefele számolni?? // +11 a taskváltás miatt (néha 1us-el hosszabbat vár így)
 	osSignalWait(0x0001,osWaitForever);
 	HAL_TIM_Base_Stop_IT(&htim6);
+}
+
+void MeasureSensor()
+{
+	uint16_t pattern = 0x0100;
+	uint8_t data[70];
+	int ertek;
+
+	for(int i = 0; i < 70; i++)
+	{
+		data[i] = 0;
+	}
+
+	SetMUX((uint8_t)8);
+
+	SetLeds(pattern);	// ez felfüggesztõs legyen? vagy idõbeosztást máshogy
+
+
+
+	HAL_ADC_Start_DMA(&hadc1, (uint32_t*)data, 100);
+	__HAL_TIM_SET_COUNTER(&htim5,0);
+	LATCHLeds();
+	ControlTaskDelay(200);
+	HAL_ADC_Stop_DMA(&hadc1);
+
+	timer = __HAL_TIM_GET_COUNTER(&htim5);
+	BT_send_msg(&timer, "time:" + std::string(itoa(timer,buffer,10)) + "\n");
+
+	for(int i = 0; i<70; i++)
+	{
+		ertek = data[i];
+		BT_send_msg(&ertek, "adc:" + std::string(itoa(ertek,buffer,10)) + "\n");
+	}
+
+	SetLeds(0x0000);
+	LATCHLeds();
+
+
 }
 
 void EnableDrivers()
