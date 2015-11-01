@@ -11,16 +11,17 @@
 
 #include "stm32f4xx_hal.h"
 #include <cmath>
+#include <string>
+#include <stdlib.h>
 
 struct LineState
 {
-	bool isLine; 		// van-e vonal
-	int numLines;		// vonalak száma
-	float pos[3];		// vonalak pozíciója
-	float angle;		// vonal szöge
-
+	int numLines1, numLines2;		// vonalak száma
+	float pos1[3];		// vonalak pozíciója
+	float pos2[3];
 };
 
+extern void BT_send_msg(int*msg,std::string nev);
 
 struct LineState getLinePos(int treshold);
 float calculateAngle(float pos1, float pos2);

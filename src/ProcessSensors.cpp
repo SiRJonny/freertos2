@@ -8,7 +8,11 @@
 #include "ProcessSensors.h"
 
 #define REFINE_RADIUS 2
+#define NO_LINE_MULTIPLIER 2
 
+extern TIM_HandleTypeDef htim5;
+extern char buffer[10];	//bt msg hez
+extern int timer; // idõméréshez
 extern uint32_t szenzorsor_1[32];
 extern uint32_t szenzorsor_2[32];
 
@@ -20,21 +24,28 @@ struct LineState Lines; // TODO: angle nem, másik sor pos igen
 // vonal pozíció, szám, szög számítása, treshold = hány %-al kisebb csúcs érvényes még
 struct LineState getLinePos(int treshold)
 {
+	__HAL_TIM_SET_COUNTER(&htim5,0);
+
 	int peaks1[3];
+	int peaks2[3];
 	//int average = calculateAverage(szenzorsor_1,32);
 	subtractAllFrom(szenzorsor_1, 255);	// a kicsi érték jelenti a vonalat, konvertáljuk
 	subtractAllFrom(szenzorsor_2, 255);
 
-	int max = findMaxPos(szenzorsor_1, 32);
-	refined_max = refineMaxPos(szenzorsor_1,max,REFINE_RADIUS);
+	Lines.numLines1 = find3peaks(szenzorsor_1, peaks1, treshold);
+	Lines.numLines2 = find3peaks(szenzorsor_2, peaks2, treshold);
 
-	int max2 = findMaxPos(szenzorsor_2, 32);
-	refined_max2 = refineMaxPos(szenzorsor_2,max2,REFINE_RADIUS);
+	for(int i = 0; i < Lines.numLines1; i++)
+	{
+		Lines.pos1[i] = refineMaxPos(szenzorsor_1,peaks1[i],REFINE_RADIUS);
+	}
+	for(int i = 0; i < Lines.numLines2; i++)
+	{
+		Lines.pos2[i] = refineMaxPos(szenzorsor_2,peaks2[i],REFINE_RADIUS);
+	}
 
-	//float angle = calculateAngle(refined_max,refined_max2);
-
-	Lines.numLines = find3peaks(szenzorsor_1, peaks1, treshold);
-
+	timer = __HAL_TIM_GET_COUNTER(&htim5);
+	BT_send_msg(&timer, "lines:" + std::string(itoa(timer,buffer,10)) + "\n");
 
 	return Lines;
 }
@@ -51,6 +62,7 @@ float calculateAngle(float pos1, float pos2)
 	return angle;
 }
 
+// átlag számítás
 int calculateAverage(uint32_t * data, int datacount)
 {
 	int average = 0;
@@ -146,7 +158,7 @@ int find3peaks(uint32_t * data, int * peaks, int treshold)
 		}
 	}
 
-	treshold = (float)peakMaxValue/100.0*(100-treshold);
+	treshold = (float)peakMaxValue/100.0*(100-treshold); // treshold %-ból érték
 
 	// treshold alattiak pozícióját 35-re, sorba rendezésnél elöl lesznek a ténylegesek
 	for(int i = 0; i < 3; i++)
@@ -177,7 +189,12 @@ int find3peaks(uint32_t * data, int * peaks, int treshold)
 		swap(&peakValue[1], &peakValue[2]);
 	}
 
-	return numPeaks;
+	if(peakMaxValue > calculateAverage(data)*NO_LINE_MULTIPLIER) // ha a legnagyobb csúcs nincs az átlag ennyiszerese -> nincs vonal
+	{
+		return numPeaks;
+	}else{
+		return -1;
+	}
 }
 
 int findPeakMinPos(int * peakValue)
