@@ -14,11 +14,17 @@ extern uint32_t szenzorsor_2[32];
 
 float refined_max;
 float refined_max2;
+struct LineState Lines; // TODO: angle nem, másik sor pos igen
 
 
-float getLinePos()
+// vonal pozíció, szám, szög számítása, treshold = hány %-al kisebb csúcs érvényes még
+struct LineState getLinePos(int treshold)
 {
+	int peaks1[3];
 	//int average = calculateAverage(szenzorsor_1,32);
+	subtractAllFrom(szenzorsor_1, 255);	// a kicsi érték jelenti a vonalat, konvertáljuk
+	subtractAllFrom(szenzorsor_2, 255);
+
 	int max = findMaxPos(szenzorsor_1, 32);
 	refined_max = refineMaxPos(szenzorsor_1,max,REFINE_RADIUS);
 
@@ -27,7 +33,10 @@ float getLinePos()
 
 	//float angle = calculateAngle(refined_max,refined_max2);
 
-	return refined_max;
+	Lines.numLines = find3peaks(szenzorsor_1, peaks1, treshold);
+
+
+	return Lines;
 }
 
 float calculateAngle()
@@ -53,12 +62,12 @@ int calculateAverage(uint32_t * data, int datacount)
 	return average;
 }
 
-
+// uint32_t tömb minden elemébõl ugyanazt kivonni,   < 0-ra szaturál
 void subtractFromAll(uint32_t * data, int amount, int datacount)
 {
 	for (int i = 0; i < datacount; i++)
 	{
-		if(data[i] < datacount)
+		if(data[i] < amount)
 		{
 			data[i] = 0;
 		}else{
@@ -67,6 +76,16 @@ void subtractFromAll(uint32_t * data, int amount, int datacount)
 	}
 }
 
+// uint32_t tömb minden elemét ugyanabból kivonni
+void subtractAllFrom(uint32_t * data, int amount, int datacount)
+{
+	for (int i = 0; i < datacount; i++)
+	{
+		data[i] = amount - data[i];
+	}
+}
+
+// uint32_t tömb-ben a legnagyobb érték megkeresése
 int findMaxPos(uint32_t * data, int datacount)
 {
 	int max = 0;
@@ -81,6 +100,105 @@ int findMaxPos(uint32_t * data, int datacount)
 		}
 	}
 	return max_pos;
+}
+
+// uint32_t tömb-ben a legkisebb érték megkeresése
+int findMinPos(uint32_t * data, int datacount)
+{
+	int min = 10000;	// adc max 12bit lehet, -> 4095
+	int min_pos = 0;
+
+	for(int i = 0; i < datacount; i++)
+	{
+		if(data[i] < min)
+		{
+			min = data[i];
+			min_pos = i;
+		}
+	}
+	return min_pos;
+}
+
+// 3 legnagyobb csúcs megkeresése, return numPeaks
+int find3peaks(uint32_t * data, int * peaks, int treshold)
+{
+	int peakValue[3];
+	int peakMinPos = 0;
+	int peakMaxValue = 0;
+	int numPeaks = 3;
+
+	for(int i = 0; i<3; i++)
+	{
+		peakValue[i] = 0; // init
+	}
+
+	for(int i = 1; i < 31; i++)	// elsõt és utolsót nem nézzük
+	{
+		peakMinPos = findPeakMinPos(peakValue);		// a meglévõ csúcsok között a legkisebb megkeresése
+		if(data[i-1] <= data[i] && data[i+1] <= data[i] && data[i] > peakValue[peakMinPos])
+		{
+			peaks[peakMinPos] = i;
+			peakValue[peakMinPos] = data[i];
+			if (data[i] > peakMaxValue)
+			{
+				peakMaxValue = data[i];
+			}
+		}
+	}
+
+	treshold = (float)peakMaxValue/100.0*(100-treshold);
+
+	// treshold alattiak pozícióját 35-re, sorba rendezésnél elöl lesznek a ténylegesek
+	for(int i = 0; i < 3; i++)
+	{
+		if(peakValue[i] < treshold)
+		{
+			peaks[i] = 35;
+			numPeaks--;
+		}
+	}
+
+	// sorba rendezés pozíció szerint
+	if(peaks[0] > peaks[1])
+	{
+		swap(&peaks[0], &peaks[1]);
+		swap(&peakValue[0], &peakValue[1]);
+	}
+
+	if(peaks[0] > peaks[2])
+	{
+		swap(&peaks[0], &peaks[2]);
+		swap(&peakValue[0], &peakValue[2]);
+	}
+
+	if(peaks[1] > peaks[2])
+	{
+		swap(&peaks[1], &peaks[2]);
+		swap(&peakValue[1], &peakValue[2]);
+	}
+
+	return numPeaks;
+}
+
+int findPeakMinPos(int * peakValue)
+{
+	if(peakValue[0] < peakValue[1] && peakValue[0] < peakValue[2])
+	{
+		return 0;
+	}else if (peakValue[1] < peakValue[2])
+	{
+		return 1;
+	}else
+	{
+		return 2;
+	}
+}
+
+void swap(int * a, int * b)
+{
+	int temp = *a;
+	*a = *b;
+	*b = temp;
 }
 
 // az adott pont körüliekbõl

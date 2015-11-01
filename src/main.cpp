@@ -402,7 +402,7 @@ void StartButtonTask()
 
 			//BT_send_msg(&timer, "RS:" + string(itoa(timer,buffer,10)) + "us\n");
 			float aa = 543.3;
-			BT_send_msg(&aa, "pos" + string(itoa(231,buffer,10)));
+			//BT_send_msg(&aa, "pos" + string(itoa(231,buffer,10)));
 
 			osThreadResume(SteerControl_TaskHandle);
 
@@ -502,7 +502,7 @@ void SteerControlTask()
 	float linePos = 0;
 	float lastPos = 15.5;
 	float error = 0;
-
+	struct LineState Lines;
 
 	PIDs.pGain = 0;
 	PIDs.iGain = 0;
@@ -520,22 +520,19 @@ void SteerControlTask()
 	char buffer[10];
 
 
-	//osThreadSuspend(SteerControl_TaskHandle);
+	osThreadSuspend(SteerControl_TaskHandle);
 
 	for(;;)
 	{
 		//__HAL_TIM_SET_COUNTER(&htim5,0);
 
 		ReadSensors();
+		Lines = getLinePos(20);
 
-		linePos = getLinePos();
-		angle = calculateAngle();
-		error = linePos - lastPos;
-		lastPos = linePos;
 
-		encoderPos = __HAL_TIM_GET_COUNTER(&htim2);
+		/*encoderPos = __HAL_TIM_GET_COUNTER(&htim2);
 		speed = encoderPos - lastEncoderPos;
-		lastEncoderPos = encoderPos;
+		lastEncoderPos = encoderPos;*/
 
 		//UpdatePID1(&PIDs, error, linePos);
 
@@ -577,8 +574,8 @@ void SteerControlTask()
 		}
 
 
-
-		osDelay(20);
+		osThreadSuspend(SteerControl_TaskHandle);
+		//osDelay(20);
 	}
 }
 

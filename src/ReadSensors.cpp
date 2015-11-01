@@ -111,6 +111,7 @@ void ControlTaskDelay(int us)
 	HAL_TIM_Base_Stop_IT(&htim6);
 }
 
+
 void EnableDrivers()
 {
 	HAL_GPIO_WritePin(GPIOD,GPIO_PIN_7,GPIO_PIN_RESET); // BLANK negált jel
