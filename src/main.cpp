@@ -364,6 +364,8 @@ void SetServo_steering(int pos)
 void StartDefaultTask()
 {
 
+	int last = 0;
+	int current = 0;
   /* USER CODE BEGIN 5 */
   /* Infinite loop */
   for(;;)
@@ -372,6 +374,10 @@ void StartDefaultTask()
     osDelay(500);
     HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
 
+    /*current = __HAL_TIM_GET_COUNTER(&htim2);
+    BT_send_msg(&current, "enc:" + std::string(itoa(current-last,buffer,10)) + "\n");
+
+    last = current;*/
   }
   /* USER CODE END 5 */
 }
@@ -401,7 +407,7 @@ void StartButtonTask()
 			//float pos = getLinePos();
 
 			//BT_send_msg(&timer, "RS:" + string(itoa(timer,buffer,10)) + "us\n");
-			float aa = 543.3;
+			//float aa = 543.3;
 			//BT_send_msg(&aa, "pos" + string(itoa(231,buffer,10)));
 
 			osThreadResume(SteerControl_TaskHandle);
@@ -519,6 +525,9 @@ void SteerControlTask()
 	//int PIDsignalArray[100];
 	char buffer[10];
 
+	uint16_t pattern = 0x0001;
+	int state = 0;
+
 
 	osThreadSuspend(SteerControl_TaskHandle);
 
@@ -528,7 +537,39 @@ void SteerControlTask()
 
 		ReadSensors();
 		Lines = getLinePos(20);
+		timer = (int)(Lines.pos1[0]*10);
+		BT_send_msg(&timer, "pos1:" + std::string(itoa(timer,buffer,10)) + "\n");
 
+
+		//BT_send_msg(&timer, "pos1:" + std::to_string(Lines.pos1[0]) + "\n");
+
+		/*SetLeds(0x0000);
+		SetLeds(0x8000);
+		LATCHLeds();*/
+
+		/*SetMUX(15);
+
+		osDelay(100);
+
+		ADC1_read();
+
+		timer = ADC1_BUFFER[0];
+		BT_send_msg(&timer, "adc1:" + std::string(itoa(timer,buffer,10)) + "\n");*/
+
+
+		/*SetLeds(0x0000);
+		pattern <<= 1;
+		SetLeds(pattern);
+		LATCHLeds();*/
+
+		if(pattern == 0x8000)
+		{
+			pattern = 0x0001;
+		}
+		/*SetLeds(0x0000);
+		SetLeds(0x4441);*/
+
+		//LATCHLeds();
 
 		/*encoderPos = __HAL_TIM_GET_COUNTER(&htim2);
 		speed = encoderPos - lastEncoderPos;
@@ -574,8 +615,8 @@ void SteerControlTask()
 		}
 
 
-		osThreadSuspend(SteerControl_TaskHandle);
-		//osDelay(20);
+		//osThreadSuspend(SteerControl_TaskHandle);
+		osDelay(200);
 	}
 }
 
@@ -746,12 +787,12 @@ void MX_SPI3_Init(void)
 
   hspi3.Instance = SPI3;
   hspi3.Init.Mode = SPI_MODE_MASTER;
-  hspi3.Init.Direction = SPI_DIRECTION_1LINE;
+  hspi3.Init.Direction = SPI_DIRECTION_2LINES;
   hspi3.Init.DataSize = SPI_DATASIZE_16BIT;
   hspi3.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi3.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi3.Init.NSS = SPI_NSS_SOFT;
-  hspi3.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4;
+  hspi3.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_128;
   hspi3.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi3.Init.TIMode = SPI_TIMODE_DISABLED;
   hspi3.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLED;
@@ -822,7 +863,7 @@ void MX_TIM2_Init(void)
   htim2.Instance = TIM2;
   htim2.Init.Prescaler = 0;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 0;
+  htim2.Init.Period = 4000000000;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   sConfig.EncoderMode = TIM_ENCODERMODE_TI12;
   sConfig.IC1Polarity = TIM_ICPOLARITY_BOTHEDGE;

@@ -43,15 +43,21 @@ void ReadSensors()
 
 
 
-
+		SetLeds(0x0000);
 		SetLeds(pattern);	// ez felfüggesztõs legyen? vagy idõbeosztást máshogy
 		LATCHLeds();
 		pattern <<= 1;
 
-		ControlTaskDelay(120);	// szenzor felfutásra várakozás
-
 		SetMUX((uint8_t)i);
+
+		//ControlTaskDelay(200);	// szenzor felfutásra várakozás
+		osDelay(10);
+
+
+
 		// TODO: várni muxra? 1us-t csak blokkolva lehet
+		//ControlTaskDelay(20);
+
 		ADC1_read();
 
 		// 16on belül az elsõ
@@ -61,6 +67,8 @@ void ReadSensors()
 		szenzorsor_2[i+16] = ADC1_BUFFER[2];	// bal hátsó
 
 		SetMUX((uint8_t)i+8);
+		//ControlTaskDelay(20);
+		osDelay(10);
 
 		ADC1_read();
 
@@ -139,6 +147,7 @@ void LATCHLeds()
 {
 	HAL_GPIO_WritePin(GPIOD,GPIO_PIN_6,GPIO_PIN_SET);
 	// TODO: ez mennyi idõ lesz?
+	ControlTaskDelay(40);
 	HAL_GPIO_WritePin(GPIOD,GPIO_PIN_6,GPIO_PIN_RESET);
 }
 

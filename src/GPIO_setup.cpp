@@ -38,10 +38,10 @@ void GPIO_Init(){
 	GPIO_InitStruct.Speed = GPIO_SPEED_LOW;
 	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-	// MUX vezérlés + LED driver BLANK
-	GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_7;
+	// MUX vezérlés + LED driver BLANK + LATCH
+	GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_7|GPIO_PIN_6;
 	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	GPIO_InitStruct.Pull = GPIO_PULLDOWN;
 	GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
 	HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
@@ -78,7 +78,7 @@ void GPIO_Init(){
 	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
 	// DIP4, DIP3, DIP2
-	GPIO_InitStruct.Pin = GPIO_PIN_11|GPIO_PIN_8|GPIO_PIN_9;
+	GPIO_InitStruct.Pin = GPIO_PIN_8|GPIO_PIN_9; //GPIO_PIN_11|
 	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);

@@ -24,7 +24,7 @@ struct LineState Lines; // TODO: angle nem, másik sor pos igen
 // vonal pozíció, szám, szög számítása, treshold = hány %-al kisebb csúcs érvényes még
 struct LineState getLinePos(int treshold)
 {
-	__HAL_TIM_SET_COUNTER(&htim5,0);
+	//__HAL_TIM_SET_COUNTER(&htim5,0);
 
 	int peaks1[3];
 	int peaks2[3];
@@ -44,8 +44,8 @@ struct LineState getLinePos(int treshold)
 		Lines.pos2[i] = refineMaxPos(szenzorsor_2,peaks2[i],REFINE_RADIUS);
 	}
 
-	timer = __HAL_TIM_GET_COUNTER(&htim5);
-	BT_send_msg(&timer, "lines:" + std::string(itoa(timer,buffer,10)) + "\n");
+	//timer = __HAL_TIM_GET_COUNTER(&htim5);
+	//BT_send_msg(&timer, "lines:" + std::string(itoa(timer,buffer,10)) + "\n");
 
 	return Lines;
 }
