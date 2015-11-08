@@ -537,8 +537,18 @@ void SteerControlTask()
 
 		ReadSensors();
 		Lines = getLinePos(20);
+
+		BT_send_msg(&Lines.numLines1, "num1:" + std::string(itoa(Lines.numLines1,buffer,10)) + "\n");
+
 		timer = (int)(Lines.pos1[0]*10);
 		BT_send_msg(&timer, "pos1:" + std::string(itoa(timer,buffer,10)) + "\n");
+
+		timer = (int)(Lines.pos1[1]*10);
+		BT_send_msg(&timer, "pos2:" + std::string(itoa(timer,buffer,10)) + "\n");
+
+		timer = (int)(Lines.pos1[2]*10);
+		BT_send_msg(&timer, "pos3:" + std::string(itoa(timer,buffer,10)) + "\n");
+
 
 
 		//BT_send_msg(&timer, "pos1:" + std::to_string(Lines.pos1[0]) + "\n");
@@ -616,7 +626,7 @@ void SteerControlTask()
 
 
 		//osThreadSuspend(SteerControl_TaskHandle);
-		osDelay(200);
+		osDelay(500);
 	}
 }
 
