@@ -24,7 +24,8 @@ HAL_StatusTypeDef status;
 
 
 extern void BT_send_msg(int*msg,std::string nev);
-
+extern int timer;
+extern char buffer[10];
 
 
 // teljes szenzorsor beolvasás
@@ -39,26 +40,35 @@ void ReadSensors()
 	{
 
 
-		//__HAL_TIM_SET_COUNTER(&htim5,0);
+
 
 
 
 		SetLeds(0x0000);
 		SetLeds(pattern);	// ez felfüggesztõs legyen? vagy idõbeosztást máshogy
 		LATCHLeds();
+
+
+
 		pattern <<= 1;
 
 		SetMUX((uint8_t)i);
 
-		//ControlTaskDelay(200);	// szenzor felfutásra várakozás
-		osDelay(10);
+		//ControlTaskDelay(20);	// szenzor felfutásra várakozás
+		//osDelay(10);
 
 
 
 		// TODO: várni muxra? 1us-t csak blokkolva lehet
 		//ControlTaskDelay(20);
+		//__HAL_TIM_SET_COUNTER(&htim5,0);
 
 		ADC1_read();
+
+		/*timer = __HAL_TIM_GET_COUNTER(&htim5);
+		if(i==3){
+			BT_send_msg(&timer, "setL:" + std::string(itoa(timer,buffer,10)) + "\n");
+		}*/
 
 		// 16on belül az elsõ
 		szenzorsor_1[i] = ADC1_BUFFER[1];		// PA2 -> bal elsõ csoport
@@ -68,7 +78,7 @@ void ReadSensors()
 
 		SetMUX((uint8_t)i+8);
 		//ControlTaskDelay(20);
-		osDelay(10);
+		//osDelay(10);
 
 		ADC1_read();
 
@@ -78,8 +88,7 @@ void ReadSensors()
 		szenzorsor_2[i+8] = ADC1_BUFFER[3];		// PA4 -> bal hátsó
 		szenzorsor_2[i+16+8] = ADC1_BUFFER[2];	// bal hátsó
 
-		//timer = __HAL_TIM_GET_COUNTER(&htim5);
-		//BT_send_msg(&timer, "1/8sens" + std::string(itoa(timer,buffer,10)) + "\n");
+
 
 
 	}
@@ -147,7 +156,7 @@ void LATCHLeds()
 {
 	HAL_GPIO_WritePin(GPIOD,GPIO_PIN_6,GPIO_PIN_SET);
 	// TODO: ez mennyi idõ lesz?
-	ControlTaskDelay(40);
+	//ControlTaskDelay(40);
 	HAL_GPIO_WritePin(GPIOD,GPIO_PIN_6,GPIO_PIN_RESET);
 }
 

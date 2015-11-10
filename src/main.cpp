@@ -533,12 +533,22 @@ void SteerControlTask()
 
 	for(;;)
 	{
-		//__HAL_TIM_SET_COUNTER(&htim5,0);
+		__HAL_TIM_SET_COUNTER(&htim5,0);
 
 		ReadSensors();
+
+		timer = __HAL_TIM_GET_COUNTER(&htim5);
+		BT_send_msg(&timer, "read:" + std::string(itoa(timer,buffer,10)) + "\n");
+
+		/*timer = (int)(szenzorsor_1[15]);
+		BT_send_msg(&timer, "sz15:" + std::string(itoa(timer,buffer,10)) + "\n");*/
+
 		Lines = getLinePos(20);
 
-		BT_send_msg(&Lines.numLines1, "num1:" + std::string(itoa(Lines.numLines1,buffer,10)) + "\n");
+		timer = (int)(Lines.pos1[0]*10);
+		BT_send_msg(&timer, "pos1:" + std::string(itoa(timer,buffer,10)) + "\n");
+
+		/*BT_send_msg(&Lines.numLines1, "num1:" + std::string(itoa(Lines.numLines1,buffer,10)) + "\n");
 
 		timer = (int)(Lines.pos1[0]*10);
 		BT_send_msg(&timer, "pos1:" + std::string(itoa(timer,buffer,10)) + "\n");
@@ -547,7 +557,7 @@ void SteerControlTask()
 		BT_send_msg(&timer, "pos2:" + std::string(itoa(timer,buffer,10)) + "\n");
 
 		timer = (int)(Lines.pos1[2]*10);
-		BT_send_msg(&timer, "pos3:" + std::string(itoa(timer,buffer,10)) + "\n");
+		BT_send_msg(&timer, "pos3:" + std::string(itoa(timer,buffer,10)) + "\n");*/
 
 
 
@@ -802,7 +812,7 @@ void MX_SPI3_Init(void)
   hspi3.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi3.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi3.Init.NSS = SPI_NSS_SOFT;
-  hspi3.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_128;
+  hspi3.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
   hspi3.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi3.Init.TIMode = SPI_TIMODE_DISABLED;
   hspi3.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLED;
