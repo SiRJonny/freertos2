@@ -54,7 +54,7 @@ void ReadSensors()
 
 		SetMUX((uint8_t)i);
 
-		//ControlTaskDelay(20);	// szenzor felfutásra várakozás
+		ControlTaskDelay(20);	// szenzor felfutásra várakozás
 		//osDelay(10);
 
 
@@ -74,10 +74,10 @@ void ReadSensors()
 		szenzorsor_1[i] = ADC1_BUFFER[1];		// PA2 -> bal elsõ csoport
 		szenzorsor_1[i+16] = ADC1_BUFFER[0];	// PA1 -> jobb elsõ csoport
 		szenzorsor_2[i] = ADC1_BUFFER[3];		// PA4 -> bal hátsó
-		szenzorsor_2[i+16] = ADC1_BUFFER[2];	// bal hátsó
+		szenzorsor_2[i+16] = ADC1_BUFFER[2];	// jobb hátsó
 
 		SetMUX((uint8_t)i+8);
-		//ControlTaskDelay(20);
+		ControlTaskDelay(20);
 		//osDelay(10);
 
 		ADC1_read();
@@ -86,7 +86,7 @@ void ReadSensors()
 		szenzorsor_1[i+8] = ADC1_BUFFER[1];		// PA2 -> bal elsõ csoport
 		szenzorsor_1[i+16+8] = ADC1_BUFFER[0];	// PA1 -> jobb elsõ csoport
 		szenzorsor_2[i+8] = ADC1_BUFFER[3];		// PA4 -> bal hátsó
-		szenzorsor_2[i+16+8] = ADC1_BUFFER[2];	// bal hátsó
+		szenzorsor_2[i+16+8] = ADC1_BUFFER[2];	// jobb hátsó
 
 
 

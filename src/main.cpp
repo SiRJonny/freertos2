@@ -103,6 +103,9 @@ uint32_t ADC1_BUFFER[4];
 uint32_t szenzorsor_1[32];
 uint32_t szenzorsor_2[32];
 
+uint32_t szenzorsor_temp_1[32];
+uint32_t szenzorsor_temp_2[32];
+
 PID_struct PIDs;
 
 int speed = 0;
@@ -411,7 +414,8 @@ void StartButtonTask()
 			//BT_send_msg(&aa, "pos" + string(itoa(231,buffer,10)));
 
 			osThreadResume(SteerControl_TaskHandle);
-
+			osDelay(100);
+			osThreadResume(SendRemoteVar_TaskHandle);
 
 
 
@@ -486,16 +490,33 @@ void SendRemoteVarTask()
 	// minden remote változóhez külen kellenek ezek
 	osThreadSuspend(SendRemoteVar_TaskHandle);
 
+
 	for(;;)
 	{
 
+		for(int i = 0; i<32; i++)
+		{
+			szenzorsor_temp_1[i] = szenzorsor_1[i];
+			szenzorsor_temp_2[i] = szenzorsor_2[i];
+		}
+
+		for(int i = 0; i<32; i++)
+		{
+			if(i<10)
+			{
+				BT_send_msg(&szenzorsor_temp_1[i], "sens10" + std::string(itoa(i,buffer,10)));
+				BT_send_msg(&szenzorsor_temp_2[i], "sens20" + std::string(itoa(i,buffer,10)));
+			}else{
+				BT_send_msg(&szenzorsor_temp_1[i], "sens1" + std::string(itoa(i,buffer,10)));
+				BT_send_msg(&szenzorsor_temp_2[i], "sens2" + std::string(itoa(i,buffer,10)));
+			}
+		}
 
 
-		// minden változóhoz konverzió és küldés
-	//BT_send_msg(123456,"teszt");
+		//osThreadSuspend(SendRemoteVar_TaskHandle); // minden elküldve, pihenünk (osThreadResume-ra megint elküld mindent)
+	    HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
 
-
-		osThreadSuspend(SendRemoteVar_TaskHandle); // minden elküldve, pihenünk (osThreadResume-ra megint elküld mindent)
+		osDelay(1000);
 	}
 
 }
@@ -533,21 +554,29 @@ void SteerControlTask()
 
 	for(;;)
 	{
-		__HAL_TIM_SET_COUNTER(&htim5,0);
+		//__HAL_TIM_SET_COUNTER(&htim5,0);
 
 		ReadSensors();
 
-		timer = __HAL_TIM_GET_COUNTER(&htim5);
-		BT_send_msg(&timer, "read:" + std::string(itoa(timer,buffer,10)) + "\n");
+		/*timer = __HAL_TIM_GET_COUNTER(&htim5);
+		BT_send_msg(&timer, "read:" + std::string(itoa(timer,buffer,10)) + "\n");*/
 
-		/*timer = (int)(szenzorsor_1[15]);
-		BT_send_msg(&timer, "sz15:" + std::string(itoa(timer,buffer,10)) + "\n");*/
+		/*timer = (int)(szenzorsor_1[10]);
+		BT_send_msg(&timer, "sz10:" + std::string(itoa(timer,buffer,10)) + "\n");*/
 
 		Lines = getLinePos(20);
 
-		timer = (int)(Lines.pos1[0]*10);
-		BT_send_msg(&timer, "pos1:" + std::string(itoa(timer,buffer,10)) + "\n");
+		//BT_send_msg(&Lines.pos1[0], "lpos1"); //+ std::string(itoa((int)Lines.pos1[0],buffer,10)) + "\n");
+		//BT_send_msg(&Lines.pos2[0], "lpos2"); //+ std::string(itoa((int)Lines.pos2[0],buffer,10)) + "\n");
 
+		/*if(Lines.numLines1 == 1 && Lines.numLines2 == 1)
+		{
+			timer = (int)(calculateAngle(Lines.pos1[0],Lines.pos2[0])*360.0/6.28*10.0);
+			BT_send_msg(&timer, "angle:" + std::string(itoa(timer,buffer,10)) + "\n");
+		}else{
+			BT_send_msg(&timer, "n1:" + std::string(itoa((int)Lines.numLines1,buffer,10)) + "\n");
+			BT_send_msg(&timer, "n2:" + std::string(itoa((int)Lines.numLines2,buffer,10)) + "\n");
+		}*/
 		/*BT_send_msg(&Lines.numLines1, "num1:" + std::string(itoa(Lines.numLines1,buffer,10)) + "\n");
 
 		timer = (int)(Lines.pos1[0]*10);
@@ -564,17 +593,17 @@ void SteerControlTask()
 		//BT_send_msg(&timer, "pos1:" + std::to_string(Lines.pos1[0]) + "\n");
 
 		/*SetLeds(0x0000);
-		SetLeds(0x8000);
-		LATCHLeds();*/
+		SetLeds(0x0100);
+		LATCHLeds();
 
-		/*SetMUX(15);
+		SetMUX(8);
 
-		osDelay(100);
+		osDelay(10);
 
 		ADC1_read();
 
-		timer = ADC1_BUFFER[0];
-		BT_send_msg(&timer, "adc1:" + std::string(itoa(timer,buffer,10)) + "\n");*/
+		timer = ADC1_BUFFER[2];
+		BT_send_msg(&timer, "adc3:" + std::string(itoa(timer,buffer,10)) + "\n");*/
 
 
 		/*SetLeds(0x0000);
@@ -636,7 +665,7 @@ void SteerControlTask()
 
 
 		//osThreadSuspend(SteerControl_TaskHandle);
-		osDelay(500);
+		osDelay(1000);
 	}
 }
 
