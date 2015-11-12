@@ -36,6 +36,13 @@ void ReadSensors()
 
 	EnableMUX();
 
+	// TODO: elsõ szenzor kiugró érték ellen, de nem biztos, hogy jó így
+	SetLeds(0x0000);
+	SetLeds(pattern);
+	LATCHLeds();
+	ADC1_read();
+	ControlTaskDelay(200);
+
 	for (int i = 0; i<8; i++)
 	{
 
@@ -93,7 +100,8 @@ void ReadSensors()
 
 	}
 
-
+	SetLeds(0x0000);
+	LATCHLeds();
 
 	HAL_TIM_Base_Stop_IT(&htim6);
 	DisableMUX();

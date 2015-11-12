@@ -145,7 +145,7 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart);
 /*void BT_send_msg(int msg);
 void BT_send_msg(int msg, char* nev);*/
 void BT_send_msg(int * msg, string nev);
-void BT_send_msg(float * msg, string nev);
+//void BT_send_msg(float * msg, string nev);
 void SetServo_motor(int pos); // -SERVO_RANGE_MOTOR +SERVO_RANGE_MOTOR
 void SetServo_steering(int pos); // -SERVO_RANGE_STEERING +SERVO_RANGE_STEERING
 
@@ -316,16 +316,18 @@ void BT_send_msg(int msg){
 	int2msg(&msg_int, msg, "unnamed\n");
 	xQueueSend( xQueue_BT, &msg_int, portMAX_DELAY);
 
-}
+}*/
 
-void BT_send_msg(int msg, char* nev){
+
+void BT_send_msg(int * msg, string nev){
 	struct BT_MSG msg_int;
-	int2msg(&msg_int, msg, nev);
+	int2msg(&msg_int, msg, nev.c_str());
 	xQueueSend( xQueue_BT, &msg_int, portMAX_DELAY);
 
 }
-*/
 
+
+/*
 void BT_send_msg(int * msg, string nev){
 	// type: 1=int, 3=float, 4=double
 	xQueueSend( xQueue_BT, &number2msg(msg, string(nev).c_str(), (uint8_t)1), portMAX_DELAY);
@@ -340,7 +342,7 @@ void BT_send_msg(double * msg, string nev){
 	// type: 1=int, 3=float, 4=double
 	xQueueSend( xQueue_BT, &number2msg(msg, string(nev).c_str(), (uint8_t)4), portMAX_DELAY);
 }
-
+*/
 
 // -500 és 500 közötti értéket fogad
 void SetServo_motor(int pos)

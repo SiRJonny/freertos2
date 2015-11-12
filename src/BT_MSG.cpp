@@ -14,7 +14,7 @@ int szuper_szamlalo = 2342345;
 
 
 
-void int2msg(struct BT_MSG * btmsg, int ertek, char* nev)
+void int2msg(struct BT_MSG * btmsg, int * ertek, char* nev)
 {
 
 	uint8_t i;
@@ -23,7 +23,7 @@ void int2msg(struct BT_MSG * btmsg, int ertek, char* nev)
 	btmsg->data[0] = 1;	// 1 = int
 	btmsg->data[1] = 4;	// 32 bit
 
-	ptr = (uint8_t*)&ertek;
+	ptr = (uint8_t*)ertek;
 
 
 	for( i=2 ; i<(sizeof(int)+2) ; i++)
