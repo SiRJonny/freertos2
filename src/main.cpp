@@ -326,6 +326,13 @@ void BT_send_msg(int * msg, string nev){
 
 }
 
+void BT_send_msg(float * msg, string nev){
+	struct BT_MSG msg_float;
+	float2msg(&msg_float, msg, nev.c_str());
+	xQueueSend( xQueue_BT, &msg_float, portMAX_DELAY);
+
+}
+
 
 /*
 void BT_send_msg(int * msg, string nev){
@@ -491,10 +498,13 @@ void SendRemoteVarTask()
 
 	// minden remote változóhez külen kellenek ezek
 	osThreadSuspend(SendRemoteVar_TaskHandle);
-
+	float myfloat = 123.456;
 
 	for(;;)
 	{
+
+		/*BT_send_msg(&myfloat, "myfloat");
+		myfloat +=1;*/
 
 		for(int i = 0; i<32; i++)
 		{

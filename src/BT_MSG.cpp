@@ -46,7 +46,7 @@ void int2msg(struct BT_MSG * btmsg, int * ertek, char* nev)
 
 
 
-void float2msg(struct BT_MSG * btmsg, float ertek, char* nev)
+void float2msg(struct BT_MSG * btmsg, float * ertek, char* nev)
 {
 	uint8_t i;
 	uint8_t * ptr;
@@ -54,7 +54,7 @@ void float2msg(struct BT_MSG * btmsg, float ertek, char* nev)
 	btmsg->data[0] = 3;		// 3 = float
 	btmsg->data[1] = 4;		// 32 bit
 
-	ptr = (uint8_t *)&ertek;
+	ptr = (uint8_t *)ertek;
 	for( i=2 ; i<(sizeof(float)+2) ; i++)
 	{
 		btmsg->data[i] = *ptr;

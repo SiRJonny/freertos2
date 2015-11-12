@@ -30,7 +30,7 @@ struct BT_MSG
 };
 
 void int2msg(struct BT_MSG * btmsg, int * ertek, char* nev);
-void float2msg(struct BT_MSG * btmsg, float ertek, char* nev);
+void float2msg(struct BT_MSG * btmsg, float * ertek, char* nev);
 void double2msg(struct BT_MSG * btmsg, double ertek, char* nev);
 
 template<class T>
