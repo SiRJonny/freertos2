@@ -578,7 +578,13 @@ void SteerControlTask()
 
 		Lines = getLinePos(20);
 
-		//BT_send_msg(&Lines.pos1[0], "lpos1"); //+ std::string(itoa((int)Lines.pos1[0],buffer,10)) + "\n");
+
+		BT_send_msg(&Lines.pos1[0], "lpos1"); //+ std::string(itoa((int)Lines.pos1[0],buffer,10)) + "\n");
+
+		angle = (calculateAngle(Lines.pos1[0],Lines.pos2[0])*360.0/6.28);
+		BT_send_msg(&angle, "angle:");
+
+
 		//BT_send_msg(&Lines.pos2[0], "lpos2"); //+ std::string(itoa((int)Lines.pos2[0],buffer,10)) + "\n");
 
 		/*if(Lines.numLines1 == 1 && Lines.numLines2 == 1)
@@ -1039,7 +1045,7 @@ void MX_DMA_Init(void)
 void USART3_UART_Init()
 {
   huart3.Instance = USART3;
-  huart3.Init.BaudRate = 9600;
+  huart3.Init.BaudRate = 115200;
   huart3.Init.WordLength = UART_WORDLENGTH_8B;
   huart3.Init.StopBits = UART_STOPBITS_1;
   huart3.Init.Parity = UART_PARITY_NONE;
