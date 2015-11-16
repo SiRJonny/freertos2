@@ -358,7 +358,7 @@ void SetServo_motor(int pos)
 	if(pos < -SERVO_RANGE_MOTOR){pos = -SERVO_RANGE_MOTOR;}
 
 	// 1500 = 1,5ms, ez a 0 pozíció
-	__HAL_TIM_SET_COMPARE(&htim1,1,1500+pos);
+	__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,1500+pos);
 }
 
 // -500 és 500 közötti értéket fogad DEFINEolva!
@@ -368,7 +368,7 @@ void SetServo_steering(int pos)
 	if(pos < -SERVO_RANGE_STEERING){pos = -SERVO_RANGE_STEERING;}
 
 	// 1500 = 1,5ms, ez a 0 pozíció
-	__HAL_TIM_SET_COMPARE(&htim1,2,1500+pos);
+	__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2,1500+pos);
 }
 
 /* StartDefaultTask function */
@@ -410,7 +410,7 @@ void StartButtonTask()
 
 		if (wasPressed){
 
-
+			//__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2,0);
 			// remote vÃ¡ltozÃ³k elkÃ¼ldÃ©se
 			//osThreadResume(SendRemoteVar_TaskHandle);
 
@@ -423,7 +423,7 @@ void StartButtonTask()
 			//BT_send_msg(&aa, "pos" + string(itoa(231,buffer,10)));
 
 			osThreadResume(SteerControl_TaskHandle);
-			osDelay(100);
+			osDelay(5);
 			osThreadResume(SendRemoteVar_TaskHandle);
 
 
@@ -466,9 +466,16 @@ void SendBluetoothTask()
 void BTReceiveTask()
 {
 	uint8_t msg[10];
-	int * int_ptr = (int*)&msg[1];
+	int * int_ptr;
+	int data;
+	char * char_ptr = (char*)&data;
+
+	int_ptr = (int*)&msg[1];
+
 	for( ;; )
 	{
+
+
 		HAL_UART_Receive_IT(&huart3,msg,(uint16_t)5);
 
 		osSignalWait(0x0001,osWaitForever);
@@ -476,16 +483,17 @@ void BTReceiveTask()
 		// TODO: változó fogadásnál mi legyen?
 		switch(msg[0])
 		{
-			case 1:	SetServo_motor(0);
+			case 1:	SetServo_steering(0);
 				break;
-			case 2:	SetServo_motor(400);
+			case 2:	SetServo_steering(200);
 				break;
-			case 3:	SetServo_motor(-400);
+			case 3:	SetServo_steering(-200);
 				break;
-			case 4:	SetServo_motor(*int_ptr);
+			case 4:
+				SetServo_steering(*int_ptr);
 				break;
-			case 5:	SetServo_motor(100);
-					TunePID = true;
+			case 5:	SetServo_steering(100);
+					//TunePID = true;
 				break;
 			default:
 				break;
@@ -528,7 +536,7 @@ void SendRemoteVarTask()
 		//osThreadSuspend(SendRemoteVar_TaskHandle); // minden elkÃ¼ldve, pihenÃ¼nk (osThreadResume-ra megint elkÃ¼ld mindent)
 	    HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
 
-		osDelay(1000);
+		osDelay(300);
 	}
 
 }
@@ -541,13 +549,14 @@ void SteerControlTask()
 	float linePos = 0;
 	float lastPos = 15.5;
 	float error = 0;
+	float control = 0;
 	struct LineState Lines;
 
-	PIDs.pGain = 0;
+	PIDs.pGain = 32;
 	PIDs.iGain = 0;
-	PIDs.dGain = 0;
-	PIDs.iMax = 500;
-	PIDs.iMin = -500;
+	PIDs.dGain = -100;
+	PIDs.iMax = 300;
+	PIDs.iMin = -300;
 	PIDs.iState = 0;
 	PIDs.dState = 0;
 
@@ -579,11 +588,16 @@ void SteerControlTask()
 		Lines = getLinePos(20);
 
 
-		BT_send_msg(&Lines.pos1[0], "lpos1"); //+ std::string(itoa((int)Lines.pos1[0],buffer,10)) + "\n");
+		//BT_send_msg(&Lines.pos1[0], "lpos1"); //+ std::string(itoa((int)Lines.pos1[0],buffer,10)) + "\n");
 
 		angle = (calculateAngle(Lines.pos1[0],Lines.pos2[0])*360.0/6.28);
-		BT_send_msg(&angle, "angle:");
+		//BT_send_msg(&angle, "angle:");
 
+		error = Lines.pos1[0] - 15.5;
+
+		control = UpdatePID1(&PIDs,error,Lines.pos1[0]);
+
+		SetServo_steering(control);
 
 		//BT_send_msg(&Lines.pos2[0], "lpos2"); //+ std::string(itoa((int)Lines.pos2[0],buffer,10)) + "\n");
 
@@ -683,7 +697,7 @@ void SteerControlTask()
 
 
 		//osThreadSuspend(SteerControl_TaskHandle);
-		osDelay(1000);
+		osDelay(10);
 	}
 }
 
