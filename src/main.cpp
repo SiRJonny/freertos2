@@ -553,9 +553,14 @@ void SteerControlTask()
 	float control = 0;
 	struct LineState Lines;
 
+	// állapot visszacsatolás paraméterei
+	float A = 0.5;	// sebesség függés	// d5% = v*A + B
+	float B = 0.5;	// konstans
+
+	// PID szabályzó struktúrája
 	PIDs.pGain = 20;
 	PIDs.iGain = 0;
-	PIDs.dGain = -600;
+	PIDs.dGain = -400;
 	PIDs.iMax = 300;
 	PIDs.iMin = -300;
 	PIDs.iState = 0;
@@ -577,33 +582,35 @@ void SteerControlTask()
 	for(;;)
 	{
 		//__HAL_TIM_SET_COUNTER(&htim5,0);
-		encoderPos = __HAL_TIM_GET_COUNTER(&htim2);
-		speed = (encoderPos - lastEncoderPos)/2571; //ez így m/s, ha 20 lukas a tárcsa
-		lastEncoderPos = encoderPos;
+
+		// TODO: sebességet elég ritkábban mérni? úgysem tud gyorsan változni -> pontosabb
+		if(cntr == 5)
+		{
+			encoderPos = __HAL_TIM_GET_COUNTER(&htim2);
+			speed = (encoderPos - lastEncoderPos)/(2571/20); //ez így m/s, ha 20 lukas a tárcsa és 50ms-enként mérünk (másodpercenként 20)
+			lastEncoderPos = encoderPos;
+
+			cntr = 0;
+		}
+		cntr++;
+
 
 		ReadSensors();
 
-		/*timer = __HAL_TIM_GET_COUNTER(&htim5);
-		BT_send_msg(&timer, "read:" + std::string(itoa(timer,buffer,10)) + "\n");*/
-
-		/*timer = (int)(szenzorsor_1[10]);
-		BT_send_msg(&timer, "sz10:" + std::string(itoa(timer,buffer,10)) + "\n");*/
-
 		Lines = getLinePos(20);
 
-
-		//BT_send_msg(&Lines.pos1[0], "lpos1"); //+ std::string(itoa((int)Lines.pos1[0],buffer,10)) + "\n");
-
 		angle = (calculateAngle(Lines.pos1[0],Lines.pos2[0])*360.0/6.28);
-		//BT_send_msg(&angle, "angle:");
+
+
 
 		if(Lines.numLines1 != -1)
 		{
 			error = Lines.pos1[0] - 15.5;
 
-			control = UpdatePID1(&PIDs,error,Lines.pos1[0]);
+			//control = UpdatePID1(&PIDs,error,Lines.pos1[0]);
+			//control = UpdateStateSpace(A, B, speed, angle);
 
-			SetServo_steering(control);
+			//SetServo_steering(control);
 		}
 
 
