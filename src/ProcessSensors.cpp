@@ -35,6 +35,18 @@ struct LineState getLinePos(int treshold)
 	Lines.numLines1 = find3peaks(szenzorsor_1, peaks1, treshold);
 	Lines.numLines2 = find3peaks(szenzorsor_2, peaks2, treshold);
 
+	/*if(peaks1[0] > 32 || peaks1[0] < 0)
+	{
+		HAL_GPIO_WritePin(GPIOD,GPIO_PIN_15,GPIO_PIN_SET);
+
+	}
+	if(peaks2[0] > 32 || peaks2[0] < 0)
+	{
+		HAL_GPIO_WritePin(GPIOD,GPIO_PIN_15,GPIO_PIN_SET);
+
+	}*/
+
+
 	for(int i = 0; i < Lines.numLines1; i++)
 	{
 		Lines.pos1[i] = refineMaxPos(szenzorsor_1,peaks1[i],REFINE_RADIUS);
@@ -43,6 +55,8 @@ struct LineState getLinePos(int treshold)
 	{
 		Lines.pos2[i] = refineMaxPos(szenzorsor_2,peaks2[i],REFINE_RADIUS);
 	}
+
+
 
 	//timer = __HAL_TIM_GET_COUNTER(&htim5);
 	//BT_send_msg(&timer, "lines:" + std::string(itoa(timer,buffer,10)) + "\n");
@@ -189,7 +203,7 @@ int find3peaks(uint32_t * data, int * peaks, int treshold)
 		swap(&peakValue[1], &peakValue[2]);
 	}
 
-	if(peakMaxValue > calculateAverage(data)*NO_LINE_MULTIPLIER) // ha a legnagyobb csúcs nincs az átlag ennyiszerese -> nincs vonal
+	if(peakMaxValue > calculateAverage(data)*NO_LINE_MULTIPLIER && peakMaxValue > 50) // ha a legnagyobb csúcs nincs az átlag ennyiszerese -> nincs vonal
 	{
 		return numPeaks;
 	}else{

@@ -51,7 +51,7 @@ extern "C"
 #include "Controllers.h"
 
 #define SERVO_RANGE_MOTOR 500	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a max kiadott jel
-#define SERVO_RANGE_STEERING 500	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a max kiadott jel
+#define SERVO_RANGE_STEERING 150	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a max kiadott jel
 
 using namespace std;
 
@@ -387,7 +387,7 @@ void StartDefaultTask()
     HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
 
     /*current = __HAL_TIM_GET_COUNTER(&htim2);
-    BT_send_msg(&current, "enc:" + std::string(itoa(current-last,buffer,10)) + "\n");
+    BT_send_msg(&current, "e:" + std::string(itoa(current-last,buffer,10)) + "\n");
 
     last = current;*/
   }
@@ -536,7 +536,7 @@ void SendRemoteVarTask()
 		//osThreadSuspend(SendRemoteVar_TaskHandle); // minden elkÃ¼ldve, pihenÃ¼nk (osThreadResume-ra megint elkÃ¼ld mindent)
 	    HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
 
-		osDelay(300);
+		osDelay(500);
 	}
 
 }
@@ -545,6 +545,7 @@ void SendRemoteVarTask()
 void SteerControlTask()
 {
 	int encoderPos, lastEncoderPos = 0;
+	float speed;
 	float angle = 0;
 	float linePos = 0;
 	float lastPos = 15.5;
@@ -552,9 +553,9 @@ void SteerControlTask()
 	float control = 0;
 	struct LineState Lines;
 
-	PIDs.pGain = 32;
+	PIDs.pGain = 20;
 	PIDs.iGain = 0;
-	PIDs.dGain = -100;
+	PIDs.dGain = -600;
 	PIDs.iMax = 300;
 	PIDs.iMin = -300;
 	PIDs.iState = 0;
@@ -576,6 +577,9 @@ void SteerControlTask()
 	for(;;)
 	{
 		//__HAL_TIM_SET_COUNTER(&htim5,0);
+		encoderPos = __HAL_TIM_GET_COUNTER(&htim2);
+		speed = (encoderPos - lastEncoderPos)/2571; //ez így m/s, ha 20 lukas a tárcsa
+		lastEncoderPos = encoderPos;
 
 		ReadSensors();
 
@@ -593,68 +597,15 @@ void SteerControlTask()
 		angle = (calculateAngle(Lines.pos1[0],Lines.pos2[0])*360.0/6.28);
 		//BT_send_msg(&angle, "angle:");
 
-		error = Lines.pos1[0] - 15.5;
-
-		control = UpdatePID1(&PIDs,error,Lines.pos1[0]);
-
-		SetServo_steering(control);
-
-		//BT_send_msg(&Lines.pos2[0], "lpos2"); //+ std::string(itoa((int)Lines.pos2[0],buffer,10)) + "\n");
-
-		/*if(Lines.numLines1 == 1 && Lines.numLines2 == 1)
+		if(Lines.numLines1 != -1)
 		{
-			timer = (int)(calculateAngle(Lines.pos1[0],Lines.pos2[0])*360.0/6.28*10.0);
-			BT_send_msg(&timer, "angle:" + std::string(itoa(timer,buffer,10)) + "\n");
-		}else{
-			BT_send_msg(&timer, "n1:" + std::string(itoa((int)Lines.numLines1,buffer,10)) + "\n");
-			BT_send_msg(&timer, "n2:" + std::string(itoa((int)Lines.numLines2,buffer,10)) + "\n");
-		}*/
-		/*BT_send_msg(&Lines.numLines1, "num1:" + std::string(itoa(Lines.numLines1,buffer,10)) + "\n");
+			error = Lines.pos1[0] - 15.5;
 
-		timer = (int)(Lines.pos1[0]*10);
-		BT_send_msg(&timer, "pos1:" + std::string(itoa(timer,buffer,10)) + "\n");
+			control = UpdatePID1(&PIDs,error,Lines.pos1[0]);
 
-		timer = (int)(Lines.pos1[1]*10);
-		BT_send_msg(&timer, "pos2:" + std::string(itoa(timer,buffer,10)) + "\n");
-
-		timer = (int)(Lines.pos1[2]*10);
-		BT_send_msg(&timer, "pos3:" + std::string(itoa(timer,buffer,10)) + "\n");*/
-
-
-
-		//BT_send_msg(&timer, "pos1:" + std::to_string(Lines.pos1[0]) + "\n");
-
-		/*SetLeds(0x0000);
-		SetLeds(0x0100);
-		LATCHLeds();
-
-		SetMUX(8);
-
-		osDelay(10);
-
-		ADC1_read();
-
-		timer = ADC1_BUFFER[2];
-		BT_send_msg(&timer, "adc3:" + std::string(itoa(timer,buffer,10)) + "\n");*/
-
-
-		/*SetLeds(0x0000);
-		pattern <<= 1;
-		SetLeds(pattern);
-		LATCHLeds();*/
-
-		if(pattern == 0x8000)
-		{
-			pattern = 0x0001;
+			SetServo_steering(control);
 		}
-		/*SetLeds(0x0000);
-		SetLeds(0x4441);*/
 
-		//LATCHLeds();
-
-		/*encoderPos = __HAL_TIM_GET_COUNTER(&htim2);
-		speed = encoderPos - lastEncoderPos;
-		lastEncoderPos = encoderPos;*/
 
 		//UpdatePID1(&PIDs, error, linePos);
 
@@ -947,11 +898,11 @@ void MX_TIM2_Init(void)
   htim2.Init.Period = 4000000000;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   sConfig.EncoderMode = TIM_ENCODERMODE_TI12;
-  sConfig.IC1Polarity = TIM_ICPOLARITY_BOTHEDGE;
-  sConfig.IC1Selection = TIM_ICSELECTION_DIRECTTI;
+  sConfig.IC1Polarity = TIM_ICPOLARITY_RISING;
+  sConfig.IC1Selection = TIM_ICSELECTION_INDIRECTTI;
   sConfig.IC1Prescaler = TIM_ICPSC_DIV1;
   sConfig.IC1Filter = 2;
-  sConfig.IC2Polarity = TIM_ICPOLARITY_BOTHEDGE;
+  sConfig.IC2Polarity = TIM_ICPOLARITY_RISING;
   sConfig.IC2Selection = TIM_ICSELECTION_DIRECTTI;
   sConfig.IC2Prescaler = TIM_ICPSC_DIV1;
   sConfig.IC2Filter = 2;
@@ -960,6 +911,8 @@ void MX_TIM2_Init(void)
   sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
   sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
   HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig);
+
+  __HAL_TIM_SET_COUNTER(&htim2, 1000000000);
 
   HAL_TIM_Encoder_Start(&htim2,TIM_CHANNEL_ALL);
 
