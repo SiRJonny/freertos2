@@ -51,7 +51,7 @@ extern "C"
 #include "Controllers.h"
 
 #define SERVO_RANGE_MOTOR 500	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a max kiadott jel
-#define SERVO_RANGE_STEERING 150	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a max kiadott jel
+#define SERVO_RANGE_STEERING 240	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a max kiadott jel
 
 using namespace std;
 
@@ -148,6 +148,7 @@ void BT_send_msg(int * msg, string nev);
 //void BT_send_msg(float * msg, string nev);
 void SetServo_motor(int pos); // -SERVO_RANGE_MOTOR +SERVO_RANGE_MOTOR
 void SetServo_steering(int pos); // -SERVO_RANGE_STEERING +SERVO_RANGE_STEERING
+void SetServo_steering(float angle);  // kormányzás, szöggel
 
 
 /* USER CODE BEGIN PFP */
@@ -364,11 +365,36 @@ void SetServo_motor(int pos)
 // -500 és 500 közötti értéket fogad DEFINEolva!
 void SetServo_steering(int pos)
 {
-	if(pos > SERVO_RANGE_STEERING){pos = SERVO_RANGE_STEERING;}
-	if(pos < -SERVO_RANGE_STEERING){pos = -SERVO_RANGE_STEERING;}
+	if(pos > SERVO_RANGE_STEERING){
+		pos = SERVO_RANGE_STEERING;
+		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_SET);
+	}
+	if(pos < -SERVO_RANGE_STEERING){
+		pos = -SERVO_RANGE_STEERING;
+		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_SET);
+	}
+	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_RESET);
 
 	// 1500 = 1,5ms, ez a 0 pozíció
-	__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2,1500+pos);
+	__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2, 1500 + pos - 10);
+}
+
+// float szög
+void SetServo_steering(float angle_rad)
+{
+	float pos = (angle_rad / 6.28 * 360) * 10.66666;	// 10.6666 csinál fokból pwm-et
+	if(pos > SERVO_RANGE_STEERING){
+		pos = SERVO_RANGE_STEERING;
+		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_SET);
+	}
+	if(pos < -SERVO_RANGE_STEERING){
+		pos = -SERVO_RANGE_STEERING;
+		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_SET);
+	}
+	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_RESET);
+
+	// 1500 = 1,5ms, ez a 0 pozíció
+	__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2, 1500 + (int)pos - 10);
 }
 
 /* StartDefaultTask function */
@@ -430,7 +456,7 @@ void StartButtonTask()
 
 
 
-			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14); // piros led, debug
+			//HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14); // piros led, debug
 
 			wasPressed = 0;
 		}
@@ -485,9 +511,9 @@ void BTReceiveTask()
 		{
 			case 1:	SetServo_steering(0);
 				break;
-			case 2:	SetServo_steering(200);
+			case 2:	SetServo_steering(192);
 				break;
-			case 3:	SetServo_steering(-200);
+			case 3:	SetServo_steering(-192);
 				break;
 			case 4:
 				SetServo_steering(*int_ptr);
@@ -546,6 +572,7 @@ void SteerControlTask()
 {
 	int encoderPos, lastEncoderPos = 0;
 	float speed;
+	float linePosM;		// vonalpozíció méterben
 	float angle = 0;
 	float linePos = 0;
 	float lastPos = 15.5;
@@ -596,21 +623,21 @@ void SteerControlTask()
 
 
 		ReadSensors();
-
 		Lines = getLinePos(20);
+		angle = (calculateAngle(Lines.pos1[0],Lines.pos2[0]));
 
-		angle = (calculateAngle(Lines.pos1[0],Lines.pos2[0])*360.0/6.28);
-
+		linePosM = (Lines.pos1[0]-15.5) * 5.9 / 1000; // pozíció, méterben, középen 0
 
 
 		if(Lines.numLines1 != -1)
 		{
-			error = Lines.pos1[0] - 15.5;
-
+			//error = Lines.pos1[0] - 15.5;
 			//control = UpdatePID1(&PIDs,error,Lines.pos1[0]);
-			//control = UpdateStateSpace(A, B, speed, angle);
+			//SetServo_steering((int)control); // PID-hez
 
-			//SetServo_steering(control);
+			speed = 0.5;
+			control = UpdateStateSpace(A, B, speed, linePosM, angle);
+			SetServo_steering(control);
 		}
 
 

@@ -23,7 +23,7 @@ typedef struct
 
 float UpdatePID1(PID_struct * pid, float error, float position);
 
-float UpdateStateSpace(float A, float B, float v, float angle);
+float UpdateStateSpace(float A, float B, float v, float p, float angle);
 
 
 
