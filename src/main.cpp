@@ -108,7 +108,7 @@ uint32_t szenzorsor_temp_2[32];
 
 PID_struct PIDs;
 
-int speed = 0;
+float speed_global = 0;
 bool TunePID = false;
 char buffer[10];	//bt msg hez
 int timer = 0; // idımÈrÈshez
@@ -450,7 +450,7 @@ void StartButtonTask()
 
 			osThreadResume(SteerControl_TaskHandle);
 			osDelay(5);
-			osThreadResume(SendRemoteVar_TaskHandle);
+			//osThreadResume(SendRemoteVar_TaskHandle);
 
 
 
@@ -533,6 +533,7 @@ void SendRemoteVarTask()
 	// minden remote v√°ltoz√≥hez k√ºlen kellenek ezek
 	osThreadSuspend(SendRemoteVar_TaskHandle);
 	float myfloat = 123.456;
+	int myint = 0;
 
 	for(;;)
 	{
@@ -540,7 +541,7 @@ void SendRemoteVarTask()
 		/*BT_send_msg(&myfloat, "myfloat");
 		myfloat +=1;*/
 
-		for(int i = 0; i<32; i++)
+		/*for(int i = 0; i<32; i++)
 		{
 			szenzorsor_temp_1[i] = szenzorsor_1[i];
 			szenzorsor_temp_2[i] = szenzorsor_2[i];
@@ -556,13 +557,14 @@ void SendRemoteVarTask()
 				BT_send_msg(&szenzorsor_temp_1[i], "sens1" + std::string(itoa(i,buffer,10)));
 				BT_send_msg(&szenzorsor_temp_2[i], "sens2" + std::string(itoa(i,buffer,10)));
 			}
-		}
-
-
+		}*/
+		myfloat = 100*speed_global;
+		myint = myfloat;
+		BT_send_msg(&timer, "speed:" + std::string(itoa(myint,buffer,10)) + "\n");
 		//osThreadSuspend(SendRemoteVar_TaskHandle); // minden elk√ºldve, pihen√ºnk (osThreadResume-ra megint elk√ºld mindent)
 	    HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
 
-		osDelay(500);
+		osDelay(100);
 	}
 
 }
@@ -614,8 +616,10 @@ void SteerControlTask()
 		if(cntr == 5)
 		{
 			encoderPos = __HAL_TIM_GET_COUNTER(&htim2);
-			speed = (encoderPos - lastEncoderPos)/(2571/20); //ez Ìgy m/s, ha 20 lukas a t·rcsa Ès 50ms-enkÈnt mÈr¸nk (m·sodpercenkÈnt 20)
+			speed = (float)(lastEncoderPos - encoderPos)/(2571.0/20.0); //ez Ìgy m/s, ha 20 lukas a t·rcsa Ès 50ms-enkÈnt mÈr¸nk (m·sodpercenkÈnt 20)
 			lastEncoderPos = encoderPos;
+
+			speed_global = speed;
 
 			cntr = 0;
 		}
@@ -635,7 +639,11 @@ void SteerControlTask()
 			//control = UpdatePID1(&PIDs,error,Lines.pos1[0]);
 			//SetServo_steering((int)control); // PID-hez
 
-			speed = 0.5;
+			if (speed < 0.2)
+			{
+				speed = 0.2;
+			}
+
 			control = UpdateStateSpace(A, B, speed, linePosM, angle);
 			SetServo_steering(control);
 		}
