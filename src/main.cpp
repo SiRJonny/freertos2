@@ -110,7 +110,9 @@ float posArray[100];
 float controlArray[100];
 
 PID_struct PIDs;
+PID_struct PIDm;
 
+float SET_SPEED = 0;
 float speed_global = 0;
 bool TunePID = false;
 char buffer[10];	//bt msg hez
@@ -459,9 +461,17 @@ void StartButtonTask()
 		if (wasPressed){
 
 
+			SET_SPEED = 2;
 			osThreadResume(SteerControl_TaskHandle);
+			osDelay(2000);
+			osThreadSuspend(SteerControl_TaskHandle);
+
+
+			/*osThreadResume(SteerControl_TaskHandle);
 			osDelay(100);
-			TunePID = true;
+			TunePID = true;*/
+
+
 			/*osDelay(5);
 			osThreadResume(SendRemoteVar_TaskHandle);*/
 
@@ -620,7 +630,7 @@ void SendRemoteVarTask()
 // szenzorsorok beolvasása, ha kész, szüneteli magát
 void SteerControlTask()
 {
-	int encoderPos, lastEncoderPos = 0;
+	int encoderPos, lastEncoderPos = 1000000000;	// encoder számláló innen indul, hogy semerre ne legyen túlcsordulás
 	float speed = 0;
 	float linePosM;		// vonalpozíció méterben
 	float angle = 0;
@@ -628,13 +638,16 @@ void SteerControlTask()
 	float lastPos = 15.5;
 	float error = 0;
 	float control = 0;
+	float speed_error = 0;
+	float speed_control = 0;
+
 	struct LineState Lines;
 
 	// állapot visszacsatolás paraméterei
 	float A = 0.5;	// sebesség függés	// d5% = v*A + B
 	float B = 0.5;	// konstans
 
-	// PID szabályzó struktúrája
+	// szervo PD szabályzó struktúrája
 	PIDs.pGain = 20;
 	PIDs.iGain = 0;
 	PIDs.dGain = -400;
@@ -642,6 +655,15 @@ void SteerControlTask()
 	PIDs.iMin = -300;
 	PIDs.iState = 0;
 	PIDs.dState = 0;
+
+	// motor PI szabályzó struktúra
+	PIDm.pGain = 100;		// 100-> 5m/s hibánál lesz 500 a jel (max)
+	PIDm.iGain = 1;			// pGain/100?
+	PIDm.dGain = 0;
+	PIDm.iMax = 500;
+	PIDm.iMin = -500;
+	PIDm.iState = 0;
+	PIDm.dState = 0;
 
 	/// PID tune segédváltozók
 	bool tune_started = false;
@@ -664,10 +686,15 @@ void SteerControlTask()
 		if(cntr == 5)
 		{
 			encoderPos = __HAL_TIM_GET_COUNTER(&htim2);
-			speed = (float)(lastEncoderPos - encoderPos)/(2571.0/20.0); //ez így m/s, ha 20 lukas a tárcsa és 50ms-enként mérünk (másodpercenként 20)
+			speed = ((float)(lastEncoderPos - encoderPos))/(2571.0/20.0); //ez így m/s, ha 20 lukas a tárcsa és 50ms-enként mérünk (másodpercenként 20)
 			lastEncoderPos = encoderPos;
 
 			speed_global = speed;
+
+			// motor szabályozó
+			speed_error = SET_SPEED - speed;
+			speed_control = UpdatePID1(&PIDm, speed_error, speed);
+			SetServo_motor((int)speed_control);
 
 			cntr = 0;
 		}
@@ -684,7 +711,7 @@ void SteerControlTask()
 
 		linePosM = (Lines.pos1[0]-15.5) * 5.9 / 1000; // pozíció, méterben, középen 0
 
-
+		// vonalkövetés szabályozó
 		if(Lines.numLines1 != -1)
 		{
 			//error = Lines.pos1[0] - 15.5;
@@ -700,7 +727,10 @@ void SteerControlTask()
 			SetServo_steering(control);
 		}
 
-		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
+
+
+
+
 
 		//timer = __HAL_TIM_GET_COUNTER(&htim5);
 		//BT_send_msg(&timer, "ctrl:" + std::string(itoa(timer,buffer,10)) + "\n");
@@ -747,7 +777,7 @@ void SteerControlTask()
 			}
 		}
 
-
+		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
 		//osThreadSuspend(SteerControl_TaskHandle);
 		osDelay(9);
 	}
