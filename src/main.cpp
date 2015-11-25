@@ -52,6 +52,20 @@ extern "C"
 
 #define SERVO_RANGE_MOTOR 500	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a max kiadott jel
 #define SERVO_RANGE_STEERING 240	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a max kiadott jel
+#define MOTOR_CONTROL_ENABLED 0
+#define SERVO_CONTROL_ENABLED 1
+
+#define BTN_TUNEPID 0
+
+#define SERVO_CONTROL_STATESPACE 0
+#define SERVO_CONTROL_PID 1
+
+#define STATESPACE_A 0.5
+#define STATESPACE_B 0.5
+#define PID_PGAIN 20
+#define PID_IGAIN 0
+#define PID_DGAIN -400
+
 
 using namespace std;
 
@@ -461,16 +475,20 @@ void StartButtonTask()
 		if (wasPressed){
 
 
-			SET_SPEED = 2;
+
+
+			/*SET_SPEED = 2;
 			osThreadResume(SteerControl_TaskHandle);
 			osDelay(2000);
-			osThreadSuspend(SteerControl_TaskHandle);
+			osThreadSuspend(SteerControl_TaskHandle);*/
 
-
-			/*osThreadResume(SteerControl_TaskHandle);
-			osDelay(100);
-			TunePID = true;*/
-
+			#if (BTN_TUNEPID == 1)
+			{
+				osThreadResume(SteerControl_TaskHandle);
+				osDelay(100);
+				TunePID = true;
+			}
+			#endif
 
 			/*osDelay(5);
 			osThreadResume(SendRemoteVar_TaskHandle);*/
@@ -493,7 +511,7 @@ void StartButtonTask()
 			HAL_UART_Transmit_IT(&huart3, (uint8_t*) msg.data, msg.size);*/
 
 
-			//HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14); // piros led, debug
+			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14); // piros led, debug
 
 			wasPressed = 0;
 		}
@@ -605,6 +623,8 @@ void SendRemoteVarTask()
 			}
 		}*/
 
+		BT_send_msg(&speed_global, "speed");
+
 		for(int i = 0; i < 100; i++){
 			if (i<10)
 			{
@@ -638,14 +658,17 @@ void SteerControlTask()
 	float lastPos = 15.5;
 	float error = 0;
 	float control = 0;
+	int last_control = 0;	// elõzõ szabályozás értéke
 	float speed_error = 0;
 	float speed_control = 0;
+
+	bool mybool = true;
 
 	struct LineState Lines;
 
 	// állapot visszacsatolás paraméterei
-	float A = 0.5;	// sebesség függés	// d5% = v*A + B
-	float B = 0.5;	// konstans
+	float A = 0.4;	// sebesség függés	// d5% = v*A + B
+	float B = 0.4;	// konstans
 
 	// szervo PD szabályzó struktúrája
 	PIDs.pGain = 20;
@@ -683,48 +706,60 @@ void SteerControlTask()
 		//__HAL_TIM_SET_COUNTER(&htim5,0);
 
 		// TODO: sebességet elég ritkábban mérni? úgysem tud gyorsan változni -> pontosabb
+		// de gyorsítás így késleltetve történik...
 		if(cntr == 5)
 		{
 			encoderPos = __HAL_TIM_GET_COUNTER(&htim2);
 			speed = ((float)(lastEncoderPos - encoderPos))/(2571.0/20.0); //ez így m/s, ha 20 lukas a tárcsa és 50ms-enként mérünk (másodpercenként 20)
 			lastEncoderPos = encoderPos;
 
-			speed_global = speed;
+			//speed_global = speed;
 
 			// motor szabályozó
-			speed_error = SET_SPEED - speed;
-			speed_control = UpdatePID1(&PIDm, speed_error, speed);
-			SetServo_motor((int)speed_control);
+			#if ( MOTOR_CONTROL_ENABLED == 1)
+			{
+				speed_error = SET_SPEED - speed;
+				speed_control = UpdatePID1(&PIDm, speed_error, speed);
+				SetServo_motor((int)speed_control);
+			}
+			#endif
 
 			cntr = 0;
 		}
 		cntr++;
 
 
-
+		// szenzor adatok beolvasása
 		ReadSensors();
 
-
-
+		// szenzor adatok feldolgozása
 		Lines = getLinePos(20);
 		angle = (calculateAngle(Lines.pos1[0],Lines.pos2[0]));
 
 		linePosM = (Lines.pos1[0]-15.5) * 5.9 / 1000; // pozíció, méterben, középen 0
 
 		// vonalkövetés szabályozó
-		if(Lines.numLines1 != -1)
+		if(Lines.numLines1 != -1)	// ha látunk vonalat
 		{
-			//error = Lines.pos1[0] - 15.5;
-			//control = UpdatePID1(&PIDs,error,Lines.pos1[0]);
-			//SetServo_steering((int)control); // PID-hez
-
-			if (speed < 0.2)
+			#if  ( SERVO_CONTROL_PID == 1 )
 			{
-				speed = 0.2;
+				error = Lines.pos1[0] - 15.5;
+				control = UpdatePID1(&PIDs,error,Lines.pos1[0]);
+				SetServo_steering((int)control); // PID-hez
 			}
+			#endif
 
-			control = UpdateStateSpace(A, B, speed, linePosM, angle);
-			SetServo_steering(control);
+			#if (SERVO_CONTROL_STATESPACE == 1)
+			{
+				if (speed < 0.2)
+				{
+					speed = 0.2;
+				}
+
+				control = UpdateStateSpace(A, B, speed, linePosM, angle);
+				SetServo_steering(control);
+			}
+			#endif
 		}
 
 
@@ -735,7 +770,7 @@ void SteerControlTask()
 		//timer = __HAL_TIM_GET_COUNTER(&htim5);
 		//BT_send_msg(&timer, "ctrl:" + std::string(itoa(timer,buffer,10)) + "\n");
 
-
+		//////////// szabályzó hangolás  ////////////
 		if(TunePID && !tune_started)
 		{
 			if(Lines.pos1[0] > 20 || Lines.pos1[0] < 12)
@@ -743,6 +778,7 @@ void SteerControlTask()
 				tune_started = true;
 				tune_cntr = 0;
 				HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_SET);
+				speed_global = speed;
 			}
 		}
 		if(tune_started)
@@ -750,10 +786,16 @@ void SteerControlTask()
 			if(tune_cntr < 100)
 			{
 				posArray[tune_cntr] = Lines.pos1[0]-15.5;
-				controlArray[tune_cntr] = control*50; // így +/-15,7 a szervó tartomány (de a szabályzó adhat ki nagyobbat)
+				//controlArray[tune_cntr] = control*50; // így +/-15,7 a szervó tartomány (de a szabályzó adhat ki nagyobbat)
+				controlArray[tune_cntr] = control/12;
 			}
-
 			tune_cntr++;
+			/*if(mybool){
+				tune_cntr++;
+				mybool = false;
+			}else{
+				mybool = true;
+			}*/
 
 			if(tune_cntr > 300)
 			{
