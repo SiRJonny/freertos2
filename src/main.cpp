@@ -709,10 +709,10 @@ void SteerControlTask()
 		// de gyorsítás így késleltetve történik...
 		if(cntr == 5)
 		{
-			encoderPos = __HAL_TIM_GET_COUNTER(&htim2);
-			speed = ((float)(lastEncoderPos - encoderPos))/(2571.0/20.0); //ez így m/s, ha 20 lukas a tárcsa és 50ms-enként mérünk (másodpercenként 20)
-			lastEncoderPos = encoderPos;
-
+			//encoderPos = __HAL_TIM_GET_COUNTER(&htim2);
+			//speed = ((float)(lastEncoderPos - encoderPos))/(2571.0/20.0); //ez így m/s, ha 20 lukas a tárcsa és 50ms-enként mérünk (másodpercenként 20)
+			//lastEncoderPos = encoderPos;
+			speed = 1;
 			//speed_global = speed;
 
 			// motor szabályozó
@@ -720,7 +720,7 @@ void SteerControlTask()
 			{
 				speed_error = SET_SPEED - speed;
 				speed_control = UpdatePID1(&PIDm, speed_error, speed);
-				SetServo_motor((int)speed_control);
+				//SetServo_motor((int)speed_control);
 			}
 			#endif
 
@@ -730,7 +730,7 @@ void SteerControlTask()
 
 
 		// szenzor adatok beolvasása
-		ReadSensors();
+		ReadSensorsDummy();
 
 		// szenzor adatok feldolgozása
 		Lines = getLinePos(20);
@@ -745,7 +745,7 @@ void SteerControlTask()
 			{
 				error = Lines.pos1[0] - 15.5;
 				control = UpdatePID1(&PIDs,error,Lines.pos1[0]);
-				SetServo_steering((int)control); // PID-hez
+				//SetServo_steering((int)control); // PID-hez
 			}
 			#endif
 
@@ -757,14 +757,10 @@ void SteerControlTask()
 				}
 
 				control = UpdateStateSpace(A, B, speed, linePosM, angle);
-				SetServo_steering(control);
+				//SetServo_steering(control);
 			}
 			#endif
 		}
-
-
-
-
 
 
 		//timer = __HAL_TIM_GET_COUNTER(&htim5);
@@ -1185,7 +1181,7 @@ void MX_DMA_Init(void)
 void USART3_UART_Init()
 {
   huart3.Instance = USART3;
-  huart3.Init.BaudRate = 115200;
+  huart3.Init.BaudRate = 9600;
   huart3.Init.WordLength = UART_WORDLENGTH_8B;
   huart3.Init.StopBits = UART_STOPBITS_1;
   huart3.Init.Parity = UART_PARITY_NONE;
