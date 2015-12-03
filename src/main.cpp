@@ -50,9 +50,9 @@ extern "C"
 #include "ProcessSensors.h"
 #include "Controllers.h"
 
-#define SERVO_RANGE_MOTOR 500	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a max kiadott jel
+#define SERVO_RANGE_MOTOR 600	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a max kiadott jel
 #define SERVO_RANGE_STEERING 240	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a max kiadott jel
-#define MOTOR_CONTROL_ENABLED 0
+#define MOTOR_CONTROL_ENABLED 1
 #define SERVO_CONTROL_ENABLED 1
 
 #define BTN_TUNEPID 0
@@ -64,7 +64,7 @@ extern "C"
 #define STATESPACE_B 0.5
 #define PID_PGAIN 20
 #define PID_IGAIN 0
-#define PID_DGAIN -400
+#define PID_DGAIN -500
 
 
 using namespace std;
@@ -383,6 +383,7 @@ void SetServo_motor(int pos)
 
 void EmergencyBreak(int time)
 {
+	SET_SPEED = 0;
 	SetServo_motor(-100);
 	osDelay(5);
 	SetServo_motor(0);
@@ -474,18 +475,38 @@ void StartButtonTask()
 
 		if (wasPressed){
 
+			/*SetServo_steering(70);
+			osDelay(1000);
+			SetServo_steering(0);*/
 
 
-
-			/*SET_SPEED = 2;
-			osThreadResume(SteerControl_TaskHandle);
+			/*SetServo_motor(300);
+			osDelay(5000);
+			SetServo_motor(-300);
 			osDelay(2000);
-			osThreadSuspend(SteerControl_TaskHandle);*/
+			SetServo_motor(0);
+			osDelay(2000);
+			SetServo_motor(50);
+			osDelay(1000);
+			SetServo_motor(0);*/
+
+
+			SET_SPEED = 1;
+			osThreadResume(SteerControl_TaskHandle);
+			osDelay(500);
+			SET_SPEED = 0;
+
+			osDelay(30);
+			osThreadSuspend(SteerControl_TaskHandle);
+			EmergencyBreak(1000);
+
 
 			#if (BTN_TUNEPID == 1)
 			{
+
 				osThreadResume(SteerControl_TaskHandle);
-				osDelay(100);
+				osDelay(200);
+				SET_SPEED = 2;
 				TunePID = true;
 			}
 			#endif
@@ -495,7 +516,7 @@ void StartButtonTask()
 
 			/*SetServo_motor(100);
 			osDelay(1000);
-			SetServo_motor(-100);
+			SetServo_motor(0);
 			osDelay(3);
 			SetServo_motor(0);
 			osDelay(3);
@@ -511,7 +532,7 @@ void StartButtonTask()
 			HAL_UART_Transmit_IT(&huart3, (uint8_t*) msg.data, msg.size);*/
 
 
-			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14); // piros led, debug
+			//HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14); // piros led, debug
 
 			wasPressed = 0;
 		}
@@ -563,10 +584,12 @@ void BTReceiveTask()
 		HAL_UART_Receive_IT(&huart3,msg,(uint16_t)5);
 
 		osSignalWait(0x0001,osWaitForever);
-
+		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
 		// TODO: változó fogadásnál mi legyen?
 		switch(msg[0])
 		{
+			case 0:	EmergencyBreak(1000);
+				break;
 			case 1:	SetServo_steering(0);
 				break;
 			case 2:	SetServo_steering(192);
@@ -585,6 +608,7 @@ void BTReceiveTask()
 				break;
 			case 8: SetServo_motor(-100);
 				break;
+
 			default:
 				break;
 		}
@@ -745,6 +769,10 @@ void SteerControlTask()
 			{
 				error = Lines.pos1[0] - 15.5;
 				control = UpdatePID1(&PIDs,error,Lines.pos1[0]);
+				if(speed > 1)
+				{
+					control /= speed;
+				}
 				SetServo_steering((int)control); // PID-hez
 			}
 			#endif
@@ -760,6 +788,11 @@ void SteerControlTask()
 				SetServo_steering(control);
 			}
 			#endif
+		}
+		else
+		{
+			SET_SPEED = 0;
+			EmergencyBreak(2000);
 		}
 
 
@@ -796,6 +829,10 @@ void SteerControlTask()
 			}else{
 				mybool = true;
 			}*/
+			if(tune_cntr > 100)
+			{
+				SET_SPEED = 0;
+			}
 
 			if(tune_cntr > 300)
 			{
