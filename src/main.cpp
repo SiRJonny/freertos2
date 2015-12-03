@@ -51,7 +51,7 @@ extern "C"
 #include "Controllers.h"
 
 #define SERVO_RANGE_MOTOR 600	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a max kiadott jel
-#define SERVO_RANGE_STEERING 240	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a max kiadott jel
+#define SERVO_RANGE_STEERING 300	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a max kiadott jel
 #define MOTOR_CONTROL_ENABLED 1
 #define SERVO_CONTROL_ENABLED 1
 
@@ -128,6 +128,8 @@ PID_struct PIDm;
 
 float SET_SPEED = 0;
 float speed_global = 0;
+int activeLineNum = 0;
+
 bool TunePID = false;
 char buffer[10];	//bt msg hez
 int timer = 0; // idõméréshez
@@ -388,7 +390,7 @@ void EmergencyBreak(int time)
 	osDelay(5);
 	SetServo_motor(0);
 	osDelay(5);
-	SetServo_motor(-300);
+	SetServo_motor(-500);
 	osDelay(time);
 	SetServo_motor(0);
 }
@@ -489,18 +491,16 @@ void StartButtonTask()
 			SetServo_motor(50);
 			osDelay(1000);
 			SetServo_motor(0);*/
-
-
-			SET_SPEED = 1;
+/*
+			SET_SPEED = 5;
 			osThreadResume(SteerControl_TaskHandle);
-			osDelay(500);
+			osDelay(2000);
 			SET_SPEED = 0;
 
-			osDelay(30);
+			osDelay(3000);
 			osThreadSuspend(SteerControl_TaskHandle);
-			EmergencyBreak(1000);
-
-
+			//EmergencyBreak(1000);
+*/
 			#if (BTN_TUNEPID == 1)
 			{
 
@@ -511,18 +511,30 @@ void StartButtonTask()
 			}
 			#endif
 
+			/*
+
+			SetServo_steering(240);
+			osDelay(2000);
+			SetServo_steering(260);
+			osDelay(2000);
+			SetServo_steering(280);
+			osDelay(2000);
+			SetServo_steering(300);
+*/
+
+
 			/*osDelay(5);
 			osThreadResume(SendRemoteVar_TaskHandle);*/
 
-			/*SetServo_motor(100);
+			SetServo_motor(100);
 			osDelay(1000);
-			SetServo_motor(0);
+			SetServo_motor(-100);
 			osDelay(3);
 			SetServo_motor(0);
 			osDelay(3);
 			SetServo_motor(-500);
 			osDelay(1000);
-			SetServo_motor(0);*/
+			SetServo_motor(0);
 
 			/*string temp = "^#^$^%";
 			struct BT_MSG msg;
@@ -695,16 +707,16 @@ void SteerControlTask()
 	float B = 0.4;	// konstans
 
 	// szervo PD szabályzó struktúrája
-	PIDs.pGain = 20;
+	PIDs.pGain = 25;
 	PIDs.iGain = 0;
-	PIDs.dGain = -400;
+	PIDs.dGain = -500;
 	PIDs.iMax = 300;
 	PIDs.iMin = -300;
 	PIDs.iState = 0;
 	PIDs.dState = 0;
 
 	// motor PI szabályzó struktúra
-	PIDm.pGain = 100;		// 100-> 5m/s hibánál lesz 500 a jel (max)
+	PIDm.pGain = 90;		// 100-> 5m/s hibánál lesz 500 a jel (max)
 	PIDm.iGain = 1;			// pGain/100?
 	PIDm.dGain = 0;
 	PIDm.iMax = 500;
@@ -759,19 +771,24 @@ void SteerControlTask()
 		// szenzor adatok feldolgozása
 		Lines = getLinePos(20);
 		angle = (calculateAngle(Lines.pos1[0],Lines.pos2[0]));
-
-		linePosM = (Lines.pos1[0]-15.5) * 5.9 / 1000; // pozíció, méterben, középen 0
+		float activeLine;
+		if (Lines.numLines1 == 3) {
+			activeLine =Lines.pos1[1];
+		} else {
+			activeLine =Lines.pos1[0];
+		}
+		linePosM = (activeLine-15.5) * 5.9 / 1000; // pozíció, méterben, középen 0
 
 		// vonalkövetés szabályozó
 		if(Lines.numLines1 != -1)	// ha látunk vonalat
 		{
 			#if  ( SERVO_CONTROL_PID == 1 )
 			{
-				error = Lines.pos1[0] - 15.5;
+				error = activeLine - 15.5;
 				control = UpdatePID1(&PIDs,error,Lines.pos1[0]);
-				if(speed > 1)
+				if(speed > 2)
 				{
-					control /= speed;
+					control /= (speed/2.0);
 				}
 				SetServo_steering((int)control); // PID-hez
 			}
@@ -792,7 +809,8 @@ void SteerControlTask()
 		else
 		{
 			SET_SPEED = 0;
-			EmergencyBreak(2000);
+			EmergencyBreak(speed*1000);
+			osThreadSuspend(SteerControl_TaskHandle);
 		}
 
 
