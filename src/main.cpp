@@ -57,8 +57,8 @@ extern "C"
 
 #define BTN_TUNEPID 0
 
-#define SERVO_CONTROL_STATESPACE 0
-#define SERVO_CONTROL_PID 1
+#define SERVO_CONTROL_STATESPACE 1
+#define SERVO_CONTROL_PID 0
 
 #define STATESPACE_A 0.5
 #define STATESPACE_B 0.5
@@ -491,16 +491,16 @@ void StartButtonTask()
 			SetServo_motor(50);
 			osDelay(1000);
 			SetServo_motor(0);*/
-/*
-			SET_SPEED = 5;
+
+			SET_SPEED = 1.1;
 			osThreadResume(SteerControl_TaskHandle);
-			osDelay(2000);
+			osDelay(10000);
 			SET_SPEED = 0;
 
 			osDelay(3000);
 			osThreadSuspend(SteerControl_TaskHandle);
 			//EmergencyBreak(1000);
-*/
+
 			#if (BTN_TUNEPID == 1)
 			{
 
@@ -526,7 +526,7 @@ void StartButtonTask()
 			/*osDelay(5);
 			osThreadResume(SendRemoteVar_TaskHandle);*/
 
-			SetServo_motor(100);
+			/*SetServo_motor(100);
 			osDelay(1000);
 			SetServo_motor(-100);
 			osDelay(3);
@@ -534,7 +534,7 @@ void StartButtonTask()
 			osDelay(3);
 			SetServo_motor(-500);
 			osDelay(1000);
-			SetServo_motor(0);
+			SetServo_motor(0);*/
 
 			/*string temp = "^#^$^%";
 			struct BT_MSG msg;

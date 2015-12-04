@@ -88,3 +88,4 @@ _ReSharper*/
 # Debug files
 *.dSYM/
 .settings/language.settings.xml
+.settings/language.settings.xml
