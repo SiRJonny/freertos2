@@ -475,7 +475,8 @@ void StartButtonTask()
 		if (wasPressed){
 
 
-
+			float send = 3;
+			BT_send_msg(&send, "speed");
 
 			/*SET_SPEED = 2;
 			osThreadResume(SteerControl_TaskHandle);
@@ -622,9 +623,9 @@ void SendRemoteVarTask()
 				BT_send_msg(&szenzorsor_temp_2[i], "sens2" + std::string(itoa(i,buffer,10)));
 			}
 		}*/
-
-		BT_send_msg(&speed_global, "speed");
-
+		float send = 1;
+		BT_send_msg(&send, "speed");
+/*
 		for(int i = 0; i < 100; i++){
 			if (i<10)
 			{
@@ -643,6 +644,8 @@ void SendRemoteVarTask()
 	    osThreadSuspend(SendRemoteVar_TaskHandle);
 
 		//osDelay(100);
+		 */
+
 	}
 
 }
