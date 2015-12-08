@@ -66,6 +66,8 @@ extern "C"
 #define PID_IGAIN 0
 #define PID_DGAIN -500
 
+float ACC_MAX = 20;		// egy szabályzó periódusban max ennyivel növekedhet a motor szervo jele
+
 
 using namespace std;
 
@@ -482,23 +484,27 @@ void StartButtonTask()
 			SetServo_steering(0);*/
 
 
-			/*SetServo_motor(300);
-			osDelay(5000);
-			SetServo_motor(-300);
-			osDelay(2000);
-			SetServo_motor(0);
-			osDelay(2000);
-			SetServo_motor(50);
+			/*SetServo_motor(90);
 			osDelay(1000);
-			SetServo_motor(0);*/
+			SetServo_motor(-500);
+			osDelay(1000);
+			//SetServo_motor(-600);
+			osDelay(1000);*/
 
-			SET_SPEED = 1.1;
+			SET_SPEED = 4;
+			osThreadResume(SteerControl_TaskHandle);
+			osDelay(3000);
+			SET_SPEED = 0;
+			osDelay(3000);
+			osThreadSuspend(SteerControl_TaskHandle);
+
+			/*SET_SPEED = 1.1;
 			osThreadResume(SteerControl_TaskHandle);
 			osDelay(10000);
 			SET_SPEED = 0;
 
 			osDelay(3000);
-			osThreadSuspend(SteerControl_TaskHandle);
+			osThreadSuspend(SteerControl_TaskHandle);*/
 			//EmergencyBreak(1000);
 
 			#if (BTN_TUNEPID == 1)
@@ -697,6 +703,8 @@ void SteerControlTask()
 	int last_control = 0;	// elõzõ szabályozás értéke
 	float speed_error = 0;
 	float speed_control = 0;
+	float last_speed_control = 0;
+	int break_state = 0;
 
 	bool mybool = true;
 
@@ -747,7 +755,9 @@ void SteerControlTask()
 		{
 			encoderPos = __HAL_TIM_GET_COUNTER(&htim2);
 			speed = ((float)(lastEncoderPos - encoderPos))/(2571.0/20.0); //ez így m/s, ha 20 lukas a tárcsa és 50ms-enként mérünk (másodpercenként 20)
+
 			lastEncoderPos = encoderPos;
+
 
 			//speed_global = speed;
 
@@ -756,10 +766,34 @@ void SteerControlTask()
 			{
 				speed_error = SET_SPEED - speed;
 				speed_control = UpdatePID1(&PIDm, speed_error, speed);
-				SetServo_motor((int)speed_control);
+				// negatív irányt megerõsíteni
+				if(speed_control < 0)
+				{
+					speed_control *= 10;
+				}
+
+
+				if(last_speed_control > 0 && speed_control < 0)
+				{
+					SetServo_motor(0);
+				}
+				else
+				{
+					SetServo_motor( (int)speed_control );
+				}
+
+				/*if(speed_control > 0 && speed_control > last_speed_control + ACC_MAX)
+				{
+					SetServo_motor( (int)(last_speed_control + ACC_MAX) );
+				}
+				else
+				{*/
+					//SetServo_motor( (int)speed_control );
+				//}
+
 			}
 			#endif
-
+			last_speed_control = speed_control;
 			cntr = 0;
 		}
 		cntr++;
@@ -808,9 +842,9 @@ void SteerControlTask()
 		}
 		else
 		{
-			SET_SPEED = 0;
+			/*SET_SPEED = 0;
 			EmergencyBreak(speed*1000);
-			osThreadSuspend(SteerControl_TaskHandle);
+			osThreadSuspend(SteerControl_TaskHandle);*/
 		}
 
 
