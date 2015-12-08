@@ -67,7 +67,7 @@ extern "C"
 #define PID_DGAIN -500
 
 float ACC_MAX = 20;		// egy szabályzó periódusban max ennyivel növekedhet a motor szervo jele
-
+int NO_LINE_CYCLES = 50;
 
 using namespace std;
 
@@ -704,11 +704,10 @@ void SteerControlTask()
 	float speed_error = 0;
 	float speed_control = 0;
 	float last_speed_control = 0;
-	int break_state = 0;
 
-	bool mybool = true;
 
 	struct LineState Lines;
+	int no_line_cycle_count = 0;
 
 	// állapot visszacsatolás paraméterei
 	float A = 0.4;	// sebesség függés	// d5% = v*A + B
@@ -783,9 +782,7 @@ void SteerControlTask()
 					speed_control = last_speed_control + ACC_MAX; 		// gyorsulás korlát
 				}
 
-
 				SetServo_motor( (int)speed_control );
-
 
 			}
 			#endif
@@ -810,7 +807,7 @@ void SteerControlTask()
 		linePosM = (activeLine-15.5) * 5.9 / 1000; // pozíció, méterben, középen 0
 
 		// vonalkövetés szabályozó
-		if(Lines.numLines1 != -1)	// ha látunk vonalat
+		if(Lines.numLines1 != -1 || Lines.numLines2 != -1)	// ha látunk vonalat
 		{
 			#if  ( SERVO_CONTROL_PID == 1 )
 			{
@@ -835,12 +832,22 @@ void SteerControlTask()
 				SetServo_steering(control);
 			}
 			#endif
+
+			no_line_cycle_count = 0; 	// láttunk vonalat
 		}
 		else
 		{
-			/*SET_SPEED = 0;
-			EmergencyBreak(speed*1000);
-			osThreadSuspend(SteerControl_TaskHandle);*/
+			no_line_cycle_count++;
+			if (no_line_cycle_count > NO_LINE_CYCLES)
+			{
+				SET_SPEED = 0;
+				if(speed > 0.3)
+				{
+					EmergencyBreak(speed*1000);
+				}
+				osThreadSuspend(SteerControl_TaskHandle);
+			}
+
 		}
 
 
