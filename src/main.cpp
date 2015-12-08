@@ -766,30 +766,26 @@ void SteerControlTask()
 			{
 				speed_error = SET_SPEED - speed;
 				speed_control = UpdatePID1(&PIDm, speed_error, speed);
+
 				// negatív irányt megerõsíteni
 				if(speed_control < 0)
 				{
 					speed_control *= 10;
 				}
 
-
+				// fékezés logika és gyorsulás logika
 				if(last_speed_control > 0 && speed_control < 0)
 				{
-					SetServo_motor(0);
+					speed_control = 0;
 				}
-				else
+				else if(speed_control > 0 && speed_control > last_speed_control + ACC_MAX)
 				{
-					SetServo_motor( (int)speed_control );
+					speed_control = last_speed_control + ACC_MAX; 		// gyorsulás korlát
 				}
 
-				/*if(speed_control > 0 && speed_control > last_speed_control + ACC_MAX)
-				{
-					SetServo_motor( (int)(last_speed_control + ACC_MAX) );
-				}
-				else
-				{*/
-					//SetServo_motor( (int)speed_control );
-				//}
+
+				SetServo_motor( (int)speed_control );
+
 
 			}
 			#endif
