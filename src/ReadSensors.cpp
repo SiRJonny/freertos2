@@ -95,6 +95,7 @@ void ReadSensors()
 		szenzorsor_2[i+8] = ADC1_BUFFER[3];		// PA4 -> bal hátsó
 		szenzorsor_2[i+16+8] = ADC1_BUFFER[2];	// jobb hátsó
 
+		//osDelay(500);
 
 
 

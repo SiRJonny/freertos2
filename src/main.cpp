@@ -58,8 +58,8 @@ extern "C"
 
 #define BTN_TUNEPID 0
 
-#define SERVO_CONTROL_STATESPACE 1
-#define SERVO_CONTROL_PID 0
+#define SERVO_CONTROL_STATESPACE 0
+#define SERVO_CONTROL_PID 1
 
 #define STATESPACE_A 0.5
 #define STATESPACE_B 0.5
@@ -70,8 +70,8 @@ extern "C"
 float ACC_MAX = 50;		// egy szabályzó periódusban max ennyivel növekedhet a motor szervo jele
 int NO_LINE_CYCLES = 0;
 
-float SLOW = 2;
-float FAST = 3;
+float SLOW = 0.8;
+float FAST = 2;
 
 using namespace std;
 
@@ -141,7 +141,7 @@ bool TunePID = false;
 char buffer[10];	//bt msg hez
 int timer = 0; // idõméréshez
 
-
+float activeLine = 0;  // középsõ vonal kiválasztása
 
 
 /* USER CODE END PV */
@@ -492,9 +492,12 @@ void StartButtonTask()
 			/*SetServo_steering(70);
 			osDelay(1000);
 			SetServo_steering(0);*/
-
+			SET_SPEED = 0.8;
+			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14); // piros led, debug
 			osThreadResume(SteerControl_TaskHandle);
+			osThreadResume(SendRemoteVar_TaskHandle);
 			osDelay(20000);
+			SET_SPEED = 0.0;
 			state_struct.state = -1;
 			osDelay(2000);
 			osThreadSuspend(SteerControl_TaskHandle);
@@ -565,7 +568,6 @@ void StartButtonTask()
 			HAL_UART_Transmit_IT(&huart3, (uint8_t*) msg.data, msg.size);*/
 
 
-			//HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14); // piros led, debug
 
 			wasPressed = 0;
 		}
@@ -605,6 +607,7 @@ void BTReceiveTask()
 {
 	uint8_t msg[10];
 	int * int_ptr;
+
 	int data;
 	char * char_ptr = (char*)&data;
 
@@ -626,9 +629,16 @@ void BTReceiveTask()
 				osDelay(2000);
 				osThreadSuspend(SteerControl_TaskHandle);
 				break;
-			case 1:	SetServo_steering(0);
+			case 1:
+
+				PIDs.dGain = *int_ptr;
+
+				BT_send_msg(&PIDs.dGain, "PIDd");
 				break;
-			case 2:	SetServo_steering(192);
+			case 2:
+				PIDs.pGain = *int_ptr;
+
+				BT_send_msg(&PIDs.pGain, "PIDp");
 				break;
 			case 3:	SetServo_steering(-192);
 				break;
@@ -665,7 +675,7 @@ void SendRemoteVarTask()
 		/*BT_send_msg(&myfloat, "myfloat");
 		myfloat +=1;*/
 
-		/*for(int i = 0; i<32; i++)
+		for(int i = 0; i<32; i++)
 		{
 			szenzorsor_temp_1[i] = szenzorsor_1[i];
 			szenzorsor_temp_2[i] = szenzorsor_2[i];
@@ -681,10 +691,12 @@ void SendRemoteVarTask()
 				BT_send_msg(&szenzorsor_temp_1[i], "sens1" + std::string(itoa(i,buffer,10)));
 				BT_send_msg(&szenzorsor_temp_2[i], "sens2" + std::string(itoa(i,buffer,10)));
 			}
-		}*/
+		}
+
 
 		BT_send_msg(&speed_global, "speed");
 
+		/*
 		for(int i = 0; i < 100; i++){
 			if (i<10)
 			{
@@ -697,12 +709,12 @@ void SendRemoteVarTask()
 				BT_send_msg(&controlArray[i], "diag2" + std::string(itoa(i,buffer,10)));
 			}
 		}
-
+*/
 		//osThreadSuspend(SendRemoteVar_TaskHandle); // minden elkÃ¼ldve, pihenÃ¼nk (osThreadResume-ra megint elkÃ¼ld mindent)
 	    HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
-	    osThreadSuspend(SendRemoteVar_TaskHandle);
+	    //osThreadSuspend(SendRemoteVar_TaskHandle);
 
-		//osDelay(100);
+		osDelay(150);
 	}
 
 }
@@ -740,8 +752,8 @@ void SteerControlTask()
 	PIDs.dState = 0;
 
 	// motor PI szabályzó struktúra
-	PIDm.pGain = 90;		// 100-> 5m/s hibánál lesz 500 a jel (max)
-	PIDm.iGain = 1;			// pGain/100?
+	PIDm.pGain = 200;		// 100-> 5m/s hibánál lesz 500 a jel (max)
+	PIDm.iGain = 2;			// pGain/100?
 	PIDm.dGain = 0;
 	PIDm.iMax = 500;
 	PIDm.iMin = -500;
@@ -754,7 +766,7 @@ void SteerControlTask()
 	int tune_cntr = 0;
 	char buffer[10];
 
-
+	float error = 0;
 
 
 	osThreadSuspend(SteerControl_TaskHandle);
@@ -772,7 +784,7 @@ void SteerControlTask()
 			encoderPos = __HAL_TIM_GET_COUNTER(&htim2);
 			speed = ((float)(lastEncoderPos - encoderPos))/(2571.0/20.0); //ez így m/s, ha 20 lukas a tárcsa és 50ms-enként mérünk (másodpercenként 20)
 			lastEncoderPos = encoderPos;
-
+			speed_global = speed;
 
 			//BT_send_msg(&encoderPos,"e:" + std::string(itoa(encoderPos,buffer,10)) + "\n");
 
@@ -782,15 +794,15 @@ void SteerControlTask()
 			// szenzor adatok feldolgozása
 			Lines = getLinePos(20);
 			angle = (calculateAngle(Lines.pos1[0],Lines.pos2[0]));
-			float activeLine;  // középsõ vonal kiválasztása
+
 			if (Lines.numLines1 == 3) {
 				activeLine =Lines.pos1[1];
 			} else {
 				activeLine =Lines.pos1[0];
 			}
 			linePosM = (activeLine-15.5) * 5.9 / 1000; // pozíció, méterben, középen 0
-
-			StateMachine(&state_struct, &Lines, encoderPos);
+			BT_send_msg(&activeLine, "speed");
+			//StateMachine(&state_struct, &Lines, encoderPos);
 
 			// motor szabályozó
 			#if ( MOTOR_CONTROL_ENABLED == 1)
@@ -799,10 +811,10 @@ void SteerControlTask()
 				speed_control = UpdatePID1(&PIDm, speed_error, speed);
 
 				// negatív irányt megerõsíteni	// motor bekötéstõl függ!!!
-				/*if(speed_control < 0)
+				if(speed_control < 0)
 				{
-					speed_control *= 10;
-				}*/
+					//speed_control *= 0.25;
+				}
 
 				// fékezés logika és gyorsulás logika
 				if(last_speed_control > 0 && speed_control < 0)
@@ -835,7 +847,7 @@ void SteerControlTask()
 				control = UpdatePID1(&PIDs,error,Lines.pos1[0]);
 				if(speed > 2)
 				{
-					control /= (speed/2.0);
+					//control /= (speed/2.0);
 				}
 				SetServo_steering((int)control); // PID-hez
 			}
