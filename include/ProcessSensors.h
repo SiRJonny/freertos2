@@ -14,16 +14,16 @@
 #include <string>
 #include <stdlib.h>
 
-struct LineState
+typedef struct
 {
 	int numLines1, numLines2;		// vonalak száma
 	float pos1[3];		// vonalak pozíciója
 	float pos2[3];
-};
+}LineState;
 
 extern void BT_send_msg(int*msg,std::string nev);
 
-struct LineState getLinePos(int treshold);
+LineState getLinePos(int treshold);
 float calculateAngle(float pos1, float pos2);
 float calculateAngle(void);
 int calculateAverage(uint32_t * data, int datacount = 32);

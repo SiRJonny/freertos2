@@ -18,11 +18,11 @@ extern uint32_t szenzorsor_2[32];
 
 float refined_max;
 float refined_max2;
-struct LineState Lines; // TODO: angle nem, másik sor pos igen
+LineState Lines; // TODO: angle nem, másik sor pos igen
 
 
 // vonal pozíció, szám, szög számítása, treshold = hány %-al kisebb csúcs érvényes még
-struct LineState getLinePos(int treshold)
+LineState getLinePos(int treshold)
 {
 	//__HAL_TIM_SET_COUNTER(&htim5,0);
 
