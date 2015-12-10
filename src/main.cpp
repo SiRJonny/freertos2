@@ -169,6 +169,8 @@ void SetServo_motor(int pos); // -SERVO_RANGE_MOTOR +SERVO_RANGE_MOTOR
 void SetServo_steering(int pos); // -SERVO_RANGE_STEERING +SERVO_RANGE_STEERING
 void SetServo_steering(float angle);  // kormányzás, szöggel
 
+void sendPosArrayControlArray();
+void sendSensors();
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
@@ -606,37 +608,12 @@ void SendRemoteVarTask()
 		/*BT_send_msg(&myfloat, "myfloat");
 		myfloat +=1;*/
 
-		/*for(int i = 0; i<32; i++)
-		{
-			szenzorsor_temp_1[i] = szenzorsor_1[i];
-			szenzorsor_temp_2[i] = szenzorsor_2[i];
-		}
-
-		for(int i = 0; i<32; i++)
-		{
-			if(i<10)
-			{
-				BT_send_msg(&szenzorsor_temp_1[i], "sens10" + std::string(itoa(i,buffer,10)));
-				BT_send_msg(&szenzorsor_temp_2[i], "sens20" + std::string(itoa(i,buffer,10)));
-			}else{
-				BT_send_msg(&szenzorsor_temp_1[i], "sens1" + std::string(itoa(i,buffer,10)));
-				BT_send_msg(&szenzorsor_temp_2[i], "sens2" + std::string(itoa(i,buffer,10)));
-			}
-		}*/
+		sendSensors();
 		float send = 1;
 		BT_send_msg(&send, "speed");
+		sendPosArrayControlArray();
 /*
-		for(int i = 0; i < 100; i++){
-			if (i<10)
-			{
-				BT_send_msg(&posArray[i], "diag10" + std::string(itoa(i,buffer,10)));
-				BT_send_msg(&controlArray[i], "diag20" + std::string(itoa(i,buffer,10)));
-			}
-			else
-			{
-				BT_send_msg(&posArray[i], "diag1" + std::string(itoa(i,buffer,10)));
-				BT_send_msg(&controlArray[i], "diag2" + std::string(itoa(i,buffer,10)));
-			}
+
 		}
 
 		//osThreadSuspend(SendRemoteVar_TaskHandle); // minden elkÃ¼ldve, pihenÃ¼nk (osThreadResume-ra megint elkÃ¼ld mindent)
@@ -645,9 +622,42 @@ void SendRemoteVarTask()
 
 		//osDelay(100);
 		 */
-
 	}
+}
 
+void sendSensors() {
+	for(int i = 0; i<32; i++)
+			{
+				szenzorsor_temp_1[i] = szenzorsor_1[i];
+				szenzorsor_temp_2[i] = szenzorsor_2[i];
+			}
+
+			for(int i = 0; i<32; i++)
+			{
+				if(i<10)
+				{
+					BT_send_msg(&szenzorsor_temp_1[i], "sens10" + std::string(itoa(i,buffer,10)));
+					BT_send_msg(&szenzorsor_temp_2[i], "sens20" + std::string(itoa(i,buffer,10)));
+				}else{
+					BT_send_msg(&szenzorsor_temp_1[i], "sens1" + std::string(itoa(i,buffer,10)));
+					BT_send_msg(&szenzorsor_temp_2[i], "sens2" + std::string(itoa(i,buffer,10)));
+				}
+			}
+}
+
+void sendPosArrayControlArray() {
+	for(int i = 0; i < 100; i++){
+				if (i<10)
+				{
+					BT_send_msg(&posArray[i], "diag10" + std::string(itoa(i,buffer,10)));
+					BT_send_msg(&controlArray[i], "diag20" + std::string(itoa(i,buffer,10)));
+				}
+				else
+				{
+					BT_send_msg(&posArray[i], "diag1" + std::string(itoa(i,buffer,10)));
+					BT_send_msg(&controlArray[i], "diag2" + std::string(itoa(i,buffer,10)));
+				}
+	}
 }
 
 // szenzorsorok beolvasása, ha kész, szüneteli magát
