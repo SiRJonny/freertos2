@@ -14,6 +14,7 @@
 #include <stdlib.h>
 
 void ReadSensors();
+void ReadSensorsDummy();
 void ADC1_read();
 void ControlTaskDelay(int us);
 void EnableDrivers();

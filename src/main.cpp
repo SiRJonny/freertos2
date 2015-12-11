@@ -72,10 +72,22 @@ int NO_LINE_CYCLES = 0;
 
 float SLOW = 1.2;
 float FAST = 1.5;
+float STOP = 0.0;
 
 using namespace std;
 
+float TEST_SPEED = 0;
+float TEST_DELAY = 2000;
 
+float speed = 0;
+float linePosM;		// vonalpozíció méterben
+float angle = 0;
+float control = 0;
+float speed_error = 0;
+float speed_control = 0;
+float last_speed_control = 0;
+float last_active_line_pos1 = 15.5;
+float last_active_line_pos2 = 15.5;
 
 /* USER CODE END Includes */
 
@@ -178,6 +190,10 @@ void SetServo_motor(int pos); // -SERVO_RANGE_MOTOR +SERVO_RANGE_MOTOR
 void SetServo_steering(int pos); // -SERVO_RANGE_STEERING +SERVO_RANGE_STEERING
 void SetServo_steering(float angle);  // kormányzás, szöggel
 void getActiveLinePos(LineState * Lines, float *last_pos1, float *last_pos2, float * active1, float * active2);
+
+void sendSensors();
+void sendTuning();
+void sendDebugVars();
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
@@ -676,41 +692,10 @@ void SendRemoteVarTask()
 		/*BT_send_msg(&myfloat, "myfloat");
 		myfloat +=1;*/
 
-		for(int i = 0; i<32; i++)
-		{
-			szenzorsor_temp_1[i] = szenzorsor_1[i];
-			szenzorsor_temp_2[i] = szenzorsor_2[i];
-		}
+		sendSensors();
 
-		for(int i = 0; i<32; i++)
-		{
-			if(i<10)
-			{
-				BT_send_msg(&szenzorsor_temp_1[i], "sens10" + std::string(itoa(i,buffer,10)));
-				BT_send_msg(&szenzorsor_temp_2[i], "sens20" + std::string(itoa(i,buffer,10)));
-			}else{
-				BT_send_msg(&szenzorsor_temp_1[i], "sens1" + std::string(itoa(i,buffer,10)));
-				BT_send_msg(&szenzorsor_temp_2[i], "sens2" + std::string(itoa(i,buffer,10)));
-			}
-		}
+		//sendTuning();
 
-
-		BT_send_msg(&speed_global, "speed");
-
-		/*
-		for(int i = 0; i < 100; i++){
-			if (i<10)
-			{
-				BT_send_msg(&posArray[i], "diag10" + std::string(itoa(i,buffer,10)));
-				BT_send_msg(&controlArray[i], "diag20" + std::string(itoa(i,buffer,10)));
-			}
-			else
-			{
-				BT_send_msg(&posArray[i], "diag1" + std::string(itoa(i,buffer,10)));
-				BT_send_msg(&controlArray[i], "diag2" + std::string(itoa(i,buffer,10)));
-			}
-		}
-*/
 		//osThreadSuspend(SendRemoteVar_TaskHandle); // minden elkÃ¼ldve, pihenÃ¼nk (osThreadResume-ra megint elkÃ¼ld mindent)
 	    HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
 	    //osThreadSuspend(SendRemoteVar_TaskHandle);
@@ -720,19 +705,74 @@ void SendRemoteVarTask()
 
 }
 
+void sendSensors() {
+
+	for(int i = 0; i<32; i++)
+	{
+		szenzorsor_temp_1[i] = szenzorsor_1[i];
+		szenzorsor_temp_2[i] = szenzorsor_2[i];
+	}
+
+	for(int i = 0; i<32; i++)
+	{
+		if(i<10)
+		{
+			BT_send_msg(&szenzorsor_temp_1[i], "sens10" + std::string(itoa(i,buffer,10)));
+			BT_send_msg(&szenzorsor_temp_2[i], "sens20" + std::string(itoa(i,buffer,10)));
+		}else{
+			BT_send_msg(&szenzorsor_temp_1[i], "sens1" + std::string(itoa(i,buffer,10)));
+			BT_send_msg(&szenzorsor_temp_2[i], "sens2" + std::string(itoa(i,buffer,10)));
+		}
+	}
+
+	BT_send_msg(&speed_global, "speed");
+}
+
+void sendTuning() {
+	for(int i = 0; i < 100; i++) {
+		if (i<10)
+		{
+			BT_send_msg(&posArray[i], "diag10" + std::string(itoa(i,buffer,10)));
+			BT_send_msg(&controlArray[i], "diag20" + std::string(itoa(i,buffer,10)));
+		}
+		else
+		{
+			BT_send_msg(&posArray[i], "diag1" + std::string(itoa(i,buffer,10)));
+			BT_send_msg(&controlArray[i], "diag2" + std::string(itoa(i,buffer,10)));
+		}
+	}
+}
+
+void sendDebugVars() {
+	BT_send_msg(&speed_global, "speed");
+	BT_send_msg(&linePosM, "linePosM");
+
+	BT_send_msg(&angle, "angle");
+	BT_send_msg(&control, "control");
+	BT_send_msg(&speed_error, "speed_error");
+	BT_send_msg(&speed_control, "speed_control");
+	BT_send_msg(&last_speed_control, "lilast_speed_controlnePosM");
+	BT_send_msg(&last_active_line_pos1, "last_line_pos1");
+	BT_send_msg(&last_active_line_pos2, "last_line_pos2");
+}
+
+void sendPIDs() {
+	BT_send_msg(&PIDs.pGain, "PIDs_p");
+	BT_send_msg(&PIDs.dGain, "PIDs_s");
+}
+
+void sendPIDm() {
+	BT_send_msg(&PIDm.pGain, "PIDm_p");
+	BT_send_msg(&PIDm.dGain, "PIDm_s");
+}
+
+
 // szenzorsorok beolvasása, ha kész, szüneteli magát
 void SteerControlTask()
 {
 	int encoderPos, lastEncoderPos = 1000000000;	// encoder számláló innen indul, hogy semerre ne legyen túlcsordulás
-	float speed = 0;
-	float linePosM;		// vonalpozíció méterben
-	float angle = 0;
-	float control = 0;
-	float speed_error = 0;
-	float speed_control = 0;
-	float last_speed_control = 0;
-	float last_active_line_pos1 = 15.5;
-	float last_active_line_pos2 = 15.5;
+
+
 
 	LineState Lines;
 	int no_line_cycle_count = 0;
@@ -789,7 +829,6 @@ void SteerControlTask()
 			lastEncoderPos = encoderPos;
 			speed_global = speed;
 
-			//BT_send_msg(&activeLine, "speed");
 
 			// motor szabályozó
 			#if ( MOTOR_CONTROL_ENABLED == 1)
