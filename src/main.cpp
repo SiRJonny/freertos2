@@ -156,6 +156,8 @@ int timer = 0; // idõméréshez
 float activeLine1 = 0;  // középsõ vonal kiválasztása
 float activeLine2 = 0;
 
+int ONE = 1;
+int stopped = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -194,6 +196,8 @@ void getActiveLinePos(LineState * Lines, float *last_pos1, float *last_pos2, flo
 void sendSensors();
 void sendTuning();
 void sendDebugVars();
+void sendStateData();
+
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
@@ -642,7 +646,9 @@ void BTReceiveTask()
 		switch(msg[0])
 		{
 			case 0:
+
 				SET_SPEED = 0;
+				stopped = 1;
 				osDelay(2000);
 				osThreadSuspend(SteerControl_TaskHandle);
 				break;
@@ -657,13 +663,14 @@ void BTReceiveTask()
 
 				BT_send_msg(&PIDs.pGain, "PIDp");
 				break;
-			case 3:	SetServo_steering(-192);
+			case 3:
+				SET_SPEED = SLOW;
 				break;
 			case 4:
-				SetServo_steering(*int_ptr);
+				SET_SPEED = FAST;
 				break;
-			case 5:	SetServo_steering(100);
-					//TunePID = true;
+			case 5:
+
 				break;
 			case 6: SetServo_motor(0);
 				break;
@@ -683,17 +690,22 @@ void SendRemoteVarTask()
 
 	// minden remote vÃ¡ltozÃ³hez kÃ¼len kellenek ezek
 	osThreadSuspend(SendRemoteVar_TaskHandle);
-	float myfloat = 123.456;
+	float myfloat = 1;
 	int myint = 1;
 
 	for(;;)
 	{
 
-		/*BT_send_msg(&myfloat, "myfloat");
-		myfloat +=1;*/
+		if (!stopped) {
+			BT_send_msg(&myfloat, "myfloat");
+			myfloat +=1;
+		}
+
+		BT_send_msg(&stopped, "stopped");
 
 		sendSensors();
-
+		sendDebugVars();
+		sendStateData();
 		//sendTuning();
 
 		//osThreadSuspend(SendRemoteVar_TaskHandle); // minden elkÃ¼ldve, pihenÃ¼nk (osThreadResume-ra megint elkÃ¼ld mindent)
@@ -745,15 +757,25 @@ void sendTuning() {
 
 void sendDebugVars() {
 	BT_send_msg(&speed_global, "speed");
-	BT_send_msg(&linePosM, "linePosM");
+	BT_send_msg(&SET_SPEED, "SET_SPEED");
+	//BT_send_msg(&linePosM, "linePosM");
+
+	BT_send_msg(&activeLine1, "actL1");
+	BT_send_msg(&activeLine2, "actL2");
 
 	BT_send_msg(&angle, "angle");
 	BT_send_msg(&control, "control");
-	BT_send_msg(&speed_error, "speed_error");
-	BT_send_msg(&speed_control, "speed_control");
-	BT_send_msg(&last_speed_control, "lilast_speed_controlnePosM");
-	BT_send_msg(&last_active_line_pos1, "last_line_pos1");
-	BT_send_msg(&last_active_line_pos2, "last_line_pos2");
+	//BT_send_msg(&speed_error, "speed_error");
+	//BT_send_msg(&speed_control, "speed_control");
+	//BT_send_msg(&last_speed_control, "lilast_speed_controlnePosM");
+	BT_send_msg(&last_active_line_pos1, "last_pos1");
+	BT_send_msg(&last_active_line_pos2, "last_pos2");
+}
+
+void sendStateData() {
+	BT_send_msg(&state_struct.state, "state");
+	BT_send_msg(&state_struct.nextState, "nextState");
+
 }
 
 void sendPIDs() {
@@ -770,7 +792,8 @@ void sendPIDm() {
 // szenzorsorok beolvasása, ha kész, szüneteli magát
 void SteerControlTask()
 {
-	int encoderPos, lastEncoderPos = 1000000000;	// encoder számláló innen indul, hogy semerre ne legyen túlcsordulás
+	int encoderPos = 1000000000;
+	int lastEncoderPos = 1000000000;	// encoder számláló innen indul, hogy semerre ne legyen túlcsordulás
 
 
 
