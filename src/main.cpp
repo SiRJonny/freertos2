@@ -70,7 +70,7 @@ extern "C"
 float ACC_MAX = 50;		// egy szabályzó periódusban max ennyivel növekedhet a motor szervo jele
 int NO_LINE_CYCLES = 0;
 
-float SLOW = 0.8;
+float SLOW = 1.2;
 float FAST = 1.5;
 
 using namespace std;
@@ -492,14 +492,15 @@ void StartButtonTask()
 			/*SetServo_steering(70);
 			osDelay(1000);
 			SetServo_steering(0);*/
-			SET_SPEED = 0.8;
+			//SET_SPEED = 1.2;
 			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14); // piros led, debug
 			osThreadResume(SteerControl_TaskHandle);
-			//osThreadResume(SendRemoteVar_TaskHandle);
-			osDelay(10000);
-			SET_SPEED = 0.0;
+			osThreadResume(SendRemoteVar_TaskHandle);
+			osDelay(20000);
+			//SET_SPEED = 0.0;
 			state_struct.state = -1;
 			osDelay(2000);
+			SetServo_motor(0);
 			osThreadSuspend(SteerControl_TaskHandle);
 
 
@@ -694,7 +695,7 @@ void SendRemoteVarTask()
 		}
 
 
-		//BT_send_msg(&speed_global, "speed");
+		BT_send_msg(&speed_global, "speed");
 
 		/*
 		for(int i = 0; i < 100; i++){
@@ -753,7 +754,7 @@ void SteerControlTask()
 	PIDs.dState = 0;
 
 	// motor PI szabályzó struktúra
-	PIDm.pGain = 200;		// 100-> 5m/s hibánál lesz 500 a jel (max)
+	PIDm.pGain = 300;		// 100-> 5m/s hibánál lesz 500 a jel (max)
 	PIDm.iGain = 2;			// pGain/100?
 	PIDm.dGain = 0;
 	PIDm.iMax = 500;
@@ -784,6 +785,7 @@ void SteerControlTask()
 			// sebesség mérés
 			encoderPos = __HAL_TIM_GET_COUNTER(&htim2);
 			speed = ((float)(lastEncoderPos - encoderPos))/(2571.0/20.0); //ez így m/s, ha 20 lukas a tárcsa és 50ms-enként mérünk (másodpercenként 20)
+
 			lastEncoderPos = encoderPos;
 			speed_global = speed;
 
@@ -798,7 +800,7 @@ void SteerControlTask()
 				// negatív irányt megerõsíteni	// motor bekötéstõl függ!!!
 				if(speed_control < 0)
 				{
-					//speed_control *= 0.25;
+					speed_control *= 0.25;
 				}
 
 				// fékezés logika és gyorsulás logika
@@ -836,7 +838,7 @@ void SteerControlTask()
 		linePosM = (activeLine1-15.5) * 5.9 / 1000; // pozíció, méterben, középen 0
 
 		//////////// állapotgép   /////////////
-		//StateMachine(&state_struct, &Lines, encoderPos);
+		StateMachine(&state_struct, &Lines, encoderPos);
 
 		// vonalkövetés szabályozó
 		if(Lines.numLines1 != -1)	// ha látunk vonalat
@@ -876,8 +878,10 @@ void SteerControlTask()
 			no_line_cycle_count++;
 			if (no_line_cycle_count > NO_LINE_CYCLES)
 			{
-				SET_SPEED = 0;
+				//SET_SPEED = 0;
 				state_struct.state = -1;
+				SetServo_motor(0);
+				osThreadSuspend(SteerControl_TaskHandle);
 			}
 
 		}

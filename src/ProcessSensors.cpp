@@ -203,7 +203,7 @@ int find3peaks(uint32_t * data, int * peaks, int treshold)
 		swap(&peakValue[1], &peakValue[2]);
 	}
 
-	if(peakMaxValue > calculateAverage(data)*NO_LINE_MULTIPLIER && peakMaxValue > 50) // ha a legnagyobb csúcs nincs az átlag ennyiszerese -> nincs vonal
+	if(peakMaxValue > calculateAverage(data)*NO_LINE_MULTIPLIER && peakMaxValue > 130) // ha a legnagyobb csúcs nincs az átlag ennyiszerese -> nincs vonal
 	{
 		return numPeaks;
 	}else{
