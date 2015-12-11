@@ -49,27 +49,45 @@ extern "C"
 #include "ReadSensors.h"
 #include "ProcessSensors.h"
 #include "Controllers.h"
+#include "StateMachine.h"
 
-#define SERVO_RANGE_MOTOR 500	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a max kiadott jel
-#define SERVO_RANGE_STEERING 240	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a max kiadott jel
-#define MOTOR_CONTROL_ENABLED 0
+#define SERVO_RANGE_MOTOR 600	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a max kiadott jel
+#define SERVO_RANGE_STEERING 300	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a max kiadott jel
+#define MOTOR_CONTROL_ENABLED 1
 #define SERVO_CONTROL_ENABLED 1
 
 #define BTN_TUNEPID 0
 
-#define SERVO_CONTROL_STATESPACE 0
-#define SERVO_CONTROL_PID 1
+#define SERVO_CONTROL_STATESPACE 1
+#define SERVO_CONTROL_PID 0
 
 #define STATESPACE_A 0.5
 #define STATESPACE_B 0.5
 #define PID_PGAIN 20
 #define PID_IGAIN 0
-#define PID_DGAIN -400
+#define PID_DGAIN -500
 
+float ACC_MAX = 50;		// egy szabályzó periódusban max ennyivel növekedhet a motor szervo jele
+int NO_LINE_CYCLES = 0;
+
+float SLOW = 0.8;
+float FAST = 1.5;
+float STOP = 0.0;
 
 using namespace std;
 
+float TEST_SPEED = 0;
+float TEST_DELAY = 2000;
 
+float speed = 0;
+float linePosM;		// vonalpozíció méterben
+float angle = 0;
+float control = 0;
+float speed_error = 0;
+float speed_control = 0;
+float last_speed_control = 0;
+float last_active_line_pos1 = 15.5;
+float last_active_line_pos2 = 15.5;
 
 /* USER CODE END Includes */
 
@@ -125,15 +143,18 @@ float controlArray[100];
 
 PID_struct PIDs;
 PID_struct PIDm;
+state_machine_struct state_struct;
 
 float SET_SPEED = 0;
 float speed_global = 0;
+int activeLineNum = 0;
+
 bool TunePID = false;
 char buffer[10];	//bt msg hez
 int timer = 0; // idõméréshez
 
-
-
+float activeLine1 = 0;  // középsõ vonal kiválasztása
+float activeLine2 = 0;
 
 /* USER CODE END PV */
 
@@ -168,9 +189,11 @@ void BT_send_msg(int * msg, string nev);
 void SetServo_motor(int pos); // -SERVO_RANGE_MOTOR +SERVO_RANGE_MOTOR
 void SetServo_steering(int pos); // -SERVO_RANGE_STEERING +SERVO_RANGE_STEERING
 void SetServo_steering(float angle);  // kormányzás, szöggel
+void getActiveLinePos(LineState * Lines, float *last_pos1, float *last_pos2, float * active1, float * active2);
 
-void sendPosArrayControlArray();
 void sendSensors();
+void sendTuning();
+void sendDebugVars();
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
@@ -380,16 +403,21 @@ void SetServo_motor(int pos)
 	if(pos < -SERVO_RANGE_MOTOR){pos = -SERVO_RANGE_MOTOR;}
 
 	// 1500 = 1,5ms, ez a 0 pozíció
-	__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,1500+pos);
+	__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,1500-pos);
 }
 
+// TODO: sebességmérés külön, és rendes emergency break
 void EmergencyBreak(int time)
 {
+	state_struct.state = -1;
+	SET_SPEED = 0;
+	if(time > 2000){time = 2000;}
+
 	SetServo_motor(-100);
 	osDelay(5);
 	SetServo_motor(0);
 	osDelay(5);
-	SetServo_motor(-300);
+	SetServo_motor(-500);
 	osDelay(time);
 	SetServo_motor(0);
 }
@@ -437,6 +465,9 @@ void SetServo_steering(float angle_rad)
 	__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2, 1500 + (int)pos - 10);
 }
 
+
+
+
 /* StartDefaultTask function */
 // default tastk, csak egy villogÃ³ led
 void StartDefaultTask()
@@ -463,8 +494,6 @@ void StartDefaultTask()
 void StartButtonTask()
 {
 	uint8_t wasPressed = 0;
-	int adc_result[4];
-
 
 
 	for (;;){
@@ -476,22 +505,63 @@ void StartButtonTask()
 
 		if (wasPressed){
 
+			/*SetServo_steering(70);
+			osDelay(1000);
+			SetServo_steering(0);*/
+			SET_SPEED = TEST_SPEED;
+			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14); // piros led, debug
+			osThreadResume(SteerControl_TaskHandle);
+			//osThreadResume(SendRemoteVar_TaskHandle);
+			osDelay(TEST_DELAY);
+			SET_SPEED = STOP;
+			state_struct.state = -1;
+			osDelay(2000);
+			osThreadSuspend(SteerControl_TaskHandle);
 
-			float send = 3;
-			BT_send_msg(&send, "speed");
+
+			/*SetServo_motor(90);
+			osDelay(1000);
+			SetServo_motor(-500);
+			osDelay(1000);
+			//SetServo_motor(-600);
+			osDelay(1000);*/
+
+			/*SET_SPEED = 4;
+			osThreadResume(SteerControl_TaskHandle);
+			osDelay(3000);
+			SET_SPEED = 0;
+			osDelay(3000);
+			osThreadSuspend(SteerControl_TaskHandle);*/
 
 			/*SET_SPEED = 2;
 			osThreadResume(SteerControl_TaskHandle);
-			osDelay(2000);
+			osDelay(1000);
+			SET_SPEED = 0;
+			osDelay(3000);
 			osThreadSuspend(SteerControl_TaskHandle);*/
+
 
 			#if (BTN_TUNEPID == 1)
 			{
+
 				osThreadResume(SteerControl_TaskHandle);
-				osDelay(100);
+				osDelay(200);
+				SET_SPEED = 2;
 				TunePID = true;
 			}
 			#endif
+
+			/*
+
+			SetServo_steering(240);
+			osDelay(2000);
+			SetServo_steering(260);
+			osDelay(2000);
+			SetServo_steering(280);
+			osDelay(2000);
+			SetServo_steering(300);
+*/
+
 
 			/*osDelay(5);
 			osThreadResume(SendRemoteVar_TaskHandle);*/
@@ -514,7 +584,6 @@ void StartButtonTask()
 			HAL_UART_Transmit_IT(&huart3, (uint8_t*) msg.data, msg.size);*/
 
 
-			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14); // piros led, debug
 
 			wasPressed = 0;
 		}
@@ -554,6 +623,7 @@ void BTReceiveTask()
 {
 	uint8_t msg[10];
 	int * int_ptr;
+
 	int data;
 	char * char_ptr = (char*)&data;
 
@@ -566,13 +636,25 @@ void BTReceiveTask()
 		HAL_UART_Receive_IT(&huart3,msg,(uint16_t)5);
 
 		osSignalWait(0x0001,osWaitForever);
-
+		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
 		// TODO: változó fogadásnál mi legyen?
 		switch(msg[0])
 		{
-			case 1:	SetServo_steering(0);
+			case 0:
+				SET_SPEED = 0;
+				osDelay(2000);
+				osThreadSuspend(SteerControl_TaskHandle);
 				break;
-			case 2:	SetServo_steering(192);
+			case 1:
+
+				PIDs.dGain = *int_ptr;
+
+				BT_send_msg(&PIDs.dGain, "PIDd");
+				break;
+			case 2:
+				PIDs.pGain = *int_ptr;
+
+				BT_send_msg(&PIDs.pGain, "PIDp");
 				break;
 			case 3:	SetServo_steering(-192);
 				break;
@@ -588,6 +670,7 @@ void BTReceiveTask()
 				break;
 			case 8: SetServo_motor(-100);
 				break;
+
 			default:
 				break;
 		}
@@ -609,92 +692,109 @@ void SendRemoteVarTask()
 		myfloat +=1;*/
 
 		sendSensors();
-		float send = 1;
-		BT_send_msg(&send, "speed");
-		sendPosArrayControlArray();
-/*
 
-		}
+		//sendTuning();
 
 		//osThreadSuspend(SendRemoteVar_TaskHandle); // minden elkÃ¼ldve, pihenÃ¼nk (osThreadResume-ra megint elkÃ¼ld mindent)
 	    HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
-	    osThreadSuspend(SendRemoteVar_TaskHandle);
+	    //osThreadSuspend(SendRemoteVar_TaskHandle);
 
-		//osDelay(100);
-		 */
+		osDelay(300);
 	}
+
 }
 
 void sendSensors() {
-	for(int i = 0; i<32; i++)
-			{
-				szenzorsor_temp_1[i] = szenzorsor_1[i];
-				szenzorsor_temp_2[i] = szenzorsor_2[i];
-			}
 
-			for(int i = 0; i<32; i++)
-			{
-				if(i<10)
-				{
-					BT_send_msg(&szenzorsor_temp_1[i], "sens10" + std::string(itoa(i,buffer,10)));
-					BT_send_msg(&szenzorsor_temp_2[i], "sens20" + std::string(itoa(i,buffer,10)));
-				}else{
-					BT_send_msg(&szenzorsor_temp_1[i], "sens1" + std::string(itoa(i,buffer,10)));
-					BT_send_msg(&szenzorsor_temp_2[i], "sens2" + std::string(itoa(i,buffer,10)));
-				}
-			}
+	for(int i = 0; i<32; i++)
+	{
+		szenzorsor_temp_1[i] = szenzorsor_1[i];
+		szenzorsor_temp_2[i] = szenzorsor_2[i];
+	}
+
+	for(int i = 0; i<32; i++)
+	{
+		if(i<10)
+		{
+			BT_send_msg(&szenzorsor_temp_1[i], "sens10" + std::string(itoa(i,buffer,10)));
+			BT_send_msg(&szenzorsor_temp_2[i], "sens20" + std::string(itoa(i,buffer,10)));
+		}else{
+			BT_send_msg(&szenzorsor_temp_1[i], "sens1" + std::string(itoa(i,buffer,10)));
+			BT_send_msg(&szenzorsor_temp_2[i], "sens2" + std::string(itoa(i,buffer,10)));
+		}
+	}
+
+	BT_send_msg(&speed_global, "speed");
 }
 
-void sendPosArrayControlArray() {
-	for(int i = 0; i < 100; i++){
-				if (i<10)
-				{
-					BT_send_msg(&posArray[i], "diag10" + std::string(itoa(i,buffer,10)));
-					BT_send_msg(&controlArray[i], "diag20" + std::string(itoa(i,buffer,10)));
-				}
-				else
-				{
-					BT_send_msg(&posArray[i], "diag1" + std::string(itoa(i,buffer,10)));
-					BT_send_msg(&controlArray[i], "diag2" + std::string(itoa(i,buffer,10)));
-				}
+void sendTuning() {
+	for(int i = 0; i < 100; i++) {
+		if (i<10)
+		{
+			BT_send_msg(&posArray[i], "diag10" + std::string(itoa(i,buffer,10)));
+			BT_send_msg(&controlArray[i], "diag20" + std::string(itoa(i,buffer,10)));
+		}
+		else
+		{
+			BT_send_msg(&posArray[i], "diag1" + std::string(itoa(i,buffer,10)));
+			BT_send_msg(&controlArray[i], "diag2" + std::string(itoa(i,buffer,10)));
+		}
 	}
 }
+
+void sendDebugVars() {
+	BT_send_msg(&speed_global, "speed");
+	BT_send_msg(&linePosM, "linePosM");
+
+	BT_send_msg(&angle, "angle");
+	BT_send_msg(&control, "control");
+	BT_send_msg(&speed_error, "speed_error");
+	BT_send_msg(&speed_control, "speed_control");
+	BT_send_msg(&last_speed_control, "lilast_speed_controlnePosM");
+	BT_send_msg(&last_active_line_pos1, "last_line_pos1");
+	BT_send_msg(&last_active_line_pos2, "last_line_pos2");
+}
+
+void sendPIDs() {
+	BT_send_msg(&PIDs.pGain, "PIDs_p");
+	BT_send_msg(&PIDs.dGain, "PIDs_s");
+}
+
+void sendPIDm() {
+	BT_send_msg(&PIDm.pGain, "PIDm_p");
+	BT_send_msg(&PIDm.dGain, "PIDm_s");
+}
+
 
 // szenzorsorok beolvasása, ha kész, szüneteli magát
 void SteerControlTask()
 {
 	int encoderPos, lastEncoderPos = 1000000000;	// encoder számláló innen indul, hogy semerre ne legyen túlcsordulás
-	float speed = 0;
-	float linePosM;		// vonalpozíció méterben
-	float angle = 0;
-	float linePos = 0;
-	float lastPos = 15.5;
-	float error = 0;
-	float control = 0;
-	int last_control = 0;	// elõzõ szabályozás értéke
-	float speed_error = 0;
-	float speed_control = 0;
 
-	bool mybool = true;
 
-	struct LineState Lines;
+
+	LineState Lines;
+	int no_line_cycle_count = 0;
+
+	// állapotgép init
+	state_struct.state = 0;
 
 	// állapot visszacsatolás paraméterei
 	float A = 0.4;	// sebesség függés	// d5% = v*A + B
 	float B = 0.4;	// konstans
 
 	// szervo PD szabályzó struktúrája
-	PIDs.pGain = 20;
+	PIDs.pGain = 25;
 	PIDs.iGain = 0;
-	PIDs.dGain = -400;
+	PIDs.dGain = -500;
 	PIDs.iMax = 300;
 	PIDs.iMin = -300;
 	PIDs.iState = 0;
 	PIDs.dState = 0;
 
 	// motor PI szabályzó struktúra
-	PIDm.pGain = 100;		// 100-> 5m/s hibánál lesz 500 a jel (max)
-	PIDm.iGain = 1;			// pGain/100?
+	PIDm.pGain = 200;		// 100-> 5m/s hibánál lesz 500 a jel (max)
+	PIDm.iGain = 2;			// pGain/100?
 	PIDm.dGain = 0;
 	PIDm.iMax = 500;
 	PIDm.iMin = -500;
@@ -707,8 +807,7 @@ void SteerControlTask()
 	int tune_cntr = 0;
 	char buffer[10];
 
-	uint16_t pattern = 0x0001;
-	int state = 0;
+	float error = 0;
 
 
 	osThreadSuspend(SteerControl_TaskHandle);
@@ -722,43 +821,74 @@ void SteerControlTask()
 		// de gyorsítás így késleltetve történik...
 		if(cntr == 5)
 		{
-			//encoderPos = __HAL_TIM_GET_COUNTER(&htim2);
-			//speed = ((float)(lastEncoderPos - encoderPos))/(2571.0/20.0); //ez így m/s, ha 20 lukas a tárcsa és 50ms-enként mérünk (másodpercenként 20)
-			//lastEncoderPos = encoderPos;
-			speed = 1;
-			//speed_global = speed;
+			// sebesség mérés
+			encoderPos = __HAL_TIM_GET_COUNTER(&htim2);
+			speed = ((float)(lastEncoderPos - encoderPos))/(2571.0/20.0); //ez így m/s, ha 20 lukas a tárcsa és 50ms-enként mérünk (másodpercenként 20)
+			lastEncoderPos = encoderPos;
+			speed_global = speed;
+
 
 			// motor szabályozó
 			#if ( MOTOR_CONTROL_ENABLED == 1)
 			{
 				speed_error = SET_SPEED - speed;
 				speed_control = UpdatePID1(&PIDm, speed_error, speed);
-				//SetServo_motor((int)speed_control);
+
+				// negatív irányt megerõsíteni	// motor bekötéstõl függ!!!
+				if(speed_control < 0)
+				{
+					//speed_control *= 0.25;
+				}
+
+				// fékezés logika és gyorsulás logika
+				/*if(last_speed_control > 0 && speed_control < 0)
+				{
+					speed_control = 0;
+				}
+				else*/ if(speed_control > 0 && speed_control > last_speed_control + ACC_MAX)
+				{
+					speed_control = last_speed_control + ACC_MAX; 		// gyorsulás korlát
+				}
+
+				SetServo_motor( (int)speed_control );
+
 			}
 			#endif
-
+			last_speed_control = speed_control;
 			cntr = 0;
 		}
 		cntr++;
 
-
 		// szenzor adatok beolvasása
-		ReadSensorsDummy();
+		ReadSensors();
 
 		// szenzor adatok feldolgozása
 		Lines = getLinePos(20);
-		angle = (calculateAngle(Lines.pos1[0],Lines.pos2[0]));
 
-		linePosM = (Lines.pos1[0]-15.5) * 5.9 / 1000; // pozíció, méterben, középen 0
+		getActiveLinePos(&Lines, &last_active_line_pos1, &last_active_line_pos2, &activeLine1, &activeLine2);
+		last_active_line_pos1 = activeLine1;
+		last_active_line_pos2 = activeLine2;
+
+		angle = calculateAngle(activeLine1,activeLine2);
+
+
+		linePosM = (activeLine1-15.5) * 5.9 / 1000; // pozíció, méterben, középen 0
+
+		//////////// állapotgép   /////////////
+		//StateMachine(&state_struct, &Lines, encoderPos);
 
 		// vonalkövetés szabályozó
 		if(Lines.numLines1 != -1)	// ha látunk vonalat
 		{
 			#if  ( SERVO_CONTROL_PID == 1 )
 			{
-				error = Lines.pos1[0] - 15.5;
+				error = activeLine1 - 15.5;
 				control = UpdatePID1(&PIDs,error,Lines.pos1[0]);
-				//SetServo_steering((int)control); // PID-hez
+				if(speed > 2)
+				{
+					//control /= (speed/2.0);
+				}
+				SetServo_steering((int)control); // PID-hez
 			}
 			#endif
 
@@ -770,10 +900,30 @@ void SteerControlTask()
 				}
 
 				control = UpdateStateSpace(A, B, speed, linePosM, angle);
-				//SetServo_steering(control);
+				SetServo_steering(control);
 			}
 			#endif
+
+			no_line_cycle_count = 0; 	// láttunk vonalat
 		}
+		else if (Lines.numLines2 != -1)
+		{
+			no_line_cycle_count = 0;
+		}
+		else
+		{
+			no_line_cycle_count++;
+			if (no_line_cycle_count > NO_LINE_CYCLES)
+			{
+				SET_SPEED = 0;
+				state_struct.state = -1;
+			}
+
+		}
+
+
+
+
 
 
 		//timer = __HAL_TIM_GET_COUNTER(&htim5);
@@ -799,12 +949,11 @@ void SteerControlTask()
 				controlArray[tune_cntr] = control/12;
 			}
 			tune_cntr++;
-			/*if(mybool){
-				tune_cntr++;
-				mybool = false;
-			}else{
-				mybool = true;
-			}*/
+
+			if(tune_cntr > 100)
+			{
+				SET_SPEED = 0;
+			}
 
 			if(tune_cntr > 300)
 			{
@@ -812,16 +961,7 @@ void SteerControlTask()
 				EmergencyBreak(700);
 				TunePID = false;
 				tune_started = false;
-				/*for(int i = 0; i < 98; i++)
-				{
-					BT_send_msg(&A, "p:" + std::string(itoa((int)(posArray[i]),buffer,10)) + "\n");
 
-					if(i>10){
-						BT_send_msg(&posArray[i], "pos0" + std::string(itoa(i,buffer,10)));
-					}else{
-						BT_send_msg(&posArray[i], "pos" + std::string(itoa(i,buffer,10)));
-					}
-				}*/
 
 				osThreadResume(SendRemoteVar_TaskHandle);
 				osThreadSuspend(SteerControl_TaskHandle);
@@ -833,6 +973,52 @@ void SteerControlTask()
 		osDelay(9);
 	}
 }
+
+void getActiveLinePos(LineState * Lines, float *last_pos1, float *last_pos2, float * active1, float * active2)
+{
+	if (Lines->numLines1 == 3) {
+		*active1 = Lines->pos1[1];
+	}
+	else if(Lines->numLines1 == 2)
+	{
+		if( abs( (*last_pos1) - Lines->pos1[0] ) < abs( (*last_pos1) - Lines->pos1[1]) )
+		{
+			*active1 = Lines->pos1[0];
+		}
+		else
+		{
+			*active1 = Lines->pos1[1];
+		}
+	}
+	else
+	{
+		*active1 = Lines->pos1[0];
+	}
+
+
+
+
+	if (Lines->numLines2 == 3) {
+		*active2 = Lines->pos2[1];
+	}
+	else if(Lines->numLines2 == 2)
+	{
+		if( abs( (*last_pos2) - Lines->pos2[0]) < abs( (*last_pos2) - Lines->pos2[1]) )
+		{
+			*active2 = Lines->pos2[0];
+		}
+		else
+		{
+			*active2 = Lines->pos2[1];
+		}
+	}
+	else
+	{
+		*active2 = Lines->pos2[0];
+	}
+
+}
+
 
 // hal uart callback
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart){
@@ -1194,7 +1380,7 @@ void MX_DMA_Init(void)
 void USART3_UART_Init()
 {
   huart3.Instance = USART3;
-  huart3.Init.BaudRate = 9600;
+  huart3.Init.BaudRate = 115200;
   huart3.Init.WordLength = UART_WORDLENGTH_8B;
   huart3.Init.StopBits = UART_STOPBITS_1;
   huart3.Init.Parity = UART_PARITY_NONE;

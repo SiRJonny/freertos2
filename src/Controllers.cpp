@@ -37,7 +37,7 @@ float UpdateStateSpace(float A, float B, float v, float p, float angle)
 	w0 = 1/T;
 	Re_s = kszi*w0;
 
-	kp = (L*w0*w0)/(v*v);
+	kp = (L*w0*w0)/(v);
 	kd = (L/v)*( (Re_s+Re_s) - (v*kp) );
 
 
