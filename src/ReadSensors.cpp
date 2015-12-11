@@ -27,6 +27,31 @@ extern void BT_send_msg(int*msg,std::string nev);
 extern int timer;
 extern char buffer[10];
 
+//dummy sensors
+
+void ReadSensorsDummy() {
+		uint16_t pattern = 0x0101;
+
+		int vonal1 = 16;
+		int vonal2 = 16;
+
+
+		for (int i = 0; i<32; i++)
+		{
+			if (vonal1 == i) {
+				szenzorsor_1[i] = 200;
+			} else {
+				szenzorsor_1[i] = 0;
+			}
+			if (vonal2 == i) {
+				szenzorsor_2[i] = 200;
+			} else {
+				szenzorsor_2[i] = 0;
+			}
+
+		}
+
+}
 
 // teljes szenzorsor beolvasás
 void ReadSensors()

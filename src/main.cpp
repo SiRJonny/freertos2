@@ -508,15 +508,15 @@ void StartButtonTask()
 			/*SetServo_steering(70);
 			osDelay(1000);
 			SetServo_steering(0);*/
-			SET_SPEED = TEST_SPEED;
+			//SET_SPEED = TEST_SPEED;
 			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14); // piros led, debug
-			osThreadResume(SteerControl_TaskHandle);
-			//osThreadResume(SendRemoteVar_TaskHandle);
-			osDelay(TEST_DELAY);
-			SET_SPEED = STOP;
-			state_struct.state = -1;
-			osDelay(2000);
-			osThreadSuspend(SteerControl_TaskHandle);
+			//osThreadResume(SteerControl_TaskHandle);
+			osThreadResume(SendRemoteVar_TaskHandle);
+			//osDelay(TEST_DELAY);
+			//SET_SPEED = STOP;
+			//state_struct.state = -1;
+			//osDelay(2000);
+			//osThreadSuspend(SteerControl_TaskHandle);
 
 
 			/*SetServo_motor(90);
@@ -688,11 +688,11 @@ void SendRemoteVarTask()
 	for(;;)
 	{
 
-		/*BT_send_msg(&myfloat, "myfloat");
-		myfloat +=1;*/
+		BT_send_msg(&myfloat, "myfloat");
+		myfloat +=1;
 
-		sendSensors();
-		sendDebugVars();
+		//sendSensors();
+		//sendDebugVars();
 		//sendTuning();
 
 		//osThreadSuspend(SendRemoteVar_TaskHandle); // minden elküldve, pihenünk (osThreadResume-ra megint elküld mindent)
