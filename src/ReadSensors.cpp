@@ -28,6 +28,22 @@ extern int timer;
 extern char buffer[10];
 
 
+
+// teljes szenzorsor beolvasás
+void ReadSensorsDummy()
+{
+
+	for (int i = 0; i < 32; i++) {
+
+		if (i == 15 || i == 16) {
+			szenzorsor_1[i] = 200;
+			szenzorsor_2[i] = 200;
+		}
+
+	}
+
+}
+
 // teljes szenzorsor beolvasás
 void ReadSensors()
 {
