@@ -89,6 +89,13 @@ float last_speed_control = 0;
 float last_active_line_pos1 = 15.5;
 float last_active_line_pos2 = 15.5;
 
+LineState globalLines;
+
+int testLinePos = 10;
+
+float A = 0.4;	// sebesség függés	// d5% = v*A + B
+float B = 0.4;	// konstans
+
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -628,11 +635,13 @@ void BTReceiveTask()
 {
 	uint8_t msg[10];
 	int * int_ptr;
+	float * flt_ptr;
 
 	int data;
 	char * char_ptr = (char*)&data;
 
 	int_ptr = (int*)&msg[1];
+	flt_ptr = (float*)&msg[1];
 
 	for( ;; )
 	{
@@ -665,20 +674,31 @@ void BTReceiveTask()
 				break;
 			case 3:
 				SET_SPEED = SLOW;
+				BT_send_msg(&SET_SPEED, "SET_SPEED");
 				break;
 			case 4:
 				SET_SPEED = FAST;
+				BT_send_msg(&SET_SPEED, "SET_SPEED");
 				break;
 			case 5:
+				state_struct.state = *int_ptr;
+				BT_send_msg(&state_struct.state, "state");
+				break;
+			case 6:
+				testLinePos = *int_ptr;
+				BT_send_msg(&testLinePos, "testLinePos");
+				break;
+			case 7:
 
 				break;
-			case 6: SetServo_motor(0);
+			case 8:
+				A = *flt_ptr;
+				BT_send_msg(&A, "A");
 				break;
-			case 7: SetServo_motor(100);
+			case 9:
+				B = *flt_ptr;
+				BT_send_msg(&B, "B");
 				break;
-			case 8: SetServo_motor(-100);
-				break;
-
 			default:
 				break;
 		}
@@ -704,15 +724,15 @@ void SendRemoteVarTask()
 		BT_send_msg(&stopped, "stopped");
 
 		sendSensors();
-		sendDebugVars();
-		sendStateData();
+		//sendDebugVars();
+		//sendStateData();
 		//sendTuning();
 
 		//osThreadSuspend(SendRemoteVar_TaskHandle); // minden elkÃ¼ldve, pihenÃ¼nk (osThreadResume-ra megint elkÃ¼ld mindent)
 	    HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
 	    //osThreadSuspend(SendRemoteVar_TaskHandle);
 
-		osDelay(300);
+		osDelay(1000);
 	}
 
 }
@@ -760,6 +780,9 @@ void sendDebugVars() {
 	BT_send_msg(&SET_SPEED, "SET_SPEED");
 	//BT_send_msg(&linePosM, "linePosM");
 
+	BT_send_msg(&testLinePos, "testLinePos");
+
+
 	BT_send_msg(&activeLine1, "actL1");
 	BT_send_msg(&activeLine2, "actL2");
 
@@ -770,6 +793,21 @@ void sendDebugVars() {
 	//BT_send_msg(&last_speed_control, "lilast_speed_controlnePosM");
 	BT_send_msg(&last_active_line_pos1, "last_pos1");
 	BT_send_msg(&last_active_line_pos2, "last_pos2");
+
+	//Állapotteres
+	BT_send_msg(&A, "A");
+	BT_send_msg(&B, "B");
+
+
+	BT_send_msg(&globalLines.numLines1, "numLines1");
+	BT_send_msg(&globalLines.numLines2, "numLines2");
+
+	BT_send_msg(&globalLines.pos1[0], "front_0");
+	BT_send_msg(&globalLines.pos1[1], "front_1");
+	BT_send_msg(&globalLines.pos1[2], "front_2");
+	BT_send_msg(&globalLines.pos2[0], "back_0");
+	BT_send_msg(&globalLines.pos2[1], "back_1");
+	BT_send_msg(&globalLines.pos2[2], "back_2");
 }
 
 void sendStateData() {
@@ -796,16 +834,21 @@ void SteerControlTask()
 	int lastEncoderPos = 1000000000;	// encoder számláló innen indul, hogy semerre ne legyen túlcsordulás
 
 
+	//LineS
+	for (int i = 0; i<3; i++) {
+		//globalLines.pos1[i] = 100;
+		//globalLines.pos1[i] = 100;
+	}
 
-	LineState Lines;
+
 	int no_line_cycle_count = 0;
 
 	// állapotgép init
 	state_struct.state = 0;
 
 	// állapot visszacsatolás paraméterei
-	float A = 0.4;	// sebesség függés	// d5% = v*A + B
-	float B = 0.4;	// konstans
+	A = 0.4;	// sebesség függés	// d5% = v*A + B
+	B = 0.4;	// konstans
 
 	// szervo PD szabályzó struktúrája
 	PIDs.pGain = 25;
@@ -888,9 +931,9 @@ void SteerControlTask()
 		ReadSensors();
 
 		// szenzor adatok feldolgozása
-		Lines = getLinePos(20);
+		globalLines = getLinePos(20);
 
-		getActiveLinePos(&Lines, &last_active_line_pos1, &last_active_line_pos2, &activeLine1, &activeLine2);
+		getActiveLinePos(&globalLines, &last_active_line_pos1, &last_active_line_pos2, &activeLine1, &activeLine2);
 		last_active_line_pos1 = activeLine1;
 		last_active_line_pos2 = activeLine2;
 
@@ -900,15 +943,15 @@ void SteerControlTask()
 		linePosM = (activeLine1-15.5) * 5.9 / 1000; // pozíció, méterben, középen 0
 
 		//////////// állapotgép   /////////////
-		StateMachine(&state_struct, &Lines, encoderPos);
+		StateMachine(&state_struct, &globalLines, encoderPos);
 
 		// vonalkövetés szabályozó
-		if(Lines.numLines1 != -1)	// ha látunk vonalat
+		if(globalLines.numLines1 != -1)	// ha látunk vonalat
 		{
 			#if  ( SERVO_CONTROL_PID == 1 )
 			{
 				error = activeLine1 - 15.5;
-				control = UpdatePID1(&PIDs,error,Lines.pos1[0]);
+				control = UpdatePID1(&PIDs,error,globalLines.pos1[0]);
 				if(speed > 2)
 				{
 					//control /= (speed/2.0);
@@ -931,7 +974,7 @@ void SteerControlTask()
 
 			no_line_cycle_count = 0; 	// láttunk vonalat
 		}
-		else if (Lines.numLines2 != -1)
+		else if (globalLines.numLines2 != -1)
 		{
 			no_line_cycle_count = 0;
 		}
@@ -959,7 +1002,7 @@ void SteerControlTask()
 		//////////// szabályzó hangolás  ////////////
 		if(TunePID && !tune_started)
 		{
-			if(Lines.pos1[0] > 20 || Lines.pos1[0] < 12)
+			if(globalLines.pos1[0] > 20 || globalLines.pos1[0] < 12)
 			{
 				tune_started = true;
 				tune_cntr = 0;
@@ -971,7 +1014,7 @@ void SteerControlTask()
 		{
 			if(tune_cntr < 100)
 			{
-				posArray[tune_cntr] = Lines.pos1[0]-15.5;
+				posArray[tune_cntr] = globalLines.pos1[0]-15.5;
 				//controlArray[tune_cntr] = control*50; // így +/-15,7 a szervó tartomány (de a szabályzó adhat ki nagyobbat)
 				controlArray[tune_cntr] = control/12;
 			}

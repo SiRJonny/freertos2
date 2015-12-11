@@ -27,17 +27,23 @@ extern void BT_send_msg(int*msg,std::string nev);
 extern int timer;
 extern char buffer[10];
 
+extern int testLinePos;
 
 
 // teljes szenzorsor beolvasás
 void ReadSensorsDummy()
 {
 
+
+
 	for (int i = 0; i < 32; i++) {
 
-		if (i == 15 || i == 16) {
-			szenzorsor_1[i] = 200;
-			szenzorsor_2[i] = 200;
+		if (i == testLinePos || i == testLinePos - 1) {
+			szenzorsor_1[i] = 50;
+			szenzorsor_2[i] = 50;
+		} else {
+			szenzorsor_1[i] = 250;
+			szenzorsor_2[i] = 250;
 		}
 
 	}
