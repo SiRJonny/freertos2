@@ -76,8 +76,8 @@ float STOP = 0.0;
 
 using namespace std;
 
-float TEST_SPEED = 0;
-float TEST_DELAY = 2000;
+float TEST_SPEED = 1;
+float TEST_DELAY = 6000;
 
 float speed = 0;
 float linePosM;		// vonalpozíció méterben
@@ -692,7 +692,7 @@ void SendRemoteVarTask()
 		myfloat +=1;*/
 
 		sendSensors();
-
+		sendDebugVars();
 		//sendTuning();
 
 		//osThreadSuspend(SendRemoteVar_TaskHandle); // minden elkÃ¼ldve, pihenÃ¼nk (osThreadResume-ra megint elkÃ¼ld mindent)
@@ -822,8 +822,8 @@ void SteerControlTask()
 		if(cntr == 5)
 		{
 			// sebesség mérés
-			encoderPos = __HAL_TIM_GET_COUNTER(&htim2);
-			speed = ((float)(lastEncoderPos - encoderPos))/(2571.0/20.0); //ez így m/s, ha 20 lukas a tárcsa és 50ms-enként mérünk (másodpercenként 20)
+			//encoderPos = __HAL_TIM_GET_COUNTER(&htim2);
+			speed = 1.0;//((float)(lastEncoderPos - encoderPos))/(2571.0/20.0); //ez így m/s, ha 20 lukas a tárcsa és 50ms-enként mérünk (másodpercenként 20)
 			lastEncoderPos = encoderPos;
 			speed_global = speed;
 
@@ -850,7 +850,7 @@ void SteerControlTask()
 					speed_control = last_speed_control + ACC_MAX; 		// gyorsulás korlát
 				}
 
-				SetServo_motor( (int)speed_control );
+				//SetServo_motor( (int)speed_control );
 
 			}
 			#endif
@@ -860,7 +860,7 @@ void SteerControlTask()
 		cntr++;
 
 		// szenzor adatok beolvasása
-		ReadSensors();
+		ReadSensorsDummy();
 
 		// szenzor adatok feldolgozása
 		Lines = getLinePos(20);
@@ -888,7 +888,7 @@ void SteerControlTask()
 				{
 					//control /= (speed/2.0);
 				}
-				SetServo_steering((int)control); // PID-hez
+				//SetServo_steering((int)control); // PID-hez
 			}
 			#endif
 
@@ -900,7 +900,7 @@ void SteerControlTask()
 				}
 
 				control = UpdateStateSpace(A, B, speed, linePosM, angle);
-				SetServo_steering(control);
+				//SetServo_steering(control);
 			}
 			#endif
 
@@ -958,7 +958,7 @@ void SteerControlTask()
 			if(tune_cntr > 300)
 			{
 				HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_RESET);
-				EmergencyBreak(700);
+				//EmergencyBreak(700);
 				TunePID = false;
 				tune_started = false;
 
