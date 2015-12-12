@@ -58,7 +58,7 @@ void ReadSensorsDummy()
 void ReadSensors()
 {
 	uint16_t pattern = 0x0101;
-
+	int amount = 255;
 
 	EnableMUX();
 
@@ -104,10 +104,10 @@ void ReadSensors()
 		}*/
 
 		// 16on belül az elsõ
-		szenzorsor_1[i] = ADC1_BUFFER[1];		// PA2 -> bal elsõ csoport
-		szenzorsor_1[i+16] = ADC1_BUFFER[0];	// PA1 -> jobb elsõ csoport
-		szenzorsor_2[i] = ADC1_BUFFER[3];		// PA4 -> bal hátsó
-		szenzorsor_2[i+16] = ADC1_BUFFER[2];	// jobb hátsó
+		szenzorsor_1[i] = amount - ADC1_BUFFER[1];		// PA2 -> bal elsõ csoport
+		szenzorsor_1[i+16] = amount - ADC1_BUFFER[0];	// PA1 -> jobb elsõ csoport
+		szenzorsor_2[i] = amount - ADC1_BUFFER[3];		// PA4 -> bal hátsó
+		szenzorsor_2[i+16] = amount - ADC1_BUFFER[2];	// jobb hátsó
 
 		SetMUX((uint8_t)i+8);
 		ControlTaskDelay(20);
@@ -116,10 +116,10 @@ void ReadSensors()
 		ADC1_read();
 
 		// 16on belül a másik
-		szenzorsor_1[i+8] = ADC1_BUFFER[1];		// PA2 -> bal elsõ csoport
-		szenzorsor_1[i+16+8] = ADC1_BUFFER[0];	// PA1 -> jobb elsõ csoport
-		szenzorsor_2[i+8] = ADC1_BUFFER[3];		// PA4 -> bal hátsó
-		szenzorsor_2[i+16+8] = ADC1_BUFFER[2];	// jobb hátsó
+		szenzorsor_1[i+8] = amount - ADC1_BUFFER[1];		// PA2 -> bal elsõ csoport
+		szenzorsor_1[i+16+8] = amount - ADC1_BUFFER[0];	// PA1 -> jobb elsõ csoport
+		szenzorsor_2[i+8] = amount - ADC1_BUFFER[3];		// PA4 -> bal hátsó
+		szenzorsor_2[i+16+8] = amount - ADC1_BUFFER[2];	// jobb hátsó
 
 		//osDelay(500);
 

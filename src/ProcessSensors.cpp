@@ -29,8 +29,8 @@ LineState getLinePos(int treshold)
 	int peaks1[3];
 	int peaks2[3];
 	//int average = calculateAverage(szenzorsor_1,32);
-	subtractAllFrom(szenzorsor_1, 255);	// a kicsi érték jelenti a vonalat, konvertáljuk
-	subtractAllFrom(szenzorsor_2, 255);
+	//subtractAllFrom(szenzorsor_1, 255);	// a kicsi érték jelenti a vonalat, konvertáljuk
+	//subtractAllFrom(szenzorsor_2, 255);
 
 	Lines.numLines1 = find3peaks(szenzorsor_1, peaks1, treshold);
 	Lines.numLines2 = find3peaks(szenzorsor_2, peaks2, treshold);
