@@ -38,13 +38,17 @@ void ReadSensorsDummy()
 
 	for (int i = 0; i < 32; i++) {
 
-		if (i == testLinePos || i == testLinePos - 1) {
+		if (i == testLinePos) {
+			szenzorsor_1[i] = 50;
+			szenzorsor_2[i] = 50;
+		} else if(i == testLinePos-1){
 			szenzorsor_1[i] = 50;
 			szenzorsor_2[i] = 50;
 		} else {
-			szenzorsor_1[i] = 250;
-			szenzorsor_2[i] = 250;
+			szenzorsor_1[i] = 251;
+			szenzorsor_2[i] = 251;
 		}
+
 
 	}
 

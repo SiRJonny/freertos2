@@ -161,7 +161,7 @@ int find3peaks(uint32_t * data, int * peaks, int treshold)
 	for(int i = 1; i < 31; i++)	// elsõt és utolsót nem nézzük
 	{
 		peakMinPos = findPeakMinPos(peakValue);		// a meglévõ csúcsok között a legkisebb megkeresése
-		if(data[i-1] <= data[i] && data[i+1] <= data[i] && data[i] > peakValue[peakMinPos])
+		if(data[i-1] <= data[i] && data[i+1] < data[i] && data[i] > peakValue[peakMinPos])
 		{
 			peaks[peakMinPos] = i;
 			peakValue[peakMinPos] = data[i];

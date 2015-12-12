@@ -688,11 +688,11 @@ void BTReceiveTask()
 				BT_send_msg(&PIDs.pGain, "PIDp");
 				break;
 			case 3:
-				SET_SPEED = SLOW;
+				//SET_SPEED = SLOW;
 				BT_send_msg(&SET_SPEED, "SET_SPEED");
 				break;
 			case 4:
-				SET_SPEED = FAST;
+				//SET_SPEED = FAST;
 				BT_send_msg(&SET_SPEED, "SET_SPEED");
 				break;
 			case 5:
@@ -739,7 +739,7 @@ void SendRemoteVarTask()
 		BT_send_msg(&stopped, "stopped");
 
 		sendSensors();
-		//sendDebugVars();
+		sendDebugVars();
 		//sendStateData();
 		//sendTuning();
 
@@ -849,6 +849,8 @@ void SteerControlTask()
 	int lastEncoderPos = 1000000000;	// encoder számláló innen indul, hogy semerre ne legyen túlcsordulás
 	float speed = 0;
 
+	int led_cntr = 0;
+
 	//LineS
 	for (int i = 0; i<3; i++) {
 		//globalLines.pos1[i] = 100;
@@ -944,6 +946,7 @@ void SteerControlTask()
 
 		// szenzor adatok beolvasása
 		ReadSensors();
+		//ReadSensorsDummy();
 
 		// szenzor adatok feldolgozása
 		globalLines = getLinePos(20);
@@ -1001,7 +1004,7 @@ void SteerControlTask()
 				//SET_SPEED = 0;
 				state_struct.state = -1;
 				SetServo_motor(0);
-				osThreadSuspend(SteerControl_TaskHandle);
+				//osThreadSuspend(SteerControl_TaskHandle);
 			}
 
 		}
@@ -1053,7 +1056,15 @@ void SteerControlTask()
 			}
 		}
 
-		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
+		if(led_cntr == 30)
+		{
+			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
+			led_cntr = 0;
+		}
+		else
+		{
+			led_cntr++;
+		}
 		//osThreadSuspend(SteerControl_TaskHandle);
 		osDelay(9);
 	}

@@ -7,13 +7,15 @@
 
 #include "StateMachine.h"
 
+extern void SetServo_motor(int pos);
+
 void StateMachine(state_machine_struct * State, LineState * Lines, int encoderPos)
 {
 	switch (State->state)
 	{
 	case -1:
 		//SET_SPEED = 0;
-		//SetServo_motor(0);
+		SetServo_motor(0);
 		break;
 	case 0:		// start state
 		SET_SPEED = SLOW;
