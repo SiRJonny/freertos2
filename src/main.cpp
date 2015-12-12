@@ -79,7 +79,7 @@ using namespace std;
 float TEST_SPEED = 0;
 float TEST_DELAY = 2000;
 
-float speed = 0;
+
 float linePosM;		// vonalpozíció méterben
 float angle = 0;
 float control = 0;
@@ -483,23 +483,38 @@ void SetServo_steering(float angle_rad)
 // default tastk, csak egy villogÃ³ led
 void StartDefaultTask()
 {
-
+	int i = 0;
 	int last = 0;
 	int current = 0;
-  /* USER CODE BEGIN 5 */
-  /* Infinite loop */
-  for(;;)
-  {
+	int encoderPos = 1000000000;
+	int lastEncoderPos = 1000000000;	// encoder számláló innen indul, hogy semerre ne legyen túlcsordulás
+	float speed_temp = 0;
 
-    osDelay(500);
-    HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
+	for(;;)
+	{
+		// sebesség mérés
+		encoderPos = __HAL_TIM_GET_COUNTER(&htim2);
+		speed_temp = ((float)(lastEncoderPos - encoderPos))/(2571.0/20.0); //ez így m/s, ha 20 lukas a tárcsa és 50ms-enként mérünk (másodpercenként 20)
 
-    /*current = __HAL_TIM_GET_COUNTER(&htim2);
-    BT_send_msg(&current, "e:" + std::string(itoa(current-last,buffer,10)) + "\n");
+		osThreadSuspendAll();
+		speed_global = speed_temp;
+		osThreadResumeAll();
 
-    last = current;*/
-  }
-  /* USER CODE END 5 */
+		lastEncoderPos = encoderPos;
+
+
+		if (i == 10)
+		{
+			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
+			i = 0;
+		}
+		else
+		{
+			i++;
+		}
+		osDelay(50);
+	}
+
 }
 
 void StartButtonTask()
@@ -520,7 +535,7 @@ void StartButtonTask()
 			osDelay(1000);
 			SetServo_steering(0);*/
 			//SET_SPEED = 1.2;
-			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14); // piros led, debug
+			//HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14); // piros led, debug
 			osThreadResume(SteerControl_TaskHandle);
 			osThreadResume(SendRemoteVar_TaskHandle);
 			osDelay(20000);
@@ -832,7 +847,7 @@ void SteerControlTask()
 {
 	int encoderPos = 1000000000;
 	int lastEncoderPos = 1000000000;	// encoder számláló innen indul, hogy semerre ne legyen túlcsordulás
-
+	float speed = 0;
 
 	//LineS
 	for (int i = 0; i<3; i++) {
@@ -889,11 +904,9 @@ void SteerControlTask()
 		if(cntr == 5)
 		{
 			// sebesség mérés
-			encoderPos = __HAL_TIM_GET_COUNTER(&htim2);
-			speed = ((float)(lastEncoderPos - encoderPos))/(2571.0/20.0); //ez így m/s, ha 20 lukas a tárcsa és 50ms-enként mérünk (másodpercenként 20)
-
-			lastEncoderPos = encoderPos;
-			speed_global = speed;
+			osThreadSuspendAll();
+			speed = speed_global;
+			osThreadResumeAll();
 
 
 			// motor szabályozó
@@ -926,6 +939,8 @@ void SteerControlTask()
 			cntr = 0;
 		}
 		cntr++;
+
+		encoderPos = __HAL_TIM_GET_COUNTER(&htim2);		// állapotgépnek
 
 		// szenzor adatok beolvasása
 		ReadSensors();
