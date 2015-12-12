@@ -67,7 +67,7 @@ extern "C"
 #define PID_DGAIN -500
 
 float ACC_MAX = 50;		// egy szabályzó periódusban max ennyivel növekedhet a motor szervo jele
-int NO_LINE_CYCLES = 0;
+int NO_LINE_CYCLES = 10;
 
 float SLOW = 1.2;
 float FAST = 2.5;
@@ -93,7 +93,7 @@ LineState globalLines;
 int testLinePos = 10;
 
 float A = 0;	// sebesség függés	// d5% = v*A + B
-float B = 0.85;	// konstans
+float B = 0.7;	// konstans
 
 int pid = 0;
 
@@ -880,7 +880,7 @@ void SteerControlTask()
 	PIDm.iGain = 2;			// pGain/100?
 	PIDm.dGain = 0;
 	PIDm.iMax = 500;
-	PIDm.iMin = -500;
+	PIDm.iMin = -100;
 	PIDm.iState = 0;
 	PIDm.dState = 0;
 
@@ -893,6 +893,7 @@ void SteerControlTask()
 	float error = 0;
 
 
+
 	osThreadSuspend(SteerControl_TaskHandle);
 
 	for(;;)
@@ -902,47 +903,49 @@ void SteerControlTask()
 
 		// TODO: sebességet elég ritkábban mérni? úgysem tud gyorsan változni -> pontosabb
 		// de gyorsítás így késleltetve történik...
-		if(cntr == 5)
+
+		// sebesség mérés
+		osThreadSuspendAll();
+		speed = speed_global;
+		osThreadResumeAll();
+
+
+		// motor szabályozó
+		#if ( MOTOR_CONTROL_ENABLED == 1)
 		{
-			// sebesség mérés
-			osThreadSuspendAll();
-			speed = speed_global;
-			osThreadResumeAll();
+			speed_error = SET_SPEED - speed;
+			speed_control = UpdatePID1(&PIDm, speed_error, speed);
 
+			// negatív irányt megerõsíteni	// motor bekötéstõl függ!!!
 
-			// motor szabályozó
-			#if ( MOTOR_CONTROL_ENABLED == 1)
+			if(speed_control < 0)
 			{
-				speed_error = SET_SPEED - speed;
-				speed_control = UpdatePID1(&PIDm, speed_error, speed);
-
-				// negatív irányt megerõsíteni	// motor bekötéstõl függ!!!
-				if(speed_control < 0)
-				{
-					speed_control *= 0.5;
-					if (speed_control > -80) {
-						speed_control = -80;
-					}
+				speed_control *= 0.5;
+				if (speed_control > -80) {
+					speed_control = -80;
 				}
-
-				// fékezés logika és gyorsulás logika
-				if(last_speed_control > 0 && speed_control < 0)
-				{
+				if (last_speed_control < 0) {
 					speed_control = 0;
 				}
-				else if(speed_control > 0 && speed_control > last_speed_control + ACC_MAX)
-				{
-					speed_control = last_speed_control + ACC_MAX; 		// gyorsulás korlát
-				}
-
-				SetServo_motor( (int)speed_control );
-
 			}
-			#endif
-			last_speed_control = speed_control;
-			cntr = 0;
+
+
+			// fékezés logika és gyorsulás logika
+			if(last_speed_control > 0 && speed_control < 0)
+			{
+				speed_control = 0;
+			}
+			else if(speed_control > 0 && speed_control > last_speed_control + ACC_MAX)
+			{
+				speed_control = last_speed_control + ACC_MAX; 		// gyorsulás korlát
+			}
+
+			SetServo_motor( (int)speed_control );
+
 		}
-		cntr++;
+		#endif
+		last_speed_control = speed_control;
+
 
 		encoderPos = __HAL_TIM_GET_COUNTER(&htim2);		// állapotgépnek
 
@@ -1053,7 +1056,7 @@ void SteerControlTask()
 
 
 				osThreadResume(SendRemoteVar_TaskHandle);
-				osThreadSuspend(SteerControl_TaskHandle);
+				//osThreadSuspend(SteerControl_TaskHandle);
 			}
 		}
 
