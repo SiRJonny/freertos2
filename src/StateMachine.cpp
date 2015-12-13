@@ -10,7 +10,7 @@
 extern void SetServo_motor(int pos);
 extern float B;
 
-void StateMachine(state_machine_struct * State, LineState * Lines, int encoderPos)
+void StateMachine(state_machine_struct * State, bool * stable3lines, int encoderPos)
 {
 	switch (State->state)
 	{
@@ -21,7 +21,7 @@ void StateMachine(state_machine_struct * State, LineState * Lines, int encoderPo
 	case 0:		// start state
 		//B = 0.85;
 		SET_SPEED = SLOW;
-		if(Lines->numLines1 == 3 && Lines->numLines2 == 3)
+		if(*stable3lines)
 		{
 			State->TargetEncoderPos = encoderPos - 1250;	// kb 0,5 méter
 			State->nextState = 1;
@@ -40,7 +40,7 @@ void StateMachine(state_machine_struct * State, LineState * Lines, int encoderPo
 		break;
 	case 2:		// gyors state
 		//SET_SPEED = FAST;
-		if(Lines->numLines1 == 3 && Lines->numLines2 == 3)
+		if(*stable3lines)
 		{
 			State->TargetEncoderPos = encoderPos - 10000;	// kb 4 méter
 			State->nextState = 4;
@@ -58,7 +58,7 @@ void StateMachine(state_machine_struct * State, LineState * Lines, int encoderPo
 		break;
 	case 4:		// kanyar state
 		//SET_SPEED = SLOW;
-		if(Lines->numLines1 == 3 && Lines->numLines2 == 3)
+		if(*stable3lines)
 		{
 			State->TargetEncoderPos = encoderPos - 1250;	// kb 0,5 méter
 			State->nextState = 1;

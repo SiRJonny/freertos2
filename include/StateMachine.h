@@ -22,6 +22,6 @@ typedef struct
 
 } state_machine_struct;
 
-void StateMachine(state_machine_struct * State, LineState * Lines, int encoderPos);
+void StateMachine(state_machine_struct * State, bool * stable3lines, int encoderPos);
 
 #endif /* INCLUDE_STATEMACHINE_H_ */

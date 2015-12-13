@@ -69,8 +69,8 @@ extern "C"
 float ACC_MAX = 50;		// egy szabályzó periódusban max ennyivel növekedhet a motor szervo jele
 int NO_LINE_CYCLES = 50;
 
-float SLOW = 1.2;
-float FAST = 3.0;
+float SLOW = 1.1;
+float FAST = 2.2;
 float STOP = 0.0;
 
 float PID_LIMIT = 1.1;
@@ -763,10 +763,10 @@ void SendRemoteVarTask()
 		//sendTuning();
 
 		//osThreadSuspend(SendRemoteVar_TaskHandle); // minden elkÃ¼ldve, pihenÃ¼nk (osThreadResume-ra megint elkÃ¼ld mindent)
-	    HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
+	    //HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
 	    //osThreadSuspend(SendRemoteVar_TaskHandle);
 
-		osDelay(100);
+		osDelay(300);
 	}
 
 }
@@ -871,10 +871,15 @@ void SteerControlTask()
 
 	int led_cntr = 0;
 
+	int numLinesArray[5];
+	int numLinesArrayIndex = 0;
+	bool stable3lines = false;
+	int numLinesSum = 0;
+	bool usePD = false;
+
 	//LineS
-	for (int i = 0; i<3; i++) {
-		//globalLines.pos1[i] = 100;
-		//globalLines.pos1[i] = 100;
+	for (int i = 0; i<5; i++) {
+		numLinesArray[i] = 1;
 	}
 
 
@@ -981,6 +986,29 @@ void SteerControlTask()
 		// szenzor adatok feldolgozása
 		globalLines = getLinePos(20);
 
+		///// stabil 3 vonal
+		numLinesArray[numLinesArrayIndex] = globalLines.numLines1;
+		numLinesArrayIndex++;
+		if (numLinesArrayIndex >= 5)
+		{
+			numLinesArrayIndex = 0;
+		}
+		numLinesSum = 0;
+		for(int i = 0; i < 5; i++)
+		{
+			numLinesSum += numLinesArray[i];
+		}
+
+		if (numLinesSum > 12)
+		{
+			stable3lines = true;
+			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_SET);
+		}else if (numLinesSum < 8){
+			stable3lines = false;
+			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_RESET);
+		}
+
+
 		getActiveLinePos(&globalLines, &last_active_line_pos1, &last_active_line_pos2, &activeLine1, &activeLine2);
 		last_active_line_pos1 = activeLine1;
 		last_active_line_pos2 = activeLine2;
@@ -991,12 +1019,22 @@ void SteerControlTask()
 		linePosM = (activeLine1-15.5) * 5.9 / 1000; // pozíció, méterben, középen 0
 
 		//////////// állapotgép   /////////////
-		StateMachine(&state_struct, &globalLines, encoderPos);
+		StateMachine(&state_struct, &stable3lines, encoderPos);
+
+		if (state_struct.nextState == 2)
+		{
+			usePD = true;
+			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, GPIO_PIN_SET);
+		} else if ( (state_struct.nextState == 4) && !stable3lines) {
+			usePD = false;
+			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, GPIO_PIN_RESET);
+		}
+
 
 		// vonalkövetés szabályozó
 		if(globalLines.numLines1 != -1)	// ha látunk vonalat
 		{
-			if  (speed >= PID_LIMIT)
+			if  (usePD)
 			{
 				pid = 1;
 				error = activeLine1 - 15.5;
