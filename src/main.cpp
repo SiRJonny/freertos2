@@ -51,7 +51,7 @@ extern "C"
 #include "Controllers.h"
 #include "StateMachine.h"
 
-#define SERVO_RANGE_MOTOR 600	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a max kiadott jel
+#define SERVO_RANGE_MOTOR 700	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a max kiadott jel
 #define SERVO_RANGE_STEERING 300	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a max kiadott jel
 #define MOTOR_CONTROL_ENABLED 1
 #define SERVO_CONTROL_ENABLED 1
@@ -66,11 +66,11 @@ extern "C"
 #define PID_IGAIN 0
 #define PID_DGAIN -500
 
-float ACC_MAX = 100;		// egy szabályzó periódusban max ennyivel növekedhet a motor szervo jele
+float ACC_MAX = 200;		// egy szabályzó periódusban max ennyivel növekedhet a motor szervo jele
 int NO_LINE_CYCLES = 10;
 
-float SLOW = 1.2;
-float FAST = 3;
+float SLOW = 1.35;
+float FAST = 3.1;
 float STOP = 0.0;
 
 float PID_LIMIT = 1.1;
@@ -94,8 +94,8 @@ LineState globalLines;
 
 int testLinePos = 10;
 
-float A = 0;	// sebesség függés	// d5% = v*A + B
-float B = 0.9;	// konstans
+float A = 0.4;	// sebesség függés	// d5% = v*A + B
+float B = 0.4;	// konstans
 
 int pid = 0;
 
