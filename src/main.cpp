@@ -66,11 +66,11 @@ extern "C"
 #define PID_IGAIN 0
 #define PID_DGAIN -500
 
-float ACC_MAX = 50;		// egy szabályzó periódusban max ennyivel növekedhet a motor szervo jele
-int NO_LINE_CYCLES = 50;
+float ACC_MAX = 100;		// egy szabályzó periódusban max ennyivel növekedhet a motor szervo jele
+int NO_LINE_CYCLES = 10;
 
-float SLOW = 1.1;
-float FAST = 2.2;
+float SLOW = 1.2;
+float FAST = 3;
 float STOP = 0.0;
 
 float PID_LIMIT = 1.1;
@@ -95,7 +95,7 @@ LineState globalLines;
 int testLinePos = 10;
 
 float A = 0;	// sebesség függés	// d5% = v*A + B
-float B = 0.8;	// konstans
+float B = 0.9;	// konstans
 
 int pid = 0;
 
@@ -875,7 +875,7 @@ void SteerControlTask()
 	int numLinesArrayIndex = 0;
 	bool stable3lines = false;
 	int numLinesSum = 0;
-	bool usePD = false;
+	bool usePD = true;
 
 	//LineS
 	for (int i = 0; i<5; i++) {
@@ -903,9 +903,9 @@ void SteerControlTask()
 
 	// motor PI szabályzó struktúra
 	PIDm.pGain = 500;		// 100-> 5m/s hibánál lesz 500 a jel (max)
-	PIDm.iGain = 0;			// pGain/100?
+	PIDm.iGain = 2;			// pGain/100?
 	PIDm.dGain = 0;
-	PIDm.iMax = 200;
+	PIDm.iMax = 300;
 	PIDm.iMin = -100;
 	PIDm.iState = 0;
 	PIDm.dState = 0;
@@ -934,6 +934,13 @@ void SteerControlTask()
 		osThreadSuspendAll();
 		speed = speed_global;
 		osThreadResumeAll();
+
+		if (SET_SPEED > 2)
+		{
+			PIDm.iGain = 2;
+		} else {
+			PIDm.iGain = 0;
+		}
 
 
 		// motor szabályozó
@@ -1024,10 +1031,10 @@ void SteerControlTask()
 		if (state_struct.nextState == 2)
 		{
 			usePD = true;
-			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, GPIO_PIN_SET);
+			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, GPIO_PIN_RESET);
 		} else if ( (state_struct.nextState == 4) && !stable3lines) {
 			usePD = false;
-			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, GPIO_PIN_SET);
 		}
 
 
