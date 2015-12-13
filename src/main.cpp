@@ -67,11 +67,13 @@ extern "C"
 #define PID_DGAIN -500
 
 float ACC_MAX = 50;		// egy szabályzó periódusban max ennyivel növekedhet a motor szervo jele
-int NO_LINE_CYCLES = 10;
+int NO_LINE_CYCLES = 50;
 
 float SLOW = 1.2;
-float FAST = 2.5;
+float FAST = 3.0;
 float STOP = 0.0;
+
+float PID_LIMIT = 1.1;
 
 using namespace std;
 
@@ -93,7 +95,7 @@ LineState globalLines;
 int testLinePos = 10;
 
 float A = 0;	// sebesség függés	// d5% = v*A + B
-float B = 0.7;	// konstans
+float B = 0.8;	// konstans
 
 int pid = 0;
 
@@ -682,15 +684,15 @@ void BTReceiveTask()
 		HAL_UART_Receive_IT(&huart3,msg,(uint16_t)5);
 
 		osSignalWait(0x0001,osWaitForever);
-		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
+
 		// TODO: változó fogadásnál mi legyen?
 		switch(msg[0])
 		{
 			case 0:
-
 				//SET_SPEED = 0;
 				state_struct.state = -1;
 				stopped = 1;
+				HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
 				//osDelay(2000);
 				//osThreadSuspend(SteerControl_TaskHandle);
 				break;
@@ -706,8 +708,12 @@ void BTReceiveTask()
 				BT_send_msg(&PIDs.pGain, "PIDp");
 				break;
 			case 3:
+				SLOW = *flt_ptr;
+				BT_send_msg(&SLOW, "SLOW");
 				break;
 			case 4:
+				FAST = *flt_ptr;
+				BT_send_msg(&FAST, "FAST");
 				break;
 			case 5:
 				BT_send_msg(&state_struct.state, "state");
@@ -752,7 +758,7 @@ void SendRemoteVarTask()
 
 		BT_send_msg(&stopped, "stopped");
 
-		sendSensors();
+		//sendSensors();
 		sendDebugVars();
 		//sendTuning();
 
@@ -805,14 +811,14 @@ void sendTuning() {
 
 void sendDebugVars() {
 	BT_send_msg(&speed_global, "speed");
-	BT_send_msg(&SET_SPEED, "SET_SPEED");
+	//BT_send_msg(&SET_SPEED, "SET_SPEED");
 	//BT_send_msg(&linePosM, "linePosM");
 
-	BT_send_msg(&testLinePos, "testLinePos");
+	//BT_send_msg(&testLinePos, "testLinePos");
 	BT_send_msg(&pid, "PIDBOOL");
 
-	BT_send_msg(&activeLine1, "actL1");
-	BT_send_msg(&activeLine2, "actL2");
+	//BT_send_msg(&activeLine1, "actL1");
+	//BT_send_msg(&activeLine2, "actL2");
 
 	//BT_send_msg(&angle, "angle");
 	//BT_send_msg(&control, "control");
@@ -823,21 +829,21 @@ void sendDebugVars() {
 	//BT_send_msg(&last_active_line_pos2, "last_pos2");
 
 	//Állapotteres
-	BT_send_msg(&A, "A");
-	BT_send_msg(&B, "B");
-	BT_send_msg(&state_struct.state, "state");
-	BT_send_msg(&state_struct.nextState, "nextState");
+	//BT_send_msg(&A, "A");
+	//BT_send_msg(&B, "B");
+	//BT_send_msg(&state_struct.state, "state");
+	//BT_send_msg(&state_struct.nextState, "nextState");
 
 
 	BT_send_msg(&globalLines.numLines1, "numLines1");
 	BT_send_msg(&globalLines.numLines2, "numLines2");
 
-	BT_send_msg(&globalLines.pos1[0], "front_0");
-	BT_send_msg(&globalLines.pos1[1], "front_1");
-	BT_send_msg(&globalLines.pos1[2], "front_2");
-	BT_send_msg(&globalLines.pos2[0], "back_0");
-	BT_send_msg(&globalLines.pos2[1], "back_1");
-	BT_send_msg(&globalLines.pos2[2], "back_2");
+	//BT_send_msg(&globalLines.pos1[0], "front_0");
+	//BT_send_msg(&globalLines.pos1[1], "front_1");
+	//BT_send_msg(&globalLines.pos1[2], "front_2");
+	//BT_send_msg(&globalLines.pos2[0], "back_0");
+	//BT_send_msg(&globalLines.pos2[1], "back_1");
+	//BT_send_msg(&globalLines.pos2[2], "back_2");
 }
 
 void sendStateData() {
@@ -891,10 +897,10 @@ void SteerControlTask()
 	PIDs.dState = 0;
 
 	// motor PI szabályzó struktúra
-	PIDm.pGain = 300;		// 100-> 5m/s hibánál lesz 500 a jel (max)
-	PIDm.iGain = 2;			// pGain/100?
+	PIDm.pGain = 500;		// 100-> 5m/s hibánál lesz 500 a jel (max)
+	PIDm.iGain = 0;			// pGain/100?
 	PIDm.dGain = 0;
-	PIDm.iMax = 500;
+	PIDm.iMax = 200;
 	PIDm.iMin = -100;
 	PIDm.iState = 0;
 	PIDm.dState = 0;
@@ -962,8 +968,9 @@ void SteerControlTask()
 		last_speed_control = speed_control;
 
 		///////// Bluetooth debug küldés	////////////////
-		BT_send_msg(&speed, "speed");
-		BT_send_msg(&speed_control, "sp_ctrl");
+		//BT_send_msg(&speed, "speed");
+		//BT_send_msg(&speed_control, "controlSpeed");
+		//BT_send_msg(&PIDm.iState, "contIState");
 
 		encoderPos = __HAL_TIM_GET_COUNTER(&htim2);		// állapotgépnek
 
@@ -989,7 +996,7 @@ void SteerControlTask()
 		// vonalkövetés szabályozó
 		if(globalLines.numLines1 != -1)	// ha látunk vonalat
 		{
-			if  (speed >= 1.5)
+			if  (speed >= PID_LIMIT)
 			{
 				pid = 1;
 				error = activeLine1 - 15.5;
