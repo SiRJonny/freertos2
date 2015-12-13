@@ -950,7 +950,7 @@ void SteerControlTask()
 			{
 				speed_control = 0;
 			}
-			else if(speed_control > 0 && speed_control > last_speed_control + ACC_MAX)
+			else if(speed_control > 0 && speed_control > (last_speed_control + ACC_MAX) && last_speed_control >= 0)
 			{
 				speed_control = last_speed_control + ACC_MAX; 		// gyorsulás korlát
 			}
@@ -961,6 +961,9 @@ void SteerControlTask()
 		#endif
 		last_speed_control = speed_control;
 
+		///////// Bluetooth debug küldés	////////////////
+		BT_send_msg(&speed, "speed");
+		BT_send_msg(&speed_control, "sp_ctrl");
 
 		encoderPos = __HAL_TIM_GET_COUNTER(&htim2);		// állapotgépnek
 

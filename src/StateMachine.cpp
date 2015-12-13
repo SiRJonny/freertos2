@@ -23,8 +23,8 @@ void StateMachine(state_machine_struct * State, LineState * Lines, int encoderPo
 		SET_SPEED = SLOW;
 		if(Lines->numLines1 == 3 && Lines->numLines2 == 3)
 		{
-			State->TargetEncoderPos = encoderPos - 10000;	// kb 4 méter
-			State->nextState = 4;
+			State->TargetEncoderPos = encoderPos - 1250;	// kb 0,5 méter
+			State->nextState = 1;
 			State->state = 3;
 			//B = 0.85;
 			SET_SPEED = SLOW;
