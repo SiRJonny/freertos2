@@ -490,22 +490,37 @@ void StartDefaultTask()
 	int current = 0;
 	int encoderPos = 1000000000;
 	int lastEncoderPos = 1000000000;	// encoder számláló innen indul, hogy semerre ne legyen túlcsordulás
+	int encoderPosArray[5];
+	int buffer_cntr = 0;
 	float speed_temp = 0;
+
+	for(int i = 0; i < 5; i++)
+	{
+		encoderPosArray[i] = 1000000000;
+	}
 
 	for(;;)
 	{
+
 		// sebesség mérés
 		encoderPos = __HAL_TIM_GET_COUNTER(&htim2);
-		speed_temp = ((float)(lastEncoderPos - encoderPos))/(2571.0/20.0); //ez így m/s, ha 20 lukas a tárcsa és 50ms-enként mérünk (másodpercenként 20)
+		encoderPosArray[buffer_cntr] = encoderPos;
+		buffer_cntr++;
+		if(buffer_cntr >= 5)
+		{
+			buffer_cntr = 0;
+		}
+
+		speed_temp = ((float)(encoderPosArray[buffer_cntr] - encoderPos))/(2571.0/20.0); //ez így m/s, ha 20 lukas a tárcsa és 50ms-enként mérünk (másodpercenként 20)
 
 		osThreadSuspendAll();
 		speed_global = speed_temp;
 		osThreadResumeAll();
 
-		lastEncoderPos = encoderPos;
+		//lastEncoderPos = encoderPos;
 
 
-		if (i == 10)
+		if (i == 50)
 		{
 			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
 			i = 0;
@@ -514,7 +529,7 @@ void StartDefaultTask()
 		{
 			i++;
 		}
-		osDelay(50);
+		osDelay(10);
 	}
 
 }
