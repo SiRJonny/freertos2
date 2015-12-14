@@ -23,7 +23,7 @@ void StateMachine(state_machine_struct * State, bool * stable3lines, int encoder
 		SET_SPEED = SLOW;
 		if(*stable3lines)
 		{
-			State->TargetEncoderPos = encoderPos - 1250;	// kb 0,5 méter
+			State->TargetEncoderPos = encoderPos - 750;	// kb 0,5 méter
 			State->nextState = 1;
 			State->state = 3;
 			//B = 0.85;
@@ -60,7 +60,7 @@ void StateMachine(state_machine_struct * State, bool * stable3lines, int encoder
 		//SET_SPEED = SLOW;
 		if(*stable3lines)
 		{
-			State->TargetEncoderPos = encoderPos - 1250;	// kb 0,5 méter
+			State->TargetEncoderPos = encoderPos - 750;	// kb 0,5 méter
 			State->nextState = 1;
 			State->state = 3;
 			//B = 0.85;

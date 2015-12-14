@@ -67,10 +67,10 @@ extern "C"
 #define PID_DGAIN -500
 
 float ACC_MAX = 200;		// egy szabályzó periódusban max ennyivel növekedhet a motor szervo jele
-int NO_LINE_CYCLES = 10;
+int NO_LINE_CYCLES = 50;
 
-float SLOW = 1.35;
-float FAST = 3.1;
+float SLOW = 1.3;
+float FAST = 2.9;
 float STOP = 0.0;
 
 float PID_LIMIT = 1.1;
@@ -893,9 +893,9 @@ void SteerControlTask()
 	//B = 0.4;	// konstans
 
 	// szervo PD szabályzó struktúrája
-	PIDs.pGain = 25;
+	PIDs.pGain = 15;
 	PIDs.iGain = 0;
-	PIDs.dGain = -300;
+	PIDs.dGain = -250;
 	PIDs.iMax = 300;
 	PIDs.iMin = -300;
 	PIDs.iState = 0;
