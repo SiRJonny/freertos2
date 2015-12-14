@@ -69,8 +69,8 @@ extern "C"
 float ACC_MAX = 200;		// egy szabályzó periódusban max ennyivel növekedhet a motor szervo jele
 int NO_LINE_CYCLES = 50;
 
-float SLOW = 1.3;
-float FAST = 2.9;
+float SLOW = 1.25;
+float FAST = 2.8;
 float STOP = 0.0;
 
 float PID_LIMIT = 1.1;
@@ -758,7 +758,7 @@ void SendRemoteVarTask()
 
 		BT_send_msg(&stopped, "stopped");
 
-		//sendSensors();
+		sendSensors();
 		sendDebugVars();
 		//sendTuning();
 
@@ -838,12 +838,12 @@ void sendDebugVars() {
 	BT_send_msg(&globalLines.numLines1, "numLines1");
 	BT_send_msg(&globalLines.numLines2, "numLines2");
 
-	//BT_send_msg(&globalLines.pos1[0], "front_0");
-	//BT_send_msg(&globalLines.pos1[1], "front_1");
-	//BT_send_msg(&globalLines.pos1[2], "front_2");
-	//BT_send_msg(&globalLines.pos2[0], "back_0");
-	//BT_send_msg(&globalLines.pos2[1], "back_1");
-	//BT_send_msg(&globalLines.pos2[2], "back_2");
+	BT_send_msg(&globalLines.pos1[0], "front_0");
+	BT_send_msg(&globalLines.pos1[1], "front_1");
+	BT_send_msg(&globalLines.pos1[2], "front_2");
+	BT_send_msg(&globalLines.pos2[0], "back_0");
+	BT_send_msg(&globalLines.pos2[1], "back_1");
+	BT_send_msg(&globalLines.pos2[2], "back_2");
 }
 
 void sendStateData() {
