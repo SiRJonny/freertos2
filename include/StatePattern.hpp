@@ -8,6 +8,10 @@
 #ifndef STATEPATTERN_HPP_
 #define STATEPATTERN_HPP_
 
+#include <string>;
+
+using namespace std;
+
 class StateContext;
 class KanyarState;
 class GyorsitoState;
@@ -21,7 +25,8 @@ extern float SET_SPEED;
 enum Event {
 	GYORSITO,
 	LASSITO,
-	SIMA
+	SIMA,
+	START
 };
 
 class BaseState {
@@ -31,10 +36,15 @@ public:
 	static GyorsitoState gyorsito;
 	static GyorsState gyors;
 	static LassitoState lassito;
+	static StopState stopped;
 
+	int stateId;
 	bool steeringPD;
 	float targetSpeed;
+	int encoderPosDifference;
+	int targetEncoderPos;
 
+	void stop(StateContext& context);
 	virtual void handleEvent(StateContext& context, Event event);
 	virtual ~BaseState() {}
 
@@ -65,17 +75,29 @@ public:
 };
 
 
+class StopState : public BaseState {
+public:
+	StopState();
+	virtual void handleEvent(StateContext& context, Event event);
+};
+
 
 class StateContext {
 private:
 	BaseState* state;
 public:
+	int currEncoderPos;
+
+	void init();
 	void handleEvent(Event event);
 	void setState(BaseState *newState);
-	void update(bool stable3lines);
+	void setTargetEncoderPos(int target);
+	void stop();
+	void update(bool stable3lines, int encoderPos);
 
 	float getTargetSpeed();
 	bool isSteeringPD();
+	int getStateId();
 
 
 };

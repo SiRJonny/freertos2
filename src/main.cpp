@@ -50,6 +50,7 @@ extern "C"
 #include "ProcessSensors.h"
 #include "Controllers.h"
 #include "StateMachine.h"
+#include "StatePattern.hpp"
 
 #define SERVO_RANGE_MOTOR 700	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a max kiadott jel
 #define SERVO_RANGE_STEERING 300	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a max kiadott jel
@@ -153,7 +154,9 @@ float controlArray[100];
 
 PID_struct PIDs;
 PID_struct PIDm;
-state_machine_struct state_struct;
+StateContext stateContext;
+
+//state_machine_struct state_struct;
 
 float SET_SPEED = 0;
 float speed_global = 0;
@@ -690,7 +693,8 @@ void BTReceiveTask()
 		{
 			case 0:
 				//SET_SPEED = 0;
-				state_struct.state = -1;
+				//state_struct.state = -1;
+				stateContext.stop();
 				stopped = 1;
 				HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
 				//osDelay(2000);
@@ -716,7 +720,8 @@ void BTReceiveTask()
 				BT_send_msg(&FAST, "FAST");
 				break;
 			case 5:
-				BT_send_msg(&state_struct.state, "state");
+				int id = stateContext.getStateId();
+				BT_send_msg(&id, "state");
 				break;
 			case 6:
 				testLinePos = *int_ptr;
@@ -886,7 +891,8 @@ void SteerControlTask()
 	int no_line_cycle_count = 0;
 
 	// állapotgép init
-	state_struct.state = 0;
+	//state_struct.state = 0;
+	stateContext.init();
 
 	// állapot visszacsatolás paraméterei
 	//A = 0.4;	// sebesség függés	// d5% = v*A + B
@@ -917,7 +923,6 @@ void SteerControlTask()
 	char buffer[10];
 
 	float error = 0;
-
 
 
 	osThreadSuspend(SteerControl_TaskHandle);
@@ -1026,7 +1031,7 @@ void SteerControlTask()
 		linePosM = (activeLine1-15.5) * 5.9 / 1000; // pozíció, méterben, középen 0
 
 		//////////// állapotgép   /////////////
-		StateMachine(&state_struct, &stable3lines, encoderPos);
+		/*StateMachine(&state_struct, &stable3lines, encoderPos);
 
 		if (state_struct.nextState == 2)
 		{
@@ -1035,7 +1040,12 @@ void SteerControlTask()
 		} else if ( (state_struct.nextState == 4) && !stable3lines) {
 			usePD = false;
 			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, GPIO_PIN_SET);
-		}
+		}*/
+
+
+		stateContext.update(stable3lines, encoderPos);
+		usePD = stateContext.isSteeringPD();
+		SET_SPEED = stateContext.getTargetSpeed();
 
 
 		// vonalkövetés szabályozó
@@ -1076,7 +1086,8 @@ void SteerControlTask()
 			if (no_line_cycle_count > NO_LINE_CYCLES)
 			{
 				//SET_SPEED = 0;
-				state_struct.state = -1;
+				//state_struct.state = -1;
+				stateContext.stop();
 				SetServo_motor(0);
 				//osThreadSuspend(SteerControl_TaskHandle);
 			}
