@@ -426,7 +426,7 @@ void SetServo_motor(int pos)
 // TODO: sebességmérés külön, és rendes emergency break
 void EmergencyBreak(int time)
 {
-	state_struct.state = -1;
+	stateContext.stop();
 	SET_SPEED = 0;
 	if(time > 2000){time = 2000;}
 
