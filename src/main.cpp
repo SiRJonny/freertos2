@@ -147,9 +147,11 @@ QueueHandle_t xQueue_BT;
 uint32_t ADC1_BUFFER[4];
 uint32_t szenzorsor_1[32];
 uint32_t szenzorsor_2[32];
+int Distance_sensors[5];
 
 uint32_t szenzorsor_temp_1[32];
 uint32_t szenzorsor_temp_2[32];
+
 
 float posArray[100];
 float controlArray[100];
@@ -564,7 +566,7 @@ void StartButtonTask()
 			stateContext.start(1000000000);
 
 			osThreadResume(SteerControl_TaskHandle);
-			osThreadResume(SendRemoteVar_TaskHandle);
+			//osThreadResume(SendRemoteVar_TaskHandle);
 			//osDelay(TEST_DELAY);
 			//SET_SPEED = 0.0;
 			//state_struct.state = -1;
@@ -1016,6 +1018,11 @@ void SteerControlTask()
 		ReadSensors();
 		//ReadSensorsDummy();
 
+
+		ADC2_read();		// blokkol, 40us
+
+
+
 		// szenzor adatok feldolgozása
 		globalLines = getLinePos(20);
 
@@ -1350,13 +1357,13 @@ void MX_ADC2_Init(void)
     */
   hadc2.Instance = ADC2;
   hadc2.Init.ClockPrescaler = ADC_CLOCKPRESCALER_PCLK_DIV4;
-  hadc2.Init.Resolution = ADC_RESOLUTION12b;
-  hadc2.Init.ScanConvMode = DISABLE;
+  hadc2.Init.Resolution = ADC_RESOLUTION8b;
+  hadc2.Init.ScanConvMode = ENABLE;
   hadc2.Init.ContinuousConvMode = DISABLE;
   hadc2.Init.DiscontinuousConvMode = DISABLE;
   hadc2.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
   hadc2.Init.DataAlign = ADC_DATAALIGN_RIGHT;
-  hadc2.Init.NbrOfConversion = 1;
+  hadc2.Init.NbrOfConversion = 5;
   hadc2.Init.DMAContinuousRequests = DISABLE;
   hadc2.Init.EOCSelection = EOC_SINGLE_CONV;
   HAL_ADC_Init(&hadc2);
@@ -1365,8 +1372,29 @@ void MX_ADC2_Init(void)
     */
   sConfig.Channel = ADC_CHANNEL_11;
   sConfig.Rank = 1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+  sConfig.SamplingTime = ADC_SAMPLETIME_15CYCLES;
   HAL_ADC_ConfigChannel(&hadc2, &sConfig);
+
+  sConfig.Channel = ADC_CHANNEL_12;
+  sConfig.Rank = 2;
+  sConfig.SamplingTime = ADC_SAMPLETIME_15CYCLES;
+  HAL_ADC_ConfigChannel(&hadc2, &sConfig);
+
+  sConfig.Channel = ADC_CHANNEL_13;
+  sConfig.Rank = 3;
+  sConfig.SamplingTime = ADC_SAMPLETIME_15CYCLES;
+  HAL_ADC_ConfigChannel(&hadc2, &sConfig);
+
+  sConfig.Channel = ADC_CHANNEL_14;
+  sConfig.Rank = 4;
+  sConfig.SamplingTime = ADC_SAMPLETIME_15CYCLES;
+  HAL_ADC_ConfigChannel(&hadc2, &sConfig);
+
+  sConfig.Channel = ADC_CHANNEL_15;
+  sConfig.Rank = 5;
+  sConfig.SamplingTime = ADC_SAMPLETIME_15CYCLES;
+  HAL_ADC_ConfigChannel(&hadc2, &sConfig);
+
 
 }
 
