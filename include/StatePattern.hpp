@@ -17,6 +17,8 @@ class KanyarState;
 class GyorsitoState;
 class GyorsState;
 class LassitoState;
+class StopState;
+class StartState;
 
 extern float SLOW;
 extern float FAST;
@@ -37,6 +39,7 @@ public:
 	static GyorsState gyors;
 	static LassitoState lassito;
 	static StopState stopped;
+	static StartState started;
 
 	int stateId;
 	bool steeringPD;
@@ -81,19 +84,27 @@ public:
 	virtual void handleEvent(StateContext& context, Event event);
 };
 
+class StartState : public BaseState {
+public:
+	StartState();
+	virtual void handleEvent(StateContext& context, Event event);
+};
+
 
 class StateContext {
 private:
-	BaseState* state;
+
 public:
+	BaseState* state;
 	int currEncoderPos;
+	int temp;
 
 	void init();
 	void handleEvent(Event event);
 	void setState(BaseState *newState);
 	void setTargetEncoderPos(int target);
 	void stop();
-	void start();
+	void start(int encoderPos);
 	void update(bool stable3lines, int encoderPos);
 
 	float getTargetSpeed();

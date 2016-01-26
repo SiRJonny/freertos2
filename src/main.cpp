@@ -93,6 +93,8 @@ float last_active_line_pos2 = 15.5;
 
 LineState globalLines;
 
+bool stable3lines;
+
 int testLinePos = 10;
 
 float A = 0.4;	// sebesség függés	// d5% = v*A + B
@@ -558,6 +560,9 @@ void StartButtonTask()
 			SetServo_steering(0);*/
 			//SET_SPEED = 1.2;
 			//HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14); // piros led, debug
+
+			stateContext.start(1000000000);
+
 			osThreadResume(SteerControl_TaskHandle);
 			osThreadResume(SendRemoteVar_TaskHandle);
 			//osDelay(TEST_DELAY);
@@ -674,6 +679,8 @@ void BTReceiveTask()
 	int * int_ptr;
 	float * flt_ptr;
 
+	int sid = -2;
+
 	int data;
 	char * char_ptr = (char*)&data;
 
@@ -720,8 +727,8 @@ void BTReceiveTask()
 				BT_send_msg(&FAST, "FAST");
 				break;
 			case 5:
-				int id = stateContext.getStateId();
-				BT_send_msg(&id, "state");
+				sid = stateContext.getStateId();
+				BT_send_msg(&sid, "state");
 				break;
 			case 6:
 				testLinePos = *int_ptr;
@@ -855,6 +862,19 @@ void sendDebugVars() {
 void sendStateData() {
 	int stateId = stateContext.getStateId();
 	BT_send_msg(&stateId, "StateID");
+	int stableLines = 0;
+	if (stable3lines) {
+		stableLines = 1;
+	}
+	BT_send_msg(&stableLines, "stable3lines");
+
+	int te = stateContext.temp;
+	BT_send_msg(&te, "te");
+
+	int cEnc = stateContext.currEncoderPos;
+	BT_send_msg(&cEnc, "cEnc");
+	int tEnc = stateContext.state->targetEncoderPos;
+	BT_send_msg(&tEnc, "tEnc");
 }
 
 void sendPIDs() {
@@ -879,7 +899,7 @@ void SteerControlTask()
 
 	int numLinesArray[5];
 	int numLinesArrayIndex = 0;
-	bool stable3lines = false;
+	stable3lines = false;
 	int numLinesSum = 0;
 	bool usePD = true;
 

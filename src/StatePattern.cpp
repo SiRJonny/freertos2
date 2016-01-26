@@ -14,6 +14,8 @@ KanyarState BaseState::kanyar;
 GyorsitoState BaseState::gyorsito;
 GyorsState BaseState::gyors;
 LassitoState BaseState::lassito;
+StopState BaseState::stopped;
+StartState BaseState::started;
 
 //Kanyar közben
 KanyarState::KanyarState() {
@@ -33,15 +35,13 @@ void KanyarState::handleEvent(StateContext& context, Event event) {
 //Gyorsításkor
 GyorsitoState::GyorsitoState() {
 	stateId = 2;
-	steeringPD = true;
-	targetSpeed = FAST;
+	steeringPD = false;
+	targetSpeed = SLOW;
 	encoderPosDifference = 750;
 }
 
 void GyorsitoState::handleEvent(StateContext& context, Event event) {
-	if (event == SIMA) {
-		context.setState(&BaseState::gyors);
-	}
+	context.setState(&BaseState::gyors);
 }
 
 //Gyors szakaszon
@@ -81,7 +81,23 @@ StopState::StopState() {
 
 void StopState::handleEvent(StateContext& context, Event event) {
 	if (event == START) {
-		context.setState(&BaseState::kanyar);
+		context.setState(&BaseState::started);
+	}
+}
+
+//Start state
+StartState::StartState() {
+	stateId = 0;
+	steeringPD = false;
+	targetSpeed = SLOW;
+	encoderPosDifference = 0;
+}
+
+void StartState::handleEvent(StateContext& context, Event event) {
+	context.temp = 2;
+	if (event == GYORSITO) {
+		context.temp = 3;
+		context.setState(&BaseState::gyorsito);
 	}
 }
 
@@ -90,8 +106,11 @@ void BaseState::stop(StateContext& context) {
 	context.setState(&BaseState::stopped);
 }
 
+//BaseState::~BaseState() {};
+
 //StateContext
 void StateContext::init(){
+	temp = -3;
 	setState(&BaseState::stopped);
 }
 
@@ -107,14 +126,16 @@ void StateContext::setState(BaseState* newState){
 
 void StateContext::update(bool stable3lines, int encoderPos){
 	currEncoderPos = encoderPos;
-	if(currEncoderPos < state->targetEncoderPos)
-			{
-				if (stable3lines) {
-					handleEvent(GYORSITO);
-				} else {
-					handleEvent(SIMA);
-				}
+	temp = 0;
+	if(currEncoderPos <= state->targetEncoderPos)
+		{
+		temp = 1;
+			if (stable3lines) {
+				handleEvent(GYORSITO);
+			} else {
+				handleEvent(SIMA);
 			}
+		}
 }
 
 float StateContext::getTargetSpeed(){
@@ -130,8 +151,9 @@ void StateContext::stop(){
 	SetServo_motor(0);
 }
 
-void StateContext::start() {
-	handleEvent(START);
+void StateContext::start(int encoderPos) {
+	currEncoderPos = encoderPos;
+	setState(&BaseState::started);
 }
 
 int StateContext::getStateId() {
