@@ -93,6 +93,7 @@ public:
 	void setState(BaseState *newState);
 	void setTargetEncoderPos(int target);
 	void stop();
+	void start();
 	void update(bool stable3lines, int encoderPos);
 
 	float getTargetSpeed();

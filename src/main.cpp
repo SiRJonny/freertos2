@@ -764,8 +764,9 @@ void SendRemoteVarTask()
 		BT_send_msg(&stopped, "stopped");
 
 		sendSensors();
-		sendDebugVars();
+		//sendDebugVars();
 		//sendTuning();
+		sendStateData();
 
 		//osThreadSuspend(SendRemoteVar_TaskHandle); // minden elküldve, pihenünk (osThreadResume-ra megint elküld mindent)
 	    //HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
@@ -852,8 +853,8 @@ void sendDebugVars() {
 }
 
 void sendStateData() {
-
-
+	int stateId = stateContext.getStateId();
+	BT_send_msg(&stateId, "StateID");
 }
 
 void sendPIDs() {
