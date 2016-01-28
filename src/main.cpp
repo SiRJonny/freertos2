@@ -51,6 +51,7 @@ extern "C"
 #include "Controllers.h"
 #include "StateMachine.h"
 #include "StatePattern.hpp"
+#include "giro.hpp"
 
 #define SERVO_RANGE_MOTOR 700	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a max kiadott jel
 #define SERVO_RANGE_STEERING 300	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a max kiadott jel
@@ -565,7 +566,16 @@ void StartButtonTask()
 
 			stateContext.start(1000000000);
 
-			osThreadResume(SteerControl_TaskHandle);
+
+			uint8_t girodata = 47;
+
+			giro_write_reg(0x20, 0x0F);
+			girodata = giro_read_reg(0x2C);
+
+
+			BT_send_msg(&timer, "gir:" + std::string(itoa(girodata,buffer,10)) + "\n");
+
+			//osThreadResume(SteerControl_TaskHandle);
 			//osThreadResume(SendRemoteVar_TaskHandle);
 			//osDelay(TEST_DELAY);
 			//SET_SPEED = 0.0;
