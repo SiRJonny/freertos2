@@ -109,8 +109,9 @@ void BaseState::stop(StateContext& context) {
 //BaseState::~BaseState() {};
 
 //StateContext
-void StateContext::init(){
+void StateContext::init(int startEncoderPos){
 	temp = -3;
+	currEncoderPos = startEncoderPos;
 	setState(&BaseState::stopped);
 }
 
@@ -151,8 +152,7 @@ void StateContext::stop(){
 	SetServo_motor(0);
 }
 
-void StateContext::start(int encoderPos) {
-	currEncoderPos = encoderPos;
+void StateContext::start() {
 	setState(&BaseState::started);
 }
 

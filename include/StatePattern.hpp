@@ -99,12 +99,12 @@ public:
 	int currEncoderPos;
 	int temp;
 
-	void init();
+	void init(int encoderPos);
 	void handleEvent(Event event);
 	void setState(BaseState *newState);
 	void setTargetEncoderPos(int target);
 	void stop();
-	void start(int encoderPos);
+	void start();
 	void update(bool stable3lines, int encoderPos);
 
 	float getTargetSpeed();

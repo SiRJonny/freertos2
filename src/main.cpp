@@ -41,8 +41,6 @@ extern "C"
 #include <string>
 #include <stdlib.h>
 
-
-
 #include "GPIO_setup.h"
 //#include "stm32f4xx_hal_uart.h"
 #include "BT_MSG.h"
@@ -52,36 +50,27 @@ extern "C"
 #include "StateMachine.h"
 #include "StatePattern.hpp"
 
-#define SERVO_RANGE_MOTOR 700	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a max kiadott jel
-#define SERVO_RANGE_STEERING 300	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a max kiadott jel
-#define MOTOR_CONTROL_ENABLED 1
-#define SERVO_CONTROL_ENABLED 1
 
-#define BTN_TUNEPID 0
+using namespace std;
 
-#define SERVO_CONTROL_STATESPACE 1
-#define SERVO_CONTROL_PID 0
+int servo_range_motor = 700;
+int servo_range_steering = 300;
+bool motor_control_enabled = true;
 
-
-#define PID_PGAIN 20
-#define PID_IGAIN 0
-#define PID_DGAIN -500
+bool BTN_TUNEPID = false;
 
 float ACC_MAX = 200;		// egy szabályzó periódusban max ennyivel növekedhet a motor szervo jele
 int NO_LINE_CYCLES = 50;
 
+//Sebesség
 float SLOW = 1.25;
 float FAST = 2.8;
 float STOP = 0.0;
 
-float PID_LIMIT = 1.1;
+float SET_SPEED = 0;
+float speed_global = 0;
 
-using namespace std;
-
-float TEST_SPEED = 0;
-float TEST_DELAY = 60000;
-
-
+//Vonalak
 float linePosM;		// vonalpozíció méterben
 float angle = 0;
 float control = 0;
@@ -95,16 +84,39 @@ LineState globalLines;
 
 bool stable3lines;
 
-int testLinePos = 10;
-
+//Szabályzó paraméterek
 float A = 0.4;	// sebesség függés	// d5% = v*A + B
 float B = 0.4;	// konstans
 
-int pid = 0;
+int usePD = 1;
 
-/* USER CODE END Includes */
+uint32_t ADC1_BUFFER[4];
+uint32_t szenzorsor_1[32];
+uint32_t szenzorsor_2[32];
 
-/* Private variables ---------------------------------------------------------*/
+uint32_t szenzorsor_temp_1[32];
+uint32_t szenzorsor_temp_2[32];
+
+float posArray[100];
+float controlArray[100];
+
+PID_struct PIDs;
+PID_struct PIDm;
+StateContext stateContext;
+
+bool TunePID = false;
+char buffer[10];	//bt msg hez
+int timer = 0; // idõméréshez
+
+float activeLine1 = 0;  // középsõ vonal kiválasztása
+float activeLine2 = 0;
+
+int stopped = 0;
+
+int startEncoderPos = 1000000000;
+
+
+
 osThreadId defaultTaskHandle;
 osThreadId BT_TaskHandle;
 osThreadId SendRemoteVar_TaskHandle;
@@ -136,44 +148,6 @@ osSemaphoreDef(ADC1_complete);
 QueueHandle_t xQueue_BT;
 
 
-
-
-
-
-
-/* USER CODE BEGIN PV */
-/* Private variables ---------------------------------------------------------*/
-
-uint32_t ADC1_BUFFER[4];
-uint32_t szenzorsor_1[32];
-uint32_t szenzorsor_2[32];
-
-uint32_t szenzorsor_temp_1[32];
-uint32_t szenzorsor_temp_2[32];
-
-float posArray[100];
-float controlArray[100];
-
-PID_struct PIDs;
-PID_struct PIDm;
-StateContext stateContext;
-
-//state_machine_struct state_struct;
-
-float SET_SPEED = 0;
-float speed_global = 0;
-int activeLineNum = 0;
-
-bool TunePID = false;
-char buffer[10];	//bt msg hez
-int timer = 0; // idõméréshez
-
-float activeLine1 = 0;  // középsõ vonal kiválasztása
-float activeLine2 = 0;
-
-int ONE = 1;
-int stopped = 0;
-/* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
@@ -214,14 +188,6 @@ void sendDebugVars();
 void sendStateData();
 
 
-/* USER CODE BEGIN PFP */
-/* Private function prototypes -----------------------------------------------*/
-
-/* USER CODE END PFP */
-
-/* USER CODE BEGIN 0 */
-
-/* USER CODE END 0 */
 
 int main(void)
 {
@@ -332,9 +298,6 @@ int main(void)
 
 }
 
-/** System Clock Configuration
-*/
-
 
 
 void SystemClock_Config(void)
@@ -374,15 +337,6 @@ void SystemClock_Config(void)
 }
 
 
-/*
-void BT_send_msg(int msg){
-	struct BT_MSG msg_int;
-	int2msg(&msg_int, msg, "unnamed\n");
-	xQueueSend( xQueue_BT, &msg_int, portMAX_DELAY);
-
-}*/
-
-
 void BT_send_msg(int * msg, string nev){
 	struct BT_MSG msg_int;
 	int2msg(&msg_int, msg, nev.c_str());
@@ -397,29 +351,11 @@ void BT_send_msg(float * msg, string nev){
 
 }
 
-
-/*
-void BT_send_msg(int * msg, string nev){
-	// type: 1=int, 3=float, 4=double
-	xQueueSend( xQueue_BT, &number2msg(msg, string(nev).c_str(), (uint8_t)1), portMAX_DELAY);
-}
-
-void BT_send_msg(float * msg, string nev){
-	// type: 1=int, 3=float, 4=double
-	xQueueSend( xQueue_BT, &number2msg(msg, string(nev).c_str(), (uint8_t)3), portMAX_DELAY);
-}
-
-void BT_send_msg(double * msg, string nev){
-	// type: 1=int, 3=float, 4=double
-	xQueueSend( xQueue_BT, &number2msg(msg, string(nev).c_str(), (uint8_t)4), portMAX_DELAY);
-}
-*/
-
 // -500 és 500 közötti értéket fogad
 void SetServo_motor(int pos)
 {
-	if(pos > SERVO_RANGE_MOTOR){pos = SERVO_RANGE_MOTOR;}
-	if(pos < -SERVO_RANGE_MOTOR){pos = -SERVO_RANGE_MOTOR;}
+	if(pos > servo_range_motor){pos = servo_range_motor;}
+	if(pos < -servo_range_motor){pos = -servo_range_motor;}
 
 	// 1500 = 1,5ms, ez a 0 pozíció
 	__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,1500-pos);
@@ -444,14 +380,14 @@ void EmergencyBreak(int time)
 // -500 és 500 közötti értéket fogad DEFINEolva!
 void SetServo_steering(int pos)
 {
-	if(pos > SERVO_RANGE_STEERING)
+	if(pos > servo_range_steering)
 	{
-		pos = SERVO_RANGE_STEERING;
+		pos = servo_range_steering;
 		//HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_SET);
 	}
-	else if(pos < -SERVO_RANGE_STEERING)
+	else if(pos < -servo_range_steering)
 	{
-		pos = -SERVO_RANGE_STEERING;
+		pos = -servo_range_steering;
 		//HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_SET);
 	}
 	else
@@ -467,14 +403,14 @@ void SetServo_steering(int pos)
 void SetServo_steering(float angle_rad)
 {
 	float pos = (angle_rad / 6.28 * 360) * 10.66666;	// 10.6666 csinál fokból pwm-et
-	if(pos > SERVO_RANGE_STEERING)
+	if(pos > servo_range_steering)
 	{
-		pos = SERVO_RANGE_STEERING;
+		pos = servo_range_steering;
 		//HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_SET);
 	}
-	else if(pos < -SERVO_RANGE_STEERING)
+	else if(pos < -servo_range_steering)
 	{
-		pos = -SERVO_RANGE_STEERING;
+		pos = -servo_range_steering;
 		//HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_SET);
 	}
 	else
@@ -493,10 +429,7 @@ void SetServo_steering(float angle_rad)
 void StartDefaultTask()
 {
 	int i = 0;
-	int last = 0;
-	int current = 0;
-	int encoderPos = 1000000000;
-	int lastEncoderPos = 1000000000;	// encoder számláló innen indul, hogy semerre ne legyen túlcsordulás
+	int encoderPos = startEncoderPos;
 	int encoderPosArray[5];
 	int buffer_cntr = 0;
 	float speed_temp = 0;
@@ -523,9 +456,6 @@ void StartDefaultTask()
 		osThreadSuspendAll();
 		speed_global = speed_temp;
 		osThreadResumeAll();
-
-		//lastEncoderPos = encoderPos;
-
 
 		if (i == 50)
 		{
@@ -555,89 +485,20 @@ void StartButtonTask()
 
 		if (wasPressed){
 
-			/*SetServo_steering(70);
-			osDelay(1000);
-			SetServo_steering(0);*/
-			//SET_SPEED = 1.2;
-			//HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14); // piros led, debug
-
-			stateContext.start(1000000000);
+			stateContext.start();
 
 			osThreadResume(SteerControl_TaskHandle);
 			osThreadResume(SendRemoteVar_TaskHandle);
-			//osDelay(TEST_DELAY);
-			//SET_SPEED = 0.0;
-			//state_struct.state = -1;
-			//osDelay(4000);
-			//SetServo_motor(0);
-			//osThreadSuspend(SteerControl_TaskHandle);
 
 
-			/*SetServo_motor(90);
-			osDelay(1000);
-			SetServo_motor(-500);
-			osDelay(1000);
-			//SetServo_motor(-600);
-			osDelay(1000);*/
-
-			/*SET_SPEED = 4;
-			osThreadResume(SteerControl_TaskHandle);
-			osDelay(3000);
-			SET_SPEED = 0;
-			osDelay(3000);
-			osThreadSuspend(SteerControl_TaskHandle);*/
-
-			/*SET_SPEED = 2;
-			osThreadResume(SteerControl_TaskHandle);
-			osDelay(1000);
-			SET_SPEED = 0;
-			osDelay(3000);
-			osThreadSuspend(SteerControl_TaskHandle);*/
-
-
-			#if (BTN_TUNEPID == 1)
+			if (BTN_TUNEPID)
 			{
 
-				osThreadResume(SteerControl_TaskHandle);
-				osDelay(200);
-				SET_SPEED = 2;
-				TunePID = true;
+//				osThreadResume(SteerControl_TaskHandle);
+	//			osDelay(200);
+		//		SET_SPEED = 2;
+			//	TunePID = true;
 			}
-			#endif
-
-			/*
-
-			SetServo_steering(240);
-			osDelay(2000);
-			SetServo_steering(260);
-			osDelay(2000);
-			SetServo_steering(280);
-			osDelay(2000);
-			SetServo_steering(300);
-*/
-
-
-			/*osDelay(5);
-			osThreadResume(SendRemoteVar_TaskHandle);*/
-
-			/*SetServo_motor(100);
-			osDelay(1000);
-			SetServo_motor(-100);
-			osDelay(3);
-			SetServo_motor(0);
-			osDelay(3);
-			SetServo_motor(-500);
-			osDelay(1000);
-			SetServo_motor(0);*/
-
-			/*string temp = "^#^$^%";
-			struct BT_MSG msg;
-			temp.copy(msg.data,sizeof(temp),0);
-			msg.size = 6;
-
-			HAL_UART_Transmit_IT(&huart3, (uint8_t*) msg.data, msg.size);*/
-
-
 
 			wasPressed = 0;
 		}
@@ -650,9 +511,6 @@ void StartButtonTask()
 void SendBluetoothTask()
 {
 	struct BT_MSG msg;
-
-
-
 
 	for( ;; )
 	{
@@ -731,12 +589,10 @@ void BTReceiveTask()
 				BT_send_msg(&sid, "state");
 				break;
 			case 6:
-				testLinePos = *int_ptr;
-				BT_send_msg(&testLinePos, "testLinePos");
+
 				break;
 			case 7:
-				TEST_DELAY = *int_ptr;
-				BT_send_msg(&TEST_DELAY, "testLinePos");
+
 				break;
 			case 8:
 				A = *flt_ptr;
@@ -775,9 +631,6 @@ void SendRemoteVarTask()
 		//sendTuning();
 		sendStateData();
 
-		//osThreadSuspend(SendRemoteVar_TaskHandle); // minden elkÃ¼ldve, pihenÃ¼nk (osThreadResume-ra megint elkÃ¼ld mindent)
-	    //HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
-	    //osThreadSuspend(SendRemoteVar_TaskHandle);
 
 		osDelay(300);
 	}
@@ -822,13 +675,14 @@ void sendTuning() {
 	}
 }
 
+
 void sendDebugVars() {
 	BT_send_msg(&speed_global, "speed");
 	//BT_send_msg(&SET_SPEED, "SET_SPEED");
 	//BT_send_msg(&linePosM, "linePosM");
 
 	//BT_send_msg(&testLinePos, "testLinePos");
-	BT_send_msg(&pid, "PIDBOOL");
+	BT_send_msg(&usePD, "PIDBOOL");
 
 	//BT_send_msg(&activeLine1, "actL1");
 	//BT_send_msg(&activeLine2, "actL2");
@@ -868,9 +722,6 @@ void sendStateData() {
 	}
 	BT_send_msg(&stableLines, "stable3lines");
 
-	int te = stateContext.temp;
-	BT_send_msg(&te, "te");
-
 	int cEnc = stateContext.currEncoderPos;
 	BT_send_msg(&cEnc, "cEnc");
 	int tEnc = stateContext.state->targetEncoderPos;
@@ -892,7 +743,6 @@ void sendPIDm() {
 void SteerControlTask()
 {
 	int encoderPos = 1000000000;
-	int lastEncoderPos = 1000000000;	// encoder számláló innen indul, hogy semerre ne legyen túlcsordulás
 	float speed = 0;
 
 	int led_cntr = 0;
@@ -901,23 +751,17 @@ void SteerControlTask()
 	int numLinesArrayIndex = 0;
 	stable3lines = false;
 	int numLinesSum = 0;
-	bool usePD = true;
 
 	//LineS
 	for (int i = 0; i<5; i++) {
 		numLinesArray[i] = 1;
 	}
 
-
 	int no_line_cycle_count = 0;
 
 	// állapotgép init
 	//state_struct.state = 0;
-	stateContext.init();
-
-	// állapot visszacsatolás paraméterei
-	//A = 0.4;	// sebesség függés	// d5% = v*A + B
-	//B = 0.4;	// konstans
+	stateContext.init(startEncoderPos);
 
 	// szervo PD szabályzó struktúrája
 	PIDs.pGain = 15;
@@ -939,9 +783,7 @@ void SteerControlTask()
 
 	/// PID tune segédváltozók
 	bool tune_started = false;
-	int cntr = 0;
 	int tune_cntr = 0;
-	char buffer[10];
 
 	float error = 0;
 
@@ -950,12 +792,6 @@ void SteerControlTask()
 
 	for(;;)
 	{
-
-		//__HAL_TIM_SET_COUNTER(&htim5,0);
-
-		// TODO: sebességet elég ritkábban mérni? úgysem tud gyorsan változni -> pontosabb
-		// de gyorsítás így késleltetve történik...
-
 		// sebesség mérés
 		osThreadSuspendAll();
 		speed = speed_global;
@@ -970,7 +806,7 @@ void SteerControlTask()
 
 
 		// motor szabályozó
-		#if ( MOTOR_CONTROL_ENABLED == 1)
+		if (motor_control_enabled)
 		{
 			speed_error = SET_SPEED - speed;
 			speed_control = UpdatePID1(&PIDm, speed_error, speed);
@@ -1002,7 +838,7 @@ void SteerControlTask()
 			SetServo_motor( (int)speed_control );
 
 		}
-		#endif
+
 		last_speed_control = speed_control;
 
 		///////// Bluetooth debug küldés	////////////////
@@ -1014,7 +850,6 @@ void SteerControlTask()
 
 		// szenzor adatok beolvasása
 		ReadSensors();
-		//ReadSensorsDummy();
 
 		// szenzor adatok feldolgozása
 		globalLines = getLinePos(20);
@@ -1051,30 +886,21 @@ void SteerControlTask()
 
 		linePosM = (activeLine1-15.5) * 5.9 / 1000; // pozíció, méterben, középen 0
 
-		//////////// állapotgép   /////////////
-		/*StateMachine(&state_struct, &stable3lines, encoderPos);
-
-		if (state_struct.nextState == 2)
-		{
-			usePD = true;
-			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, GPIO_PIN_RESET);
-		} else if ( (state_struct.nextState == 4) && !stable3lines) {
-			usePD = false;
-			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, GPIO_PIN_SET);
-		}*/
-
-
 		stateContext.update(stable3lines, encoderPos);
-		usePD = stateContext.isSteeringPD();
+		if (stateContext.isSteeringPD()) {
+			usePD = 1;
+		} else {
+			usePD = 0;
+		}
+
 		SET_SPEED = stateContext.getTargetSpeed();
 
 
 		// vonalkövetés szabályozó
 		if(globalLines.numLines1 != -1)	// ha látunk vonalat
 		{
-			if  (usePD)
+			if  (usePD == 1)
 			{
-				pid = 1;
 				error = activeLine1 - 15.5;
 				control = UpdatePID1(&PIDs,error,globalLines.pos1[0]);
 				if(speed > 2)
@@ -1084,7 +910,6 @@ void SteerControlTask()
 				SetServo_steering((int)control); // PID-hez
 			} else
 			{
-				pid = 0;
 				if (speed < 0.2)
 				{
 					speed = 0.2;
@@ -1114,10 +939,6 @@ void SteerControlTask()
 			}
 
 		}
-
-
-
-
 
 
 		//timer = __HAL_TIM_GET_COUNTER(&htim5);
@@ -1225,8 +1046,10 @@ void getActiveLinePos(LineState * Lines, float *last_pos1, float *last_pos2, flo
 	}
 
 	//TODO külön függvénybe megadott numLines kéne paraméterben
-
 }
+
+
+
 
 
 // hal uart callback
