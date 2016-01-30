@@ -22,7 +22,7 @@ KanyarState::KanyarState() {
 	stateId = 1;
 	steeringPD = false;
 	targetSpeed = SLOW;
-	encoderPosDifference = 10000;
+	encoderPosDifference = 3000;
 }
 
 void KanyarState::handleEvent(StateContext& context, Event event) {
@@ -63,7 +63,7 @@ LassitoState::LassitoState() {
 	stateId = 4;
 	steeringPD = true;
 	targetSpeed = SLOW;
-	encoderPosDifference = 2500;
+	encoderPosDifference = 6000;
 }
 
 void LassitoState::handleEvent(StateContext& context, Event event) {

@@ -705,7 +705,7 @@ void BTReceiveTask()
 				stopped = 1;
 				HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
 				//osDelay(2000);
-				//osThreadSuspend(SteerControl_TaskHandle);
+				osThreadSuspend(SteerControl_TaskHandle);
 				break;
 			case 1:
 
@@ -1110,7 +1110,7 @@ void SteerControlTask()
 				//state_struct.state = -1;
 				stateContext.stop();
 				SetServo_motor(0);
-				//osThreadSuspend(SteerControl_TaskHandle);
+				osThreadSuspend(SteerControl_TaskHandle);
 			}
 
 		}
