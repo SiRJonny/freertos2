@@ -9,10 +9,36 @@
 
 
 extern SPI_HandleTypeDef hspi2;
+extern int giro_200ms;
+
 uint8_t data;
 uint8_t temp;
 uint8_t temp2[2];
 uint8_t * char_ptr2;
+int16_t * int16_ptr;
+uint8_t ch_temp[2];
+
+
+int giro_calib()
+{
+
+	return 1;
+}
+
+// csatorna beolvasás, X = 0
+int giro_read_channel(int channel)
+{
+	uint8_t address;
+	address = 0x28 + (2*channel);
+
+	ch_temp[0] = giro_read_reg(address);
+	ch_temp[1] = giro_read_reg(address + 1);
+
+	int16_ptr = (int16_t*)&ch_temp[0];
+
+
+	return (int)*int16_ptr;
+}
 
 uint8_t giro_read_reg(uint8_t address)
 {

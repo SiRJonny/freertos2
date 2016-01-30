@@ -149,6 +149,7 @@ uint32_t ADC1_BUFFER[4];
 uint32_t szenzorsor_1[32];
 uint32_t szenzorsor_2[32];
 int Distance_sensors[5];
+float giro_200ms;
 
 uint32_t szenzorsor_temp_1[32];
 uint32_t szenzorsor_temp_2[32];
@@ -567,14 +568,34 @@ void StartButtonTask()
 			stateContext.start(1000000000);
 
 
-			uint8_t girodata = 47;
+			float girodata = 0;
 
 			giro_write_reg(0x20, 0x0F);
-			girodata = giro_read_reg(0x2C);
+
+			osDelay(500);
+			for(int i=0; i<128; i++)
+			{
+				girodata += giro_read_channel(2);
+				osDelay(10);
+			}
+			girodata /= 128;
+
+			giro_200ms = girodata*20;
 
 
-			BT_send_msg(&timer, "gir:" + std::string(itoa(girodata,buffer,10)) + "\n");
+			girodata = 0;
+			while(1){
+				for(int i=0; i<20; i++)
+				{
+					girodata += giro_read_channel(2);
+					osDelay(10);
+				}
+				girodata -= giro_200ms;
 
+				BT_send_msg(&timer, "gir:" + std::string(itoa(girodata,buffer,10)) + "\n");
+
+
+			}
 			//osThreadResume(SteerControl_TaskHandle);
 			//osThreadResume(SendRemoteVar_TaskHandle);
 			//osDelay(TEST_DELAY);
