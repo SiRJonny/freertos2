@@ -14,7 +14,7 @@
 #define ADDR_ZH 0x2D
 #define GIRO_READ_BIT 0x80	//MSB = 1 = olvasás, ezt kell vagyolni a címmel
 
-int giro_calib();
+float giro_init();
 int giro_read_channel(int channel);
 uint8_t giro_read_reg(uint8_t address);
 void giro_write_reg(uint8_t address, uint8_t data);

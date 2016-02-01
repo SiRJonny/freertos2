@@ -89,7 +89,7 @@ void ReadSensors()
 
 		SetMUX((uint8_t)i);
 
-		ControlTaskDelay(20);	// szenzor felfutásra várakozás
+		ControlTaskDelay(120);	// szenzor felfutásra várakozás
 		//osDelay(10);
 
 
@@ -112,7 +112,7 @@ void ReadSensors()
 		szenzorsor_2[i+16] = amount - ADC1_BUFFER[2];	// jobb hátsó
 
 		SetMUX((uint8_t)i+8);
-		ControlTaskDelay(20);
+		ControlTaskDelay(120);
 		//osDelay(10);
 
 		ADC1_read();
@@ -135,8 +135,8 @@ void ReadSensors()
 	HAL_TIM_Base_Stop_IT(&htim6);
 	DisableMUX();
 
-	szenzorsor_1[7] = (szenzorsor_1[6] + szenzorsor_1[8] + szenzorsor_1[7])/3.0f;
-	szenzorsor_1[4] = (szenzorsor_1[3] + szenzorsor_1[4] + szenzorsor_1[5])/3.0f;
+	//szenzorsor_1[7] = (szenzorsor_1[6] + szenzorsor_1[8] + szenzorsor_1[7])/3.0f;
+	//szenzorsor_1[4] = (szenzorsor_1[3] + szenzorsor_1[4] + szenzorsor_1[5])/3.0f;
 
 }
 

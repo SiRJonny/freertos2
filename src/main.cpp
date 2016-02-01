@@ -149,7 +149,7 @@ uint32_t ADC1_BUFFER[4];
 uint32_t szenzorsor_1[32];
 uint32_t szenzorsor_2[32];
 int Distance_sensors[5];
-float giro_200ms;
+float giro_drift_Z;
 
 uint32_t szenzorsor_temp_1[32];
 uint32_t szenzorsor_temp_2[32];
@@ -567,37 +567,25 @@ void StartButtonTask()
 
 			stateContext.start(1000000000);
 
+			/*osDelay(1000);
+			giro_drift_Z = giro_init();
 
-			float girodata = 0;
+			float girodata;
 
-			giro_write_reg(0x20, 0x0F);
-
-			osDelay(500);
-			for(int i=0; i<128; i++)
-			{
-				girodata += giro_read_channel(2);
-				osDelay(10);
-			}
-			girodata /= 128;
-
-			giro_200ms = girodata*20;
-
-
-			girodata = 0;
 			while(1){
-				for(int i=0; i<20; i++)
+				girodata = 0;
+				for(int i=0; i<50; i++)
 				{
-					girodata += giro_read_channel(2);
+					girodata += (float)giro_read_channel(2)-giro_drift_Z;
 					osDelay(10);
 				}
-				girodata -= giro_200ms;
 
 				BT_send_msg(&timer, "gir:" + std::string(itoa(girodata,buffer,10)) + "\n");
+			}*/
 
 
-			}
-			//osThreadResume(SteerControl_TaskHandle);
-			//osThreadResume(SendRemoteVar_TaskHandle);
+			osThreadResume(SteerControl_TaskHandle);
+			osThreadResume(SendRemoteVar_TaskHandle);
 			//osDelay(TEST_DELAY);
 			//SET_SPEED = 0.0;
 			//state_struct.state = -1;
@@ -796,23 +784,23 @@ void SendRemoteVarTask()
 	for(;;)
 	{
 
-		if (!stopped) {
+		/*if (!stopped) {
 			BT_send_msg(&myfloat, "myfloat");
 			myfloat +=1;
 		}
 
-		BT_send_msg(&stopped, "stopped");
+		BT_send_msg(&stopped, "stopped");*/
 
 		sendSensors();
 		//sendDebugVars();
 		//sendTuning();
-		sendStateData();
+		//sendStateData();
 
 		//osThreadSuspend(SendRemoteVar_TaskHandle); // minden elkÃ¼ldve, pihenÃ¼nk (osThreadResume-ra megint elkÃ¼ld mindent)
 	    //HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
 	    //osThreadSuspend(SendRemoteVar_TaskHandle);
 
-		osDelay(300);
+		osDelay(500);
 	}
 
 }
@@ -1050,7 +1038,7 @@ void SteerControlTask()
 		//ReadSensorsDummy();
 
 
-		ADC2_read();		// blokkol, 40us
+		//ADC2_read();		// blokkol, 40us
 
 
 
@@ -1161,44 +1149,7 @@ void SteerControlTask()
 		//timer = __HAL_TIM_GET_COUNTER(&htim5);
 		//BT_send_msg(&timer, "ctrl:" + std::string(itoa(timer,buffer,10)) + "\n");
 
-		//////////// szabályzó hangolás  ////////////
-		if(TunePID && !tune_started)
-		{
-			if(globalLines.pos1[0] > 20 || globalLines.pos1[0] < 12)
-			{
-				tune_started = true;
-				tune_cntr = 0;
-				HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_SET);
-				speed_global = speed;
-			}
-		}
-		if(tune_started)
-		{
-			if(tune_cntr < 100)
-			{
-				posArray[tune_cntr] = globalLines.pos1[0]-15.5;
-				//controlArray[tune_cntr] = control*50; // így +/-15,7 a szervó tartomány (de a szabályzó adhat ki nagyobbat)
-				controlArray[tune_cntr] = control/12;
-			}
-			tune_cntr++;
 
-			if(tune_cntr > 100)
-			{
-				SET_SPEED = 0;
-			}
-
-			if(tune_cntr > 300)
-			{
-				HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_RESET);
-				EmergencyBreak(700);
-				TunePID = false;
-				tune_started = false;
-
-
-				osThreadResume(SendRemoteVar_TaskHandle);
-				//osThreadSuspend(SteerControl_TaskHandle);
-			}
-		}
 
 		if(led_cntr == 30)
 		{

@@ -6,6 +6,7 @@
  */
 
 #include "giro.hpp"
+#include "cmsis_os.h"
 
 
 extern SPI_HandleTypeDef hspi2;
@@ -19,10 +20,25 @@ int16_t * int16_ptr;
 uint8_t ch_temp[2];
 
 
-int giro_calib()
+float giro_init()
 {
+	float girodata = 0;
+	giro_write_reg(0x20, 0x0F);
+	osDelay(1000);
+	for(int i=0; i<100; i++)
+	{
+		giro_read_channel(2);
+		osDelay(5);
+	}
 
-	return 1;
+	for(int i=0; i<512; i++)
+	{
+		girodata += giro_read_channel(2);
+		osDelay(5);
+	}
+
+	girodata /= 512;
+	return girodata;
 }
 
 // csatorna beolvasás, X = 0
