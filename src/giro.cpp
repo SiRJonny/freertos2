@@ -19,6 +19,22 @@ uint8_t * char_ptr2;
 int16_t * int16_ptr;
 uint8_t ch_temp[2];
 
+// szögmérés pédakód
+/*osDelay(1000);
+			giro_drift_Z = giro_init();
+
+			float girodata;
+
+			while(1){
+				girodata = 0;
+				for(int i=0; i<50; i++)
+				{
+					girodata += (float)giro_read_channel(2)-giro_drift_Z;
+					osDelay(10);
+				}
+
+				BT_send_msg(&timer, "gir:" + std::string(itoa(girodata,buffer,10)) + "\n");
+			}*/
 
 float giro_init()
 {
