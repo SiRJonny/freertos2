@@ -12,25 +12,23 @@
 #include <StatePattern.hpp>
 #include <Controllers.h>
 
-extern int globalval;
-
 
 extern int SERVO_RANGE_MOTOR;	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a max kiadott jel
 extern int SERVO_RANGE_STEERING;	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a max kiadott jel
 
-extern int BTN_TUNEPID;
-
-extern float ACC_MAX;		// egy szabályzó periódusban max ennyivel növekedhet a motor szervo jele
-extern int NO_LINE_CYCLES;
-
+//sebességes dolgok
 extern float SLOW;
-
 extern float FAST;
-
 extern float STOP;
-
 extern float SET_SPEED;
 extern float speed_global;
+
+//kanyarszervo
+extern int servoOffset;
+
+//encoder
+extern int encoderPos;
+extern float encoderIncrementToMeter;
 
 //szenzorsor
 extern uint32_t ADC1_BUFFER[4];
@@ -57,6 +55,8 @@ extern float activeLine1;  // középsõ vonal kiválasztása
 extern float activeLine2;
 
 //szabályzók
+extern float ACC_MAX;		// egy szabályzó periódusban max ennyivel növekedhet a motor szervo jele
+extern int NO_LINE_CYCLES;
 extern float A;	// sebesség függés	// d5% = v*A + B
 extern float B;	// konstans
 
@@ -70,6 +70,7 @@ extern PID_struct PIDm;
 
 extern StateContext stateContext;
 
+//egyeb
 extern char buffer[10];	//bt msg hez
 extern int timer; // idõméréshez
 
