@@ -238,22 +238,21 @@ float refineMaxPos(uint32_t * data, int pos, int radius)
 	int base = pos - radius;
 	float weighed_sum = 0;
 	int value_sum = 0;
-	int sat_i;
+	int index;
 
 	// radius-nyival balra kezdve, radiusnyival a jobboldalra is elmenve
 	// súlyozott átlagot számolunk a pontosított pozícióért
 	for(int i = 0; i<(2*radius + 1); i++)
 	{
-		if(i<0)
-		{
-			sat_i = -i;		// szenzorsor alul/túlindexelés
-		}else if(i > 32){
-			sat_i = i-32;
-		}else{
-			sat_i = i;
+		index = base + i;
+		if(index < 0){
+			index = 1;
+		}else if(index > 31){
+			index = 30;
 		}
-		weighed_sum += data[base+sat_i]*(base+sat_i);
-		value_sum += data[base+sat_i];
+
+		weighed_sum += data[index]*(index);
+		value_sum += data[index];
 	}
 	weighed_sum /= value_sum;
 
