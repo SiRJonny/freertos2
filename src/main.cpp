@@ -53,7 +53,7 @@ extern "C"
 #include "StatePattern.hpp"
 
 #define SERVO_RANGE_MOTOR 700	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a max kiadott jel
-#define SERVO_RANGE_STEERING 300	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a max kiadott jel
+#define SERVO_RANGE_STEERING 260	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a max kiadott jel
 #define MOTOR_CONTROL_ENABLED 1
 #define SERVO_CONTROL_ENABLED 1
 
@@ -68,10 +68,12 @@ extern "C"
 #define PID_DGAIN -500
 
 float ACC_MAX = 200;		// egy szabályzó periódusban max ennyivel növekedhet a motor szervo jele
-int NO_LINE_CYCLES = 50;
+int NO_LINE_CYCLES = 0;
 
-float SLOW = 1.25;
+float SLOW = 2.0;
+
 float FAST = 2.8;
+
 float STOP = 0.0;
 
 float PID_LIMIT = 1.1;
@@ -441,6 +443,8 @@ void EmergencyBreak(int time)
 	SetServo_motor(0);
 }
 
+int servoOffset = -60;
+
 // -500 és 500 közötti értéket fogad DEFINEolva!
 void SetServo_steering(int pos)
 {
@@ -459,7 +463,7 @@ void SetServo_steering(int pos)
 		//HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_RESET);
 	}
 	// 1500 = 1,5ms, ez a 0 pozíció
-	__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2, 1500 + pos + 35);
+	__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2, 1500 - pos + servoOffset);
 	//TODO offset
 }
 
@@ -482,7 +486,7 @@ void SetServo_steering(float angle_rad)
 		//HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_RESET);
 	}
 	// 1500 = 1,5ms, ez a 0 pozíció
-	__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2, 1500 + (int)pos + 35);
+	__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2, 1500 - (int)pos + servoOffset);
 }
 
 
@@ -764,22 +768,24 @@ void SendRemoteVarTask()
 	{
 
 		if (!stopped) {
-			BT_send_msg(&myfloat, "myfloat");
+			//BT_send_msg(&myfloat, "myfloat");
 			myfloat +=1;
 		}
 
-		BT_send_msg(&stopped, "stopped");
+		//BT_send_msg(&stopped, "stopped");
+		BT_send_msg(&speed_global, "speed");
+		//BT_send_msg(&SET_SPEED, "SET_SPEED");
 
-		sendSensors();
+		//sendSensors();
 		//sendDebugVars();
 		//sendTuning();
-		sendStateData();
+		//sendStateData();
 
 		//osThreadSuspend(SendRemoteVar_TaskHandle); // minden elkÃ¼ldve, pihenÃ¼nk (osThreadResume-ra megint elkÃ¼ld mindent)
 	    //HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
 	    //osThreadSuspend(SendRemoteVar_TaskHandle);
 
-		osDelay(300);
+		osDelay(50);
 	}
 
 }
@@ -823,7 +829,6 @@ void sendTuning() {
 }
 
 void sendDebugVars() {
-	BT_send_msg(&speed_global, "speed");
 	//BT_send_msg(&SET_SPEED, "SET_SPEED");
 	//BT_send_msg(&linePosM, "linePosM");
 
@@ -868,13 +873,7 @@ void sendStateData() {
 	}
 	BT_send_msg(&stableLines, "stable3lines");
 
-	int te = stateContext.temp;
-	BT_send_msg(&te, "te");
 
-	int cEnc = stateContext.currEncoderPos;
-	BT_send_msg(&cEnc, "cEnc");
-	int tEnc = stateContext.state->targetEncoderPos;
-	BT_send_msg(&tEnc, "tEnc");
 }
 
 void sendPIDs() {
@@ -946,6 +945,7 @@ void SteerControlTask()
 	float error = 0;
 
 
+
 	osThreadSuspend(SteerControl_TaskHandle);
 
 	for(;;)
@@ -961,7 +961,7 @@ void SteerControlTask()
 		speed = speed_global;
 		osThreadResumeAll();
 
-		if (SET_SPEED > 2)
+		if (SET_SPEED > 2.4)
 		{
 			PIDm.iGain = 2;
 		} else {
@@ -1110,6 +1110,8 @@ void SteerControlTask()
 				//state_struct.state = -1;
 				stateContext.stop();
 				SetServo_motor(0);
+				BT_send_msg(&activeLine1, "LastLine");
+
 				osThreadSuspend(SteerControl_TaskHandle);
 			}
 
@@ -1444,7 +1446,7 @@ void MX_TIM1_Init(void)
   HAL_TIMEx_ConfigBreakDeadTime(&htim1, &sBreakDeadTimeConfig);
 
   sConfigOC.OCMode = TIM_OCMODE_PWM1;
-  sConfigOC.Pulse = 1500;
+  sConfigOC.Pulse = 1500 + servoOffset;
   sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
   sConfigOC.OCNPolarity = TIM_OCNPOLARITY_HIGH;
   sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
