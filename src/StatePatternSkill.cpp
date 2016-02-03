@@ -5,11 +5,20 @@
  *      Author: Gabor
  */
 
-#include "StatePatternSkill.hpp"
+#include <StatePatternSkill.hpp>
 
 KoztesState SkillBaseState::koztes;
 SkillStopState SkillBaseState::skillStopped;
 SkillStartState SkillBaseState::skillStarted;
+
+
+//MovingState(string stateName,SkillBaseState* nextState, int howMuchToMove, float angle, float tSpeed) {
+MovingState SkillBaseState::parkolasTolat1("park1", &SkillBaseState::parkolasTolat2, -10, 0, -SKILLSLOW);
+MovingState SkillBaseState::parkolasTolat2("park2", &SkillBaseState::parkolasTolat1, 10, 0, SKILLSLOW);
+
+
+
+
 
 //Koztes
 KoztesState::KoztesState() {

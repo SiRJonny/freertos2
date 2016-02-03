@@ -8,11 +8,13 @@
 #ifndef STATEPATTERNSKILL_HPP_
 #define STATEPATTERNSKILL_HPP_
 
-#include <config.hpp>
 #include <string>
 //#include <StateParkolas.hpp>
 
 using namespace std;
+
+extern int globalDistance;
+extern float SKILLSLOW;
 
 class SkillStateContext;
 
@@ -21,6 +23,35 @@ class SkillStopState;
 class SkillStartState;
 
 class MovingState;
+class SkillBaseState;
+
+enum SkillTrackEvent {
+	STATEEND,
+	PARKOLASSTART,
+	TORKOLAT,
+	TELEPHELY,
+	HATAR,
+	BILLENO,
+	FORDITO,
+	CEL,
+	TWOWALL,
+	RADIOSTART
+};
+
+
+
+
+class StateData {
+public:
+	int lines;
+	float sensorLeft;
+	float sensorRight;
+	float sensorFront;
+	float speed;
+	SkillTrackEvent event;
+};
+
+
 
 class SkillBaseState {
 
@@ -47,15 +78,15 @@ public:
 	SkillBaseState* nextState;
 
 	void stop(SkillStateContext& context);
-	virtual void update(SkillStateContext& context, StateData data);
-	virtual ~SkillBaseState() {}
+	virtual void update(SkillStateContext& context, StateData data) {}
+	virtual ~SkillBaseState(){}
 
 };
 
 class SkillStopState : public SkillBaseState {
 public:
 	SkillStopState();
-	void update(SkillStateContext& context, StateData data);
+	virtual void update(SkillStateContext& context, StateData data);
 	//~SkillStopState() {}
 };
 

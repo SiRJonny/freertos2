@@ -74,7 +74,7 @@ PID_struct PIDm;
 //állapotgépek
 
 StateContext stateContext;
-
+SkillStateContext skillStateContext;
 
 //egyeb
 char buffer[10];	//bt msg hez

@@ -50,9 +50,12 @@ extern "C"
 #include "Controllers.h"
 #include "StateMachine.h"
 #include "StatePattern.hpp"
+#include <StatePatternSkill.hpp>
 #include <config.hpp>
 
 using namespace std;
+
+
 
 /* Private variables ---------------------------------------------------------*/
 osThreadId defaultTaskHandle;

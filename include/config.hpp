@@ -8,8 +8,10 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
+#include <StatePatternSkill.hpp>
 #include <ProcessSensors.h>
 #include <StatePattern.hpp>
+
 #include <Controllers.h>
 
 
@@ -73,35 +75,13 @@ extern PID_struct PIDm;
 //állapotgépek
 
 extern StateContext stateContext;
+extern SkillStateContext skillContext;
 
 //egyeb
 extern char buffer[10];	//bt msg hez
 extern int timer; // idõméréshez
 
 extern int stopped;
-
-enum SkillTrackEvent {
-	STATEEND,
-	PARKOLASSTART,
-	TORKOLAT,
-	TELEPHELY,
-	HATAR,
-	BILLENO,
-	FORDITO,
-	CEL,
-	TWOWALL,
-	RADIOSTART
-};
-
-class StateData {
-public:
-	int lines;
-	float sensorLeft;
-	float sensorRight;
-	float sensorFront;
-	float speed;
-	SkillTrackEvent event;
-};
 
 
 

@@ -47,7 +47,7 @@ public:
 	int targetEncoderPos;
 
 	void stop(StateContext& context);
-	virtual void handleEvent(StateContext& context, Event event);
+	virtual void handleEvent(StateContext& context, Event event) {}
 	virtual ~BaseState() {}
 
 };
