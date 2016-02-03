@@ -23,12 +23,16 @@ extern float STOP;
 extern float SET_SPEED;
 extern float speed_global;
 
+extern float SKILLSLOW;
+
 //kanyarszervo
 extern int servoOffset;
 
 //encoder
 extern int encoderPos;
 extern float encoderIncrementToMeter;
+
+extern int globalDistance;
 
 //szenzorsor
 extern uint32_t ADC1_BUFFER[4];
@@ -75,5 +79,28 @@ extern char buffer[10];	//bt msg hez
 extern int timer; // idõméréshez
 
 extern int stopped;
+
+enum SkillTrackEvent {
+	STATEEND,
+	PARKOLAS,
+	TORKOLAT,
+	TELEPHELY,
+	HATAR,
+	BILLENO,
+	FORDITO,
+	CEL
+};
+
+class StateData {
+public:
+	int lines;
+	float sensorLeft;
+	float sensorRight;
+	float sensorFront;
+	float speed;
+	SkillTrackEvent event;
+};
+
+
 
 #endif /* CONFIG_H_ */

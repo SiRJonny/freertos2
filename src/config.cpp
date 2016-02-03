@@ -22,6 +22,7 @@ float STOP = 0.0;
 float SET_SPEED = 0;
 float speed_global = 0;
 
+float SKILLSLOW = 1.0;
 
 //kanyarszervo
 int servoOffset = -60;
@@ -31,6 +32,7 @@ int servoOffset = -60;
 int encoderPos = 1000000000;
 float encoderIncrementToMeter = 0;
 
+int globalDistance = 0;
 
 //szenzorsor
 uint32_t ADC1_BUFFER[4];

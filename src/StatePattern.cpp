@@ -94,9 +94,7 @@ StartState::StartState() {
 }
 
 void StartState::handleEvent(StateContext& context, Event event) {
-	context.temp = 2;
 	if (event == GYORSITO) {
-		context.temp = 3;
 		context.setState(&BaseState::gyorsito);
 	}
 }
@@ -109,8 +107,7 @@ void BaseState::stop(StateContext& context) {
 //BaseState::~BaseState() {};
 
 //StateContext
-void StateContext::init(){
-	temp = -3;
+StateContext::StateContext(){
 	setState(&BaseState::stopped);
 }
 
@@ -126,10 +123,10 @@ void StateContext::setState(BaseState* newState){
 
 void StateContext::update(bool stable3lines, int encoderPos){
 	currEncoderPos = encoderPos;
-	temp = 0;
+
 	if(currEncoderPos <= state->targetEncoderPos)
 		{
-		temp = 1;
+
 			if (stable3lines) {
 				handleEvent(GYORSITO);
 			} else {

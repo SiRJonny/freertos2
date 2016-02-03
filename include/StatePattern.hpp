@@ -8,8 +8,6 @@
 #ifndef STATEPATTERN_HPP_
 #define STATEPATTERN_HPP_
 
-#include <string>;
-
 using namespace std;
 
 class StateContext;
@@ -97,9 +95,9 @@ private:
 public:
 	BaseState* state;
 	int currEncoderPos;
-	int temp;
 
-	void init();
+	StateContext();
+
 	void handleEvent(Event event);
 	void setState(BaseState *newState);
 	void setTargetEncoderPos(int target);
