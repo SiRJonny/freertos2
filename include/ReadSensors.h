@@ -16,6 +16,7 @@
 void ReadSensors();
 void ReadSensorsDummy();
 void ADC1_read();
+void ADC2_read();
 void ControlTaskDelay(int us);
 void EnableDrivers();
 void DisableDrivers();

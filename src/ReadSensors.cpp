@@ -14,8 +14,10 @@
 extern int ADC1_BUFFER[4];
 extern int szenzorsor_1[32];
 extern int szenzorsor_2[32];
+extern int Distance_sensors[5];
 
 extern ADC_HandleTypeDef hadc1;
+extern ADC_HandleTypeDef hadc2;
 extern osSemaphoreId ADC1_complete;
 extern SPI_HandleTypeDef hspi3;
 extern TIM_HandleTypeDef htim5;
@@ -153,6 +155,17 @@ void ADC1_read()
 
 	}
 	HAL_ADC_Stop(&hadc1);*/
+}
+
+void ADC2_read()
+{
+	HAL_ADC_Start(&hadc2);
+	for(int i = 0; i<5; i++)
+	{
+		HAL_ADC_PollForConversion(&hadc2,1000);
+		Distance_sensors[i] = HAL_ADC_GetValue(&hadc2);
+	}
+	HAL_ADC_Stop(&hadc2);
 }
 
 // control task delay microsec (min 20)

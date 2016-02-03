@@ -51,7 +51,7 @@ extern "C"
 #include "StateMachine.h"
 #include "StatePattern.hpp"
 #include <config.hpp>
-
+#include "giro.hpp"
 using namespace std;
 
 /* Private variables ---------------------------------------------------------*/
@@ -85,6 +85,9 @@ osSemaphoreDef(ADC1_complete);
 
 QueueHandle_t xQueue_BT;
 
+
+int Distance_sensors[5];
+float giro_drift_Z;
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
@@ -425,6 +428,9 @@ void StartButtonTask()
 
 			stateContext.start(encoderPos);
 
+
+
+
 			osThreadResume(SteerControl_TaskHandle);
 			osThreadResume(SendRemoteVar_TaskHandle);
 
@@ -546,7 +552,7 @@ void SendRemoteVarTask()
 	for(;;)
 	{
 
-		if (!stopped) {
+		/*if (!stopped) {
 			BT_send_msg(&myfloat, "myfloat");
 			myfloat +=1;
 		}
@@ -767,6 +773,11 @@ void SteerControlTask()
 		ReadSensors();
 		//ReadSensorsDummy();
 
+
+		//ADC2_read();		// blokkol, 40us
+
+
+
 		// szenzor adatok feldolgozása
 		globalLines = getLinePos(20);
 
@@ -850,11 +861,7 @@ void SteerControlTask()
 				BT_send_msg(&activeLine1, "LastLine");
 
 				osThreadSuspend(SteerControl_TaskHandle);
-			}
-
 		}
-
-
 
 		if(led_cntr == 30)
 		{
@@ -1044,13 +1051,13 @@ void MX_ADC2_Init(void)
     */
   hadc2.Instance = ADC2;
   hadc2.Init.ClockPrescaler = ADC_CLOCKPRESCALER_PCLK_DIV4;
-  hadc2.Init.Resolution = ADC_RESOLUTION12b;
-  hadc2.Init.ScanConvMode = DISABLE;
+  hadc2.Init.Resolution = ADC_RESOLUTION8b;
+  hadc2.Init.ScanConvMode = ENABLE;
   hadc2.Init.ContinuousConvMode = DISABLE;
   hadc2.Init.DiscontinuousConvMode = DISABLE;
   hadc2.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
   hadc2.Init.DataAlign = ADC_DATAALIGN_RIGHT;
-  hadc2.Init.NbrOfConversion = 1;
+  hadc2.Init.NbrOfConversion = 5;
   hadc2.Init.DMAContinuousRequests = DISABLE;
   hadc2.Init.EOCSelection = EOC_SINGLE_CONV;
   HAL_ADC_Init(&hadc2);
@@ -1059,8 +1066,29 @@ void MX_ADC2_Init(void)
     */
   sConfig.Channel = ADC_CHANNEL_11;
   sConfig.Rank = 1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+  sConfig.SamplingTime = ADC_SAMPLETIME_15CYCLES;
   HAL_ADC_ConfigChannel(&hadc2, &sConfig);
+
+  sConfig.Channel = ADC_CHANNEL_12;
+  sConfig.Rank = 2;
+  sConfig.SamplingTime = ADC_SAMPLETIME_15CYCLES;
+  HAL_ADC_ConfigChannel(&hadc2, &sConfig);
+
+  sConfig.Channel = ADC_CHANNEL_13;
+  sConfig.Rank = 3;
+  sConfig.SamplingTime = ADC_SAMPLETIME_15CYCLES;
+  HAL_ADC_ConfigChannel(&hadc2, &sConfig);
+
+  sConfig.Channel = ADC_CHANNEL_14;
+  sConfig.Rank = 4;
+  sConfig.SamplingTime = ADC_SAMPLETIME_15CYCLES;
+  HAL_ADC_ConfigChannel(&hadc2, &sConfig);
+
+  sConfig.Channel = ADC_CHANNEL_15;
+  sConfig.Rank = 5;
+  sConfig.SamplingTime = ADC_SAMPLETIME_15CYCLES;
+  HAL_ADC_ConfigChannel(&hadc2, &sConfig);
+
 
 }
 
