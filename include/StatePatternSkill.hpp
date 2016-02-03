@@ -9,6 +9,7 @@
 #define STATEPATTERNSKILL_HPP_
 
 #include <config.hpp>
+#include <string>
 //#include <StateParkolas.hpp>
 
 using namespace std;
@@ -19,12 +20,7 @@ class KoztesState;
 class SkillStopState;
 class SkillStartState;
 
-class ParkolasStart;
-class Tolat1State;
-class Tolat2State;
-class Vissza1State;
-class Vissza2State;
-
+class MovingState;
 
 class SkillBaseState {
 
@@ -33,20 +29,22 @@ public:
 	static SkillStartState skillStarted;
 	static KoztesState koztes;
 
-	static ParkolasStart parkolasStart;
-	static Tolat1State tolat1;
-	static Tolat2State tolat2;
-	static Vissza1State vissza1;
-	static Vissza2State vissza2;
+	static MovingState parkolasTolat1;
+	static MovingState parkolasTolat2;
 
+	string name;
 	int stateId;
 	float targetSpeed;
 
-	bool steeringController;
-	float steering;
+	bool steeringControlled;
 
-	int targetDistance;
-	int targetDifference;
+	float steeringAngle;
+	int distanceToMove;
+	SkillTrackEvent triggerEvent;
+
+	int triggerGlobalDistance;
+
+	SkillBaseState* nextState;
 
 	void stop(SkillStateContext& context);
 	virtual void update(SkillStateContext& context, StateData data);
@@ -58,50 +56,36 @@ class SkillStopState : public SkillBaseState {
 public:
 	SkillStopState();
 	void update(SkillStateContext& context, StateData data);
+	//~SkillStopState() {}
 };
 
 class SkillStartState : public SkillBaseState {
 public:
 	SkillStartState();
-	void update(SkillStateContext& context, StateData data);
+	virtual void update(SkillStateContext& context, StateData data);
+	//~SkillStartState() {}
 };
 
 class KoztesState : public SkillBaseState {
 public:
 	KoztesState();
-	void update(SkillStateContext& context, StateData data);
-};
-
-class ParkolasStart : public SkillBaseState {
-public:
-	ParkolasStart();
 	virtual void update(SkillStateContext& context, StateData data);
+	//~KoztesState() {}
 };
 
-class Tolat1State : public SkillBaseState {
+class MovingState : public SkillBaseState {
 public:
-	Tolat1State();
+	MovingState(string stateName, SkillBaseState* nState, int howMuchToMove, float angle, float tSpeed);
 	virtual void update(SkillStateContext& context, StateData data);
+	//~MovingState() {}
 };
 
-class Tolat2State : public SkillBaseState {
+class EventBasedState : public SkillBaseState {
 public:
-	Tolat2State();
+	EventBasedState(string stateName, SkillBaseState* nState, int waitDistance, SkillTrackEvent targetEvent, float tSpeed);
 	virtual void update(SkillStateContext& context, StateData data);
+	//~EventBasedState() {}
 };
-
-class Vissza1State : public SkillBaseState {
-public:
-	Vissza1State();
-	virtual void update(SkillStateContext& context, StateData data);
-};
-
-class Vissza2State : public SkillBaseState {
-public:
-	Vissza2State();
-	virtual void update(SkillStateContext& context, StateData data);
-};
-
 
 
 class SkillStateContext {
@@ -111,8 +95,8 @@ public:
 
 	SkillStateContext();
 	void setState(SkillBaseState *newState);
-	void stop();
-	void start();
+	//void stop();
+	//void start();
 
 };
 

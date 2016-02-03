@@ -8,64 +8,7 @@
 #include <StatePatternSkill.hpp>
 
 
-ParkolasStart SkillBaseState::parkolasStart;
-Tolat1State SkillBaseState::tolat1;
-Tolat2State SkillBaseState::tolat2;
-Vissza1State SkillBaseState::vissza1;
-Vissza2State SkillBaseState::vissza2;
+//MovingState(string stateName,SkillBaseState* nextState, int howMuchToMove, float angle, float tSpeed) {
+MovingState SkillBaseState::parkolasTolat1("park1", &SkillBaseState::parkolasTolat2, -10, 0, -SKILLSLOW);
+MovingState SkillBaseState::parkolasTolat2("park2", &SkillBaseState::parkolasTolat1, 10, 0, SKILLSLOW);
 
-//Tolatas kezdes
-ParkolasStart::ParkolasStart() {
-	stateId = 1;
-	targetDistance = 10;
-	targetSpeed = -1.0;
-	steering = 10;
-}
-
-void ParkolasStart::update(SkillStateContext& context, StateData data){
-
-}
-
-Tolat1State::Tolat1State() {
-	stateId = 1;
-	targetDistance = 10;
-	targetSpeed = -1.0;
-	steering = 10;
-}
-
-void Tolat1State::update(SkillStateContext& context, StateData data){
-
-}
-
-Tolat2State::Tolat2State() {
-	stateId = 1;
-	targetDistance = 10;
-	targetSpeed = -1.0;
-	steering = 10;
-}
-
-void Tolat2State::update(SkillStateContext& context, StateData data){
-
-}
-
-Vissza1State::Vissza1State() {
-	stateId = 1;
-	targetDistance = 10;
-	targetSpeed = -1.0;
-	steering = 10;
-}
-
-void Vissza1State::update(SkillStateContext& context, StateData data){
-
-}
-
-Vissza2State::Vissza2State() {
-	stateId = 1;
-	targetDistance = 10;
-	targetSpeed = -1.0;
-	steering = 10;
-}
-
-void Vissza2State::update(SkillStateContext& context, StateData data){
-
-}

@@ -82,13 +82,15 @@ extern int stopped;
 
 enum SkillTrackEvent {
 	STATEEND,
-	PARKOLAS,
+	PARKOLASSTART,
 	TORKOLAT,
 	TELEPHELY,
 	HATAR,
 	BILLENO,
 	FORDITO,
-	CEL
+	CEL,
+	TWOWALL,
+	RADIOSTART
 };
 
 class StateData {

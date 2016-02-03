@@ -11,6 +11,7 @@
 using namespace std;
 
 class StateContext;
+
 class KanyarState;
 class GyorsitoState;
 class GyorsState;
