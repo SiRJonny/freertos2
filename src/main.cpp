@@ -280,7 +280,7 @@ void SetServo_motor(int pos)
 	if(pos < -SERVO_RANGE_MOTOR){pos = -SERVO_RANGE_MOTOR;}
 
 	// 1500 = 1,5ms, ez a 0 pozíció
-	__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,1500-pos);
+	__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,1500+pos);
 }
 
 // TODO: sebességmérés külön, és rendes emergency break
@@ -552,7 +552,7 @@ void SendRemoteVarTask()
 	for(;;)
 	{
 
-		/*if (!stopped) {
+		if (!stopped) {
 			BT_send_msg(&myfloat, "myfloat");
 			myfloat +=1;
 		}
@@ -876,6 +876,7 @@ void SteerControlTask()
 		osDelay(9);
 	}
 }
+}
 
 void getActiveLinePos(LineState * Lines, float *last_pos1, float *last_pos2, float * active1, float * active2)
 {
@@ -1166,7 +1167,7 @@ void MX_TIM1_Init(void)
   HAL_TIMEx_ConfigBreakDeadTime(&htim1, &sBreakDeadTimeConfig);
 
   sConfigOC.OCMode = TIM_OCMODE_PWM1;
-  sConfigOC.Pulse = 1500 + servoOffset;
+  sConfigOC.Pulse = 1500;
   sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
   sConfigOC.OCNPolarity = TIM_OCNPOLARITY_HIGH;
   sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;

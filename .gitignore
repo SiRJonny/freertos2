@@ -89,3 +89,5 @@ _ReSharper*/
 *.dSYM/
 .settings/language.settings.xml
 .settings/language.settings.xml
+src/main.cpp.orig
+src/ReadSensors.cpp.orig
