@@ -22,6 +22,7 @@ MovingState SkillBaseState::parkolasTolat2("park2", &SkillBaseState::parkolasTol
 
 //Koztes
 KoztesState::KoztesState() {
+	name = "koztes";
 	stateId = 1;
 	targetSpeed = SKILLSLOW;
 	distanceToMove = 0;
@@ -88,6 +89,7 @@ void EventBasedState::update(SkillStateContext& context, StateData data) {
 
 //Stop state
 SkillStopState::SkillStopState() {
+	name = "stop";
 	stateId = -1;
 	targetSpeed = 0;
 }
@@ -98,6 +100,7 @@ void SkillStopState::update(SkillStateContext& context, StateData data){
 
 //Start state
 SkillStartState::SkillStartState() {
+	name = "start";
 	stateId = 0;
 	targetSpeed = SKILLSLOW;
 }
@@ -123,14 +126,7 @@ SkillStateContext::SkillStateContext() {
 }
 
 void SkillBaseState::stop(SkillStateContext& context) {
-	context.state = &SkillBaseState::skillStopped;
+	context.setState(&SkillBaseState::skillStopped);
 }
 
 
-/*
-KoztesState::~KoztesState() {}
-EventBasedState::~EventBasedState() {}
-MovingState::~MovingState() {}
-SkillStartState::~SkillStartState() {}
-SkillStopState::~SkillStopState() {}
-*/

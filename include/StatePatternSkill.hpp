@@ -26,16 +26,16 @@ class MovingState;
 class SkillBaseState;
 
 enum SkillTrackEvent {
-	STATEEND,
-	PARKOLASSTART,
+	RADIOSTART,
+	PARKOLAS,
 	TORKOLAT,
 	TELEPHELY,
 	HATAR,
 	BILLENO,
 	FORDITO,
 	CEL,
-	TWOWALL,
-	RADIOSTART
+	TWOWALL
+
 };
 
 
