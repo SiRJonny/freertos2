@@ -13,8 +13,8 @@ SkillStartState SkillBaseState::skillStarted;
 
 
 //MovingState(string stateName,SkillBaseState* nextState, int howMuchToMove, float angle, float tSpeed) {
-MovingState SkillBaseState::parkolasTolat1("park1", &SkillBaseState::parkolasTolat2, -10, 0, -SKILLSLOW);
-MovingState SkillBaseState::parkolasTolat2("park2", &SkillBaseState::parkolasTolat1, 10, 0, SKILLSLOW);
+MovingState SkillBaseState::parkolasTolat1("park1", &SkillBaseState::skillStopped, 5000, 0, 0.3);
+MovingState SkillBaseState::parkolasTolat2("park2", &SkillBaseState::skillStopped, 5000, 0, 1);
 
 
 
@@ -102,13 +102,13 @@ void SkillStopState::update(SkillStateContext& context, StateData data){
 SkillStartState::SkillStartState() {
 	name = "start";
 	stateId = 0;
-	targetSpeed = SKILLSLOW;
+	targetSpeed = 0;
 }
 
 void SkillStartState::update(SkillStateContext& context, StateData data){
 	switch (data.event) {
 			case RADIOSTART:
-				context.setState(&SkillBaseState::koztes);
+				context.setState(&SkillBaseState::parkolasTolat2);
 				break;
 		}
 }
@@ -122,7 +122,7 @@ void SkillStateContext::setState(SkillBaseState* newState) {
 }
 
 SkillStateContext::SkillStateContext() {
-	setState(&SkillBaseState::skillStarted);
+	setState(&SkillBaseState::parkolasTolat1);
 }
 
 void SkillBaseState::stop(SkillStateContext& context) {

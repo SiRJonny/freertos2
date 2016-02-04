@@ -27,7 +27,7 @@ class SkillBaseState;
 
 enum SkillTrackEvent {
 	RADIOSTART,
-	PARKOLAS,
+	PARKOLASSTART,
 	TORKOLAT,
 	TELEPHELY,
 	HATAR,

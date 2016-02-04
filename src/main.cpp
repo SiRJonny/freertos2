@@ -381,6 +381,9 @@ void StartDefaultTask()
 
 		// sebesség mérés
 		encoderPos = __HAL_TIM_GET_COUNTER(&htim2);
+
+		globalDistance = 1000000000 - encoderPos;
+
 		encoderPosArray[buffer_cntr] = encoderPos;
 		buffer_cntr++;
 		if(buffer_cntr >= 5)
@@ -429,8 +432,8 @@ void StartButtonTask()
 
 		if (wasPressed){
 
-			stateContext.start(encoderPos);
-
+			//stateContext.start(encoderPos);
+			stateData.event = PARKOLASSTART;
 
 
 
@@ -527,8 +530,13 @@ void BTReceiveTask()
 				BT_send_msg(&sid, "state");
 				break;
 			case 6:
+				PIDm.iGain = *flt_ptr;
+				BT_send_msg(&PIDm.iGain, "PIDmI");
 				break;
 			case 7:
+				PIDm.pGain = *flt_ptr;
+				BT_send_msg(&PIDm.pGain, "PIDmP");
+
 				break;
 			case 8:
 				A = *flt_ptr;
@@ -563,15 +571,24 @@ void SendRemoteVarTask()
 
 		//minden ciklusban elküldi ezeket
 		BT_send_msg(&speed_global, "speed");
+		BT_send_msg(&Distance_sensors[2], "contLeft");
+		BT_send_msg(&Distance_sensors[3], "contRight");
 
 
 		//minden slowSendMultiplier ciklusban küldi el ezeket
 		if (sendRemoteCounter % slowSendMultiplier == 0) {
+
+			//BT_send_msg(&speed_control, "control_speed");
+			BT_send_msg(&globalDistance, "globalDist");
+			//BT_send_msg(&encoderPos, "encoder");
+
+
+
 			//BT_send_msg(&stopped, "stopped");
 			//sendSensors();
 			//sendDebugVars();
 			//sendTuning();
-			//sendStateData();
+			sendStateData();
 		}
 
 		sendRemoteCounter++;
@@ -641,8 +658,12 @@ void sendDebugVars() {
 }
 
 void sendStateData() {
-	int stateId = stateContext.getStateId();
-	BT_send_msg(&stateId, "StateID");
+	//int stateId = stateContext.getStateId();
+	string stName = "stnm" + skillStateContext.state->name;
+	BT_send_msg(&globalDistance, stName);
+
+
+	//BT_send_msg(&stateId, "StateID");
 	int stableLines = 0;
 	if (stable3lines) {
 		stableLines = 1;
@@ -693,24 +714,30 @@ void SteerControlTask()
 	//B = 0.4;	// konstans
 
 	// szervo PD szabályzó struktúrája
-	PIDs.pGain = 15;
+	PIDs.pGain = 30;
 	PIDs.iGain = 0;
-	PIDs.dGain = -250;
+	PIDs.dGain = -750;
 	PIDs.iMax = 300;
 	PIDs.iMin = -300;
 	PIDs.iState = 0;
 	PIDs.dState = 0;
 
+	float pAlap = 30;
+	float dAlap = -750;
+
 	// motor PI szabályzó struktúra
-	PIDm.pGain = 500;		// 100-> 5m/s hibánál lesz 500 a jel (max)
-	PIDm.iGain = 2;			// pGain/100?
+	PIDm.pGain = 300;		// 100-> 5m/s hibánál lesz 500 a jel (max)
+	PIDm.iGain = 0.4;			// pGain/100?
 	PIDm.dGain = 0;
-	PIDm.iMax = 300;
+	PIDm.iMax = 150;
 	PIDm.iMin = -100;
 	PIDm.iState = 0;
 	PIDm.dState = 0;
 
 	float error = 0;
+
+
+
 
 	osThreadSuspend(SteerControl_TaskHandle);
 
@@ -724,12 +751,21 @@ void SteerControlTask()
 		speed = speed_global;
 		osThreadResumeAll();
 
-		if (SET_SPEED > 2.4)
+        if (speed > 1) {
+        	PIDs.dGain = dAlap * speed/FAST;
+        	PIDs.pGain = pAlap * speed/FAST;
+        } else {
+        	PIDs.pGain = pAlap;
+       		PIDs.dGain = dAlap;
+        }
+
+
+		/*if (SET_SPEED > 2.4)
 		{
 			PIDm.iGain = 2;
 		} else {
-			PIDm.iGain = 0;
-		}
+			PIDm.iGain = 2;
+		}*/
 
 
 		// motor szabályozás
@@ -741,12 +777,12 @@ void SteerControlTask()
 
 			if(speed_control < 0)
 			{
-				speed_control *= 0.5;
-				if (speed_control > -80) {
-					speed_control = -80;
+				//speed_control *= 10;
+				if (speed_control > -120) {
+					speed_control = -120;
 				}
 				if (last_speed_control < 0) {
-					speed_control = 0;
+					//speed_control = 0;
 				}
 			}
 
@@ -776,7 +812,7 @@ void SteerControlTask()
 		//ReadSensorsDummy();
 
 
-		//ADC2_read();		// blokkol, 40us
+		ADC2_read();		// blokkol, 40us
 
 
 
@@ -815,9 +851,19 @@ void SteerControlTask()
 
 		linePosM = (activeLine1-15.5) * 5.9 / 1000; // pozíció, méterben, középen 0
 
-		stateContext.update(stable3lines, encoderPos);
-		usePD = stateContext.isSteeringPD();
-		SET_SPEED = stateContext.getTargetSpeed();
+
+		bool skill = true;
+
+		if (skill) {
+			skillStateContext.state->update(skillStateContext, stateData);
+			usePD = false;
+			SET_SPEED = skillStateContext.state->targetSpeed;
+		}else {
+			stateContext.update(stable3lines, encoderPos);
+			usePD = stateContext.isSteeringPD();
+			SET_SPEED = stateContext.getTargetSpeed();
+		}
+
 
 
 		// vonalkövetés szabályozó
@@ -1069,27 +1115,27 @@ void MX_ADC2_Init(void)
     */
   sConfig.Channel = ADC_CHANNEL_11;
   sConfig.Rank = 1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_15CYCLES;
+  sConfig.SamplingTime = ADC_SAMPLETIME_56CYCLES;
   HAL_ADC_ConfigChannel(&hadc2, &sConfig);
 
   sConfig.Channel = ADC_CHANNEL_12;
   sConfig.Rank = 2;
-  sConfig.SamplingTime = ADC_SAMPLETIME_15CYCLES;
+  sConfig.SamplingTime = ADC_SAMPLETIME_56CYCLES;
   HAL_ADC_ConfigChannel(&hadc2, &sConfig);
 
   sConfig.Channel = ADC_CHANNEL_13;
   sConfig.Rank = 3;
-  sConfig.SamplingTime = ADC_SAMPLETIME_15CYCLES;
+  sConfig.SamplingTime = ADC_SAMPLETIME_56CYCLES;
   HAL_ADC_ConfigChannel(&hadc2, &sConfig);
 
   sConfig.Channel = ADC_CHANNEL_14;
   sConfig.Rank = 4;
-  sConfig.SamplingTime = ADC_SAMPLETIME_15CYCLES;
+  sConfig.SamplingTime = ADC_SAMPLETIME_56CYCLES;
   HAL_ADC_ConfigChannel(&hadc2, &sConfig);
 
   sConfig.Channel = ADC_CHANNEL_15;
   sConfig.Rank = 5;
-  sConfig.SamplingTime = ADC_SAMPLETIME_15CYCLES;
+  sConfig.SamplingTime = ADC_SAMPLETIME_56CYCLES;
   HAL_ADC_ConfigChannel(&hadc2, &sConfig);
 
 

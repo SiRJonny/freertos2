@@ -10,12 +10,12 @@
 int SERVO_RANGE_MOTOR = 700;	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a max kiadott jel
 int SERVO_RANGE_STEERING = 260;	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a max kiadott jel
 
-
+StateData stateData;
 
 //sebességes dolgok
-float SLOW = 2.0;
+float SLOW = 1.5;
 
-float FAST = 2.8;
+float FAST = 4.0;
 
 float STOP = 0.0;
 
@@ -59,8 +59,8 @@ float activeLine1 = 0;  // középsõ vonal kiválasztása
 float activeLine2 = 0;
 
 //szabályzók
-float ACC_MAX = 200;		// egy szabályzó periódusban max ennyivel növekedhet a motor szervo jele
-int NO_LINE_CYCLES = 0;
+float ACC_MAX = 100;		// egy szabályzó periódusban max ennyivel növekedhet a motor szervo jele
+int NO_LINE_CYCLES = 15;
 
 float A = 0.4;	// sebesség függés	// d5% = v*A + B
 float B = 0.4;	// konstans

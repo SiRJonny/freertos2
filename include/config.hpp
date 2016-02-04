@@ -75,7 +75,7 @@ extern PID_struct PIDm;
 //állapotgépek
 
 extern StateContext stateContext;
-extern SkillStateContext skillContext;
+extern SkillStateContext skillStateContext;
 
 //egyeb
 extern char buffer[10];	//bt msg hez
@@ -83,6 +83,6 @@ extern int timer; // idõméréshez
 
 extern int stopped;
 
-
+extern StateData stateData;
 
 #endif /* CONFIG_H_ */

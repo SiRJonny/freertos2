@@ -6,6 +6,8 @@
  */
 
 #include "StatePattern.hpp"
+#include "config.hpp"
+
 
 extern void SetServo_motor(int pos);
 
@@ -69,6 +71,7 @@ LassitoState::LassitoState() {
 void LassitoState::handleEvent(StateContext& context, Event event) {
 	if (event == SIMA) {
 		context.setState(&BaseState::kanyar);
+		PIDm.iState = 0;
 	}
 }
 
