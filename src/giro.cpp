@@ -12,6 +12,11 @@
 extern SPI_HandleTypeDef hspi2;
 extern int giro_200ms;
 
+extern float giro_drift_Y;
+extern float giro_drift_Z;
+extern float giro_accu_Y;
+extern float giro_accu_Z;
+
 uint8_t data;
 uint8_t temp;
 uint8_t temp2[2];
@@ -19,42 +24,60 @@ uint8_t * char_ptr2;
 int16_t * int16_ptr;
 uint8_t ch_temp[2];
 
-// szögmérés pédakód
-/*osDelay(1000);
-			giro_drift_Z = giro_init();
 
-			float girodata;
-
-			while(1){
-				girodata = 0;
-				for(int i=0; i<50; i++)
-				{
-					girodata += (float)giro_read_channel(2)-giro_drift_Z;
-					osDelay(10);
-				}
-
-				BT_send_msg(&timer, "gir:" + std::string(itoa(girodata,buffer,10)) + "\n");
-			}*/
-
-float giro_init()
+// balra pozitív
+float giro_get_angle_Z()
 {
-	float girodata = 0;
+	return giro_accu_Z/10000.0f;
+}
+
+// felfele pozitív
+float giro_get_angle_Y()
+{
+	return giro_accu_Y/10000.0f;
+}
+
+void giro_start_measurement()
+{
+	giro_accu_Y = 0;
+	giro_accu_Z = 0;
+}
+
+void giro_integrate()
+{
+	giro_accu_Y += (float)giro_read_channel(1)-giro_drift_Y;
+	giro_accu_Z += (float)giro_read_channel(2)-giro_drift_Z;
+}
+
+
+void giro_init()
+{
+	static float girodata_Y = 0;
+	static float girodata_Z = 0;
+
+	giro_start_measurement();	// accu-k nullázása
+
 	giro_write_reg(0x20, 0x0F);
-	osDelay(1000);
-	for(int i=0; i<100; i++)
+	osDelay(500);
+	for(int i=0; i<50; i++)
 	{
+		giro_read_channel(1);
 		giro_read_channel(2);
 		osDelay(5);
 	}
 
 	for(int i=0; i<512; i++)
 	{
-		girodata += giro_read_channel(2);
+		girodata_Y += giro_read_channel(1);
+		girodata_Z += giro_read_channel(2);
 		osDelay(5);
 	}
 
-	girodata /= 512;
-	return girodata;
+	girodata_Y /= 512;
+	girodata_Z /= 512;
+
+	giro_drift_Z = girodata_Z;
+	giro_drift_Y = girodata_Y;
 }
 
 // csatorna beolvasás, X = 0

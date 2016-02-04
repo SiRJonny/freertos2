@@ -90,7 +90,7 @@ QueueHandle_t xQueue_BT;
 
 
 int Distance_sensors[5];
-float giro_drift_Z;
+
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
@@ -437,7 +437,7 @@ void StartButtonTask()
 			//stateContext.start(encoderPos);
 			stateData.event = PARKOLASSTART;
 
-
+			giro_init();
 
 			osThreadResume(SteerControl_TaskHandle);
 			osThreadResume(SendRemoteVar_TaskHandle);
@@ -585,9 +585,9 @@ void SendRemoteVarTask()
 			//BT_send_msg(&encoderPos, "encoder");
 
 
-			BT_send_msg(&timer, "enc:" + std::string(itoa(encoderPos,buffer,10)) + "\n");
-
-
+			//BT_send_msg(&timer, "enc:" + std::string(itoa(encoderPos,buffer,10)) + "\n");
+			BT_send_msg(&timer, "Y:" + std::string(itoa(giro_get_angle_Y(),buffer,10)) + "\n");
+			BT_send_msg(&timer, "Z:" + std::string(itoa(giro_get_angle_Z(),buffer,10)) + "\n");
 			//BT_send_msg(&stopped, "stopped");
 			//sendSensors();
 			//sendDebugVars();
@@ -815,10 +815,11 @@ void SteerControlTask()
 		ReadSensors();
 		//ReadSensorsDummy();
 
-
+		//__HAL_TIM_SET_COUNTER(&htim5,0);
 		ADC2_read();		// blokkol, 40us
-
-
+		giro_integrate();
+		//timer = __HAL_TIM_GET_COUNTER(&htim5);
+		//BT_send_msg(&timer, "time:" + std::string(itoa(timer,buffer,10)) + "\n");
 
 		// szenzor adatok feldolgozása
 		globalLines = getLinePos(20);

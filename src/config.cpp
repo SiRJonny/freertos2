@@ -42,6 +42,12 @@ uint32_t szenzorsor_2[32];
 uint32_t szenzorsor_temp_1[32];
 uint32_t szenzorsor_temp_2[32];
 
+//többi szenzor
+float giro_drift_Y;
+float giro_drift_Z;
+float giro_accu_Y;
+float giro_accu_Z;
+
 //vonal
 float linePosM;		// vonalpozíció méterben
 float angle = 0;
