@@ -50,9 +50,12 @@ extern "C"
 #include "Controllers.h"
 #include "StateMachine.h"
 #include "StatePattern.hpp"
+#include <StatePatternSkill.hpp>
 #include <config.hpp>
 #include "giro.hpp"
 using namespace std;
+
+
 
 /* Private variables ---------------------------------------------------------*/
 osThreadId defaultTaskHandle;
@@ -684,7 +687,6 @@ void SteerControlTask()
 
 	// állapotgép init
 	//state_struct.state = 0;
-	stateContext.init();
 
 	// állapot visszacsatolás paraméterei
 	//A = 0.4;	// sebesség függés	// d5% = v*A + B

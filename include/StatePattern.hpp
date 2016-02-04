@@ -8,11 +8,10 @@
 #ifndef STATEPATTERN_HPP_
 #define STATEPATTERN_HPP_
 
-#include <string>;
-
 using namespace std;
 
 class StateContext;
+
 class KanyarState;
 class GyorsitoState;
 class GyorsState;
@@ -48,7 +47,7 @@ public:
 	int targetEncoderPos;
 
 	void stop(StateContext& context);
-	virtual void handleEvent(StateContext& context, Event event);
+	virtual void handleEvent(StateContext& context, Event event) {}
 	virtual ~BaseState() {}
 
 };
@@ -97,9 +96,9 @@ private:
 public:
 	BaseState* state;
 	int currEncoderPos;
-	int temp;
 
-	void init();
+	StateContext();
+
 	void handleEvent(Event event);
 	void setState(BaseState *newState);
 	void setTargetEncoderPos(int target);

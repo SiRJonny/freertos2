@@ -8,8 +8,10 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
+#include <StatePatternSkill.hpp>
 #include <ProcessSensors.h>
 #include <StatePattern.hpp>
+
 #include <Controllers.h>
 
 
@@ -23,12 +25,16 @@ extern float STOP;
 extern float SET_SPEED;
 extern float speed_global;
 
+extern float SKILLSLOW;
+
 //kanyarszervo
 extern int servoOffset;
 
 //encoder
 extern int encoderPos;
 extern float encoderIncrementToMeter;
+
+extern int globalDistance;
 
 //szenzorsor
 extern uint32_t ADC1_BUFFER[4];
@@ -69,11 +75,14 @@ extern PID_struct PIDm;
 //állapotgépek
 
 extern StateContext stateContext;
+extern SkillStateContext skillContext;
 
 //egyeb
 extern char buffer[10];	//bt msg hez
 extern int timer; // idõméréshez
 
 extern int stopped;
+
+
 
 #endif /* CONFIG_H_ */
