@@ -364,6 +364,7 @@ void StartDefaultTask()
 	int encoderPosArray[5];
 	int buffer_cntr = 0;
 	float speed_temp = 0;
+	float globalDistance_temp = 0;
 
 	float encoderDifference = 0;
 	float encoderDivider = 0;
@@ -382,7 +383,7 @@ void StartDefaultTask()
 		// sebesség mérés
 		encoderPos = __HAL_TIM_GET_COUNTER(&htim2);
 
-		globalDistance = 1000000000 - encoderPos;
+		globalDistance_temp = (float)(1000000000 - encoderPos)/2.35f;		// encoder leosztás még egy helyen szerepel!!!!
 
 		encoderPosArray[buffer_cntr] = encoderPos;
 		buffer_cntr++;
@@ -397,11 +398,12 @@ void StartDefaultTask()
 		//distDiff = encoderDifference*encoderIncrementToMeter;
 		//speed_temp = distDiff/timeDiff;
 
-		encoderDivider = (2571.0f/20.0f);
+		encoderDivider = (2350.0f/20.0f);			// encoder leosztás még egy helyen szerepel!!!!
 		speed_temp = (float)(encoderDifference/encoderDivider); //ez így m/s, ha 20 lukas a tárcsa és 50ms-enként mérünk (másodpercenként 20)
 
 		osThreadSuspendAll();
 		speed_global = speed_temp;
+		globalDistance = globalDistance_temp;
 		osThreadResumeAll();
 
 		if (i == 50)
@@ -564,31 +566,33 @@ void SendRemoteVarTask()
 	{
 
 		if (!stopped) {
-			BT_send_msg(&myfloat, "myfloat");
+			//BT_send_msg(&myfloat, "myfloat");
 			myfloat +=1;
 		}
 
 
 		//minden ciklusban elküldi ezeket
-		BT_send_msg(&speed_global, "speed");
-		BT_send_msg(&Distance_sensors[2], "contLeft");
-		BT_send_msg(&Distance_sensors[3], "contRight");
+		//BT_send_msg(&speed_global, "speed");
+		//BT_send_msg(&Distance_sensors[2], "contLeft");
+		//BT_send_msg(&Distance_sensors[3], "contRight");
 
 
 		//minden slowSendMultiplier ciklusban küldi el ezeket
 		if (sendRemoteCounter % slowSendMultiplier == 0) {
 
 			//BT_send_msg(&speed_control, "control_speed");
-			BT_send_msg(&globalDistance, "globalDist");
+			//BT_send_msg(&globalDistance, "globalDist");
 			//BT_send_msg(&encoderPos, "encoder");
 
+
+			BT_send_msg(&timer, "enc:" + std::string(itoa(encoderPos,buffer,10)) + "\n");
 
 
 			//BT_send_msg(&stopped, "stopped");
 			//sendSensors();
 			//sendDebugVars();
 			//sendTuning();
-			sendStateData();
+			//sendStateData();
 		}
 
 		sendRemoteCounter++;
