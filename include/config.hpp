@@ -19,8 +19,8 @@ extern int SERVO_RANGE_MOTOR;	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a max
 extern int SERVO_RANGE_STEERING;	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a max kiadott jel
 
 //sebességes dolgok
-extern float SLOW;
-extern float FAST;
+extern volatile float SLOW;
+extern volatile float FAST;
 extern float STOP;
 extern float SET_SPEED;
 extern float speed_global;

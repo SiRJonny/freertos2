@@ -19,8 +19,8 @@ class LassitoState;
 class StopState;
 class StartState;
 
-extern float SLOW;
-extern float FAST;
+extern volatile float SLOW;
+extern volatile float FAST;
 extern float SET_SPEED;
 
 enum Event {

@@ -56,6 +56,9 @@ extern "C"
 using namespace std;
 
 
+float pAlap = 30;
+float dAlap = -230;
+
 
 /* Private variables ---------------------------------------------------------*/
 osThreadId defaultTaskHandle;
@@ -129,6 +132,7 @@ void is_speed_under_X(float speed, float limit);
 void sendSensors();
 void sendDebugVars();
 void sendStateData();
+void sendPIDs();
 
 int main(void)
 {
@@ -435,8 +439,8 @@ void StartButtonTask()
 
 		if (wasPressed){
 
-			//stateContext.start(encoderPos);
-			stateData.event = PARKOLASSTART;
+			stateContext.start(encoderPos);
+			//stateData.event = PARKOLASSTART;
 
 			//giro_init();
 
@@ -515,14 +519,14 @@ void BTReceiveTask()
 				break;
 			case 1:
 
-				PIDs.dGain = *int_ptr;
+				dAlap = *int_ptr;
 
-				BT_send_msg(&PIDs.dGain, "PIDd");
+				BT_send_msg(&dAlap, "dAlap");
 				break;
 			case 2:
-				PIDs.pGain = *int_ptr;
+				pAlap = *int_ptr;
 
-				BT_send_msg(&PIDs.pGain, "PIDp");
+				BT_send_msg(&pAlap, "pAlap");
 				break;
 			case 3:
 				SLOW = *flt_ptr;
@@ -577,15 +581,15 @@ void SendRemoteVarTask()
 
 
 		//minden ciklusban elküldi ezeket
-		//BT_send_msg(&speed_global, "speed");
+		BT_send_msg(&speed_global, "speed");
 		//BT_send_msg(&Distance_sensors[2], "contLeft");
 		//BT_send_msg(&Distance_sensors[3], "contRight");
 
 
 		//minden slowSendMultiplier ciklusban küldi el ezeket
 		if (sendRemoteCounter % slowSendMultiplier == 0) {
-
-			//BT_send_msg(&speed_control, "control_speed");
+			//BT_send_msg(&speed_global, "speed");
+			BT_send_msg(&speed_control, "control_speed");
 			//BT_send_msg(&globalDistance, "globalDist");
 			//BT_send_msg(&encoderPos, "encoder");
 
@@ -595,12 +599,13 @@ void SendRemoteVarTask()
 			//BT_send_msg(&timer, "fal:" + std::string(itoa(vanfal,buffer,10)) + "\n");
 			//BT_send_msg(&timer, "borda:" + std::string(itoa(bordas_bal,buffer,10)) + "\n");
 			//BT_send_msg(&timer, "Z:" + std::string(itoa(giro_get_angle_Z(),buffer,10)) + "\n");
-			BT_send_msg(&timer, "lim:" + std::string(itoa(speed_under_X,buffer,10)) + "\n");
+			//BT_send_msg(&timer, "lim:" + std::string(itoa(speed_under_X,buffer,10)) + "\n");
 			//BT_send_msg(&stopped, "stopped");
 			//sendSensors();
 			//sendDebugVars();
 			//sendTuning();
 			//sendStateData();
+			sendPIDs();
 		}
 
 		sendRemoteCounter++;
@@ -670,12 +675,12 @@ void sendDebugVars() {
 }
 
 void sendStateData() {
-	//int stateId = stateContext.getStateId();
-	string stName = "stnm" + skillStateContext.state->name;
-	BT_send_msg(&globalDistance, stName);
+	int stateId = stateContext.getStateId();
+	//string stName = "stnm" + skillStateContext.state->name;
+	//BT_send_msg(&globalDistance, stName);
 
 
-	//BT_send_msg(&stateId, "StateID");
+	BT_send_msg(&stateId, "StateID");
 	int stableLines = 0;
 	if (stable3lines) {
 		stableLines = 1;
@@ -734,8 +739,7 @@ void SteerControlTask()
 	PIDs.iState = 0;
 	PIDs.dState = 0;
 
-	float pAlap = 30;
-	float dAlap = -750;
+
 
 	// motor PI szabályzó struktúra
 	PIDm.pGain = 300;		// 100-> 5m/s hibánál lesz 500 a jel (max)
@@ -765,6 +769,7 @@ void SteerControlTask()
 		speed = speed_global;
 		osThreadResumeAll();
 
+		/*
         if (speed > 1) {
         	PIDs.dGain = dAlap * speed/FAST;
         	PIDs.pGain = pAlap * speed/FAST;
@@ -772,7 +777,8 @@ void SteerControlTask()
         	PIDs.pGain = pAlap;
        		PIDs.dGain = dAlap;
         }
-
+	*/	PIDs.pGain = pAlap;
+		PIDs.dGain = dAlap;
 
 		/*if (SET_SPEED > 2.4)
 		{
@@ -854,7 +860,7 @@ void SteerControlTask()
 		if (numLinesSum > 12)
 		{
 			stable3lines = true;
-			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_SET);
+			//HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_SET);
 		}else if (numLinesSum < 8){
 			stable3lines = false;
 			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_RESET);
@@ -872,7 +878,7 @@ void SteerControlTask()
 
 
 
-		bool skill = true;
+		bool skill = false;
 
 		if (skill) {
 			skillStateContext.state->update(skillStateContext, stateData);
@@ -899,6 +905,7 @@ void SteerControlTask()
 					//control /= (speed/2.0);
 				}
 				SetServo_steering((int)control); // PID-hez
+				HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_SET);
 			} else
 			{
 				pid = 0;
@@ -910,6 +917,7 @@ void SteerControlTask()
 
 				control = UpdateStateSpace(A, B, speed, linePosM, angle);
 				SetServo_steering(control);
+				HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_RESET);
 			}
 
 			no_line_cycle_count = 0; 	// láttunk vonalat

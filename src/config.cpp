@@ -13,9 +13,9 @@ int SERVO_RANGE_STEERING = 260;	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a m
 StateData stateData;
 
 //sebességes dolgok
-float SLOW = 1.5;
+volatile float SLOW = 0.8;
 
-float FAST = 4.0;
+volatile float FAST = 4.5;
 
 float STOP = 0.0;
 
@@ -25,7 +25,7 @@ float speed_global = 0;
 float SKILLSLOW = 1.0;
 
 bool speed_under_X = false;
-float speed_limit = 0.8f;
+float speed_limit = 2;
 
 //kanyarszervo
 int servoOffset = -60;
@@ -74,7 +74,7 @@ float activeLine2 = 0;
 
 //szabályzók
 float ACC_MAX = 100;		// egy szabályzó periódusban max ennyivel növekedhet a motor szervo jele
-int NO_LINE_CYCLES = 15;
+int NO_LINE_CYCLES = 50;
 
 float A = 0.4;	// sebesség függés	// d5% = v*A + B
 float B = 0.4;	// konstans
