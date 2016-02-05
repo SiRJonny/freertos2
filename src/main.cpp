@@ -89,7 +89,7 @@ osSemaphoreDef(ADC1_complete);
 QueueHandle_t xQueue_BT;
 
 
-int Distance_sensors[5];
+
 
 
 /* Private function prototypes -----------------------------------------------*/
@@ -566,13 +566,13 @@ void SendRemoteVarTask()
 	{
 
 		if (!stopped) {
-			//BT_send_msg(&myfloat, "myfloat");
+			BT_send_msg(&myfloat, "myfloat");
 			myfloat +=1;
 		}
 
 
 		//minden ciklusban elküldi ezeket
-		//BT_send_msg(&speed_global, "speed");
+		BT_send_msg(&speed_global, "speed");
 		//BT_send_msg(&Distance_sensors[2], "contLeft");
 		//BT_send_msg(&Distance_sensors[3], "contRight");
 
@@ -586,8 +586,10 @@ void SendRemoteVarTask()
 
 
 			//BT_send_msg(&timer, "enc:" + std::string(itoa(encoderPos,buffer,10)) + "\n");
-			BT_send_msg(&timer, "Y:" + std::string(itoa(giro_get_angle_Y(),buffer,10)) + "\n");
-			BT_send_msg(&timer, "Z:" + std::string(itoa(giro_get_angle_Z(),buffer,10)) + "\n");
+
+			//BT_send_msg(&timer, "fal:" + std::string(itoa(vanfal,buffer,10)) + "\n");
+			//BT_send_msg(&timer, "borda:" + std::string(itoa(bordas_bal,buffer,10)) + "\n");
+			//BT_send_msg(&timer, "Z:" + std::string(itoa(giro_get_angle_Z(),buffer,10)) + "\n");
 			//BT_send_msg(&stopped, "stopped");
 			//sendSensors();
 			//sendDebugVars();
@@ -750,6 +752,8 @@ void SteerControlTask()
 
 		//__HAL_TIM_SET_COUNTER(&htim5,0);
 
+
+
 		// sebesség mérés
 		osThreadSuspendAll();
 		speed = speed_global;
@@ -811,15 +815,19 @@ void SteerControlTask()
 
 		encoderPos = __HAL_TIM_GET_COUNTER(&htim2);		// állapotgépnek
 
+
+
 		// szenzor adatok beolvasása
 		ReadSensors();
 		//ReadSensorsDummy();
 
-		//__HAL_TIM_SET_COUNTER(&htim5,0);
-		//ADC2_read();		// blokkol, 40us
+
+
+		ADC2_read();		// blokkol, 40us
+		wall_detection();
 		//giro_integrate();
-		//timer = __HAL_TIM_GET_COUNTER(&htim5);
-		//BT_send_msg(&timer, "time:" + std::string(itoa(timer,buffer,10)) + "\n");
+
+
 
 		// szenzor adatok feldolgozása
 		globalLines = getLinePos(20);
@@ -855,6 +863,8 @@ void SteerControlTask()
 
 
 		linePosM = (activeLine1-15.5) * 5.9 / 1000; // pozíció, méterben, középen 0
+
+
 
 
 		bool skill = true;
@@ -914,6 +924,7 @@ void SteerControlTask()
 				BT_send_msg(&activeLine1, "LastLine");
 
 				osThreadSuspend(SteerControl_TaskHandle);
+			}
 		}
 
 		if(led_cntr == 30)
@@ -926,10 +937,16 @@ void SteerControlTask()
 			led_cntr++;
 		}
 		//osThreadSuspend(SteerControl_TaskHandle);
+
+		//timer = __HAL_TIM_GET_COUNTER(&htim5);
+		//BT_send_msg(&timer, "time:" + std::string(itoa(timer,buffer,10)) + "\n");
+
+		//__HAL_TIM_SET_COUNTER(&htim5,0);
+
 		osDelay(9);
 	}
 }
-}
+
 
 void getActiveLinePos(LineState * Lines, float *last_pos1, float *last_pos2, float * active1, float * active2)
 {

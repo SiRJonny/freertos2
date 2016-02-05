@@ -47,6 +47,11 @@ float giro_drift_Y;
 float giro_drift_Z;
 float giro_accu_Y;
 float giro_accu_Z;
+bool fal_bal = false;
+bool fal_jobb = false;
+bool bordas_bal = false;
+bool bordas_jobb = false;
+int Distance_sensors[5];
 
 //vonal
 float linePosM;		// vonalpozíció méterben
