@@ -9,6 +9,8 @@
 #define STATEPATTERNSKILL_HPP_
 
 #include <string>
+#include "ProcessSensors.h"
+
 
 using namespace std;
 
@@ -25,6 +27,7 @@ class SkillStopState;
 class SkillStartState;
 
 class MovingState;
+class EventBasedState;
 class SkillBaseState;
 
 extern StateData stateData;
@@ -37,8 +40,8 @@ extern bool bordas_jobb;
 
 
 extern float activeLine1;
-
-
+extern float last_active_line_pos1;
+extern LineState globalLines;
 
 enum Direction {
 	UNDEFINED,
@@ -62,7 +65,7 @@ enum SkillTrackEvent {
 	TWOWALL_BORDAS_LEFT,
 	WALL_BORDAS_LEFT,
 	WALL_BORDAS_RIGHT,
-	WALLSEND,
+	NOWALLS,
 	NEWLINE
 
 };

@@ -20,24 +20,14 @@ MovingState SkillBaseState::parkolasTolat2("park2", &SkillBaseState::skillStoppe
 
 //Torkolat
 // 45 fok = 0.78 rad
-EventBasedState SkillBaseState::TorkFalakKozt("Tork1", &SkillBaseState::TorkFalakElhagyva, 100, WALLSEND, SKILLSLOW, 0, false);
+EventBasedState SkillBaseState::TorkFalakKozt("Tork1", &SkillBaseState::TorkFalakElhagyva, 100, NOWALLS, SKILLSLOW, 0, false);
 MovingState SkillBaseState::TorkFalakElhagyva("Tork2", &SkillBaseState::parkolasTolat2, 100, 0.78, SKILLSLOW);
-EventBasedState SkillBaseState::TorkVonalKereses("Tork3", &SkillBaseState::koztes, 0, WALLSEND, SKILLSLOW, 0, false);
-
-
-bool bothWall() {
-	if (fal_bal && fal_jobb) {
-		return true;
-	}
-	return false;
-}
-
-bool lineEnd = false;
-bool wall = false;
+EventBasedState SkillBaseState::TorkVonalKereses("Tork3", &SkillBaseState::koztes, 0, NEWLINE, SKILLSLOW, 0, false);
 
 SkillTrackEvent checkWalls() {
+	static bool wall = false;
 	SkillTrackEvent event = NONE;
-	if(bothWall()) {
+	if(fal_bal && fal_jobb) {
 		if (bordas_jobb) {
 			event = TWOWALL_BORDAS_RIGHT;
 			direction = RIGHT;
@@ -54,9 +44,9 @@ SkillTrackEvent checkWalls() {
 		event = WALL_BORDAS_LEFT;
 		direction = LEFT;
 	} else if (wall) {
-		event = WALLSEND;
+		event = NOWALLS;
 	}
-	if (event != NONE && event != WALLSEND) {
+	if (event != NONE && event != NOWALLS) {
 		wall = true;
 	}
 	return event;
@@ -64,8 +54,8 @@ SkillTrackEvent checkWalls() {
 
 SkillTrackEvent checkStateStart() {
 	SkillTrackEvent event = NONE;
-
-	if (lineEnd) {
+	//TODO stableLine?
+	if (globalLines.numLines1 == -1 && last_active_line_pos1 > 13 && last_active_line_pos1 < 18) {
 		event = TORKOLAT;
 	}
 
@@ -81,6 +71,8 @@ SkillTrackEvent checkNewLine() {
 }
 
 SkillTrackEvent SkillBaseState::calculateEvent() {
+	static SkillTrackEvent lastEvent;
+	static int cntr = 0;
 	SkillTrackEvent event = NONE;
 
 	switch (currentState) {
@@ -109,6 +101,21 @@ SkillTrackEvent SkillBaseState::calculateEvent() {
 		default:
 			break;
 	}
+
+	if (event == lastEvent){
+		if (cntr > 5) {
+			cntr = 0;
+			return event;
+		} else {
+			cntr++;
+			return NONE;
+		}
+	} else {
+		cntr = 0;
+		lastEvent = event;
+		event = NONE;
+	}
+
 	return event;
 }
 
@@ -223,7 +230,7 @@ void SkillStateContext::setState(SkillBaseState* newState) {
 }
 
 SkillStateContext::SkillStateContext() {
-	setState(&SkillBaseState::parkolasTolat1);
+	setState(&SkillBaseState::koztes);
 }
 
 void SkillBaseState::stop(SkillStateContext& context) {
