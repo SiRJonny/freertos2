@@ -89,7 +89,7 @@ osSemaphoreDef(ADC1_complete);
 QueueHandle_t xQueue_BT;
 
 
-int Distance_sensors[5];
+
 
 
 /* Private function prototypes -----------------------------------------------*/
@@ -816,7 +816,8 @@ void SteerControlTask()
 		//ReadSensorsDummy();
 
 		//__HAL_TIM_SET_COUNTER(&htim5,0);
-		//ADC2_read();		// blokkol, 40us
+		ADC2_read();		// blokkol, 40us
+		wall_detection()
 		//giro_integrate();
 		//timer = __HAL_TIM_GET_COUNTER(&htim5);
 		//BT_send_msg(&timer, "time:" + std::string(itoa(timer,buffer,10)) + "\n");

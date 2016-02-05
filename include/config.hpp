@@ -49,6 +49,11 @@ extern float giro_drift_X;
 extern float giro_drift_Z;
 extern float giro_accu_X;
 extern float giro_accu_Z;
+extern bool fal_bal;
+extern bool fal_jobb;
+extern bool bordas_bal;
+extern bool bordas_jobb;
+extern int Distance_sensors[5];
 
 //vonal
 extern float linePosM;		// vonalpozíció méterben

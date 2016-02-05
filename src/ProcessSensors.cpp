@@ -15,11 +15,63 @@ extern char buffer[10];	//bt msg hez
 extern int timer; // idõméréshez
 extern uint32_t szenzorsor_1[32];
 extern uint32_t szenzorsor_2[32];
+extern int Distance_sensors[5];
+
+extern bool fal_jobb;
+extern bool fal_bal;
 
 float refined_max;
 float refined_max2;
 LineState Lines; // TODO: angle nem, másik sor pos igen
 
+int count_between_values(int * array, int N, int min, int max)
+{
+	int count = 0;
+	for(int i=0; i<N; i++)
+	{
+		if( array[i] > min && array[i] < max )
+		{
+			count++;
+		}
+	}
+	return count;
+}
+
+void wall_detection()
+{
+	static int num_samples_average = 5;
+	static int num_samples_borda = 30;
+	static int average_array_j[5];
+	static int average_array_b[5];
+	static int borda_array_j[30];
+	static int borda_array_b[30];
+	static int average_cntr = 0;
+	static int borda_cntr = 0;
+
+	average_array_j[average_cntr] = Distance_sensors[3];
+	average_array_b[average_cntr] = Distance_sensors[2];
+
+	if(average_cntr > num_samples_average-1){
+		average_cntr = 0;
+	}else{
+		average_cntr++;
+	}
+
+	if(count_between_values(average_array_j,num_samples_average,40,80) >= 4)
+	{
+		fal_jobb = true;
+	}else{
+		fal_jobb = false;
+	}
+	if(count_between_values(average_array_b,num_samples_average,40,80) >= 4)
+	{
+		fal_bal = true;
+	}else{
+		fal_bal = false;
+	}
+
+
+}
 
 // vonal pozíció, szám, szög számítása, treshold = hány %-al kisebb csúcs érvényes még
 LineState getLinePos(int treshold)
