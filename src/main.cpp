@@ -872,7 +872,6 @@ void SteerControlTask()
 
 
 
-
 		bool skill = true;
 
 		if (skill) {
@@ -885,7 +884,7 @@ void SteerControlTask()
 			SET_SPEED = stateContext.getTargetSpeed();
 		}
 
-
+		usePD = !speed_under_X;
 
 		// vonalkövetés szabályozó
 		if(globalLines.numLines1 != -1)	// ha látunk vonalat
