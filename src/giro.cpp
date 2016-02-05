@@ -10,12 +10,12 @@
 
 
 extern SPI_HandleTypeDef hspi2;
-extern int giro_200ms;
 
 extern float giro_drift_Y;
 extern float giro_drift_Z;
 extern float giro_accu_Y;
 extern float giro_accu_Z;
+extern bool giro_stopped;
 
 uint8_t data;
 uint8_t temp;
@@ -45,10 +45,35 @@ void giro_start_measurement()
 
 void giro_integrate()
 {
+	static float giro_Z;
 	giro_accu_Y += (float)giro_read_channel(1)-giro_drift_Y;
-	giro_accu_Z += (float)giro_read_channel(2)-giro_drift_Z;
+	giro_Z = (float)giro_read_channel(2);
+	giro_accu_Z += giro_Z-giro_drift_Z;
+	set_giro_stopped(giro_Z);
 }
 
+void set_giro_stopped(float Z)
+{
+	static float array_Z[5];
+	static int cntr = 0;
+
+	array_Z[cntr] = Z;
+	cntr++;
+	if(cntr >= 5)
+	{
+		cntr = 0;
+	}
+
+	for(int i=0; i<5; i++)
+	{
+		if(array_Z[i] > 200)
+		{
+			giro_stopped = false;
+			return;
+		}
+	}
+	giro_stopped = true;
+}
 
 void giro_init()
 {
