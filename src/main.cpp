@@ -878,66 +878,75 @@ void SteerControlTask()
 
 
 
-		bool skill = false;
 
-		if (skill) {
-			skillStateContext.state->update(skillStateContext, stateData);
+
+		if (skillTrack) {
+			stateData.event = skillStateContext.state->calculateEvent();
+			skillStateContext.state->update();
 			usePD = false;
 			SET_SPEED = skillStateContext.state->targetSpeed;
+			steeringControl = skillStateContext.state->steeringControlled;
 		}else {
+			steeringControl = true;
 			stateContext.update(stable3lines, encoderPos);
-			usePD = stateContext.isSteeringPD();
+			//usePD = stateContext.isSteeringPD();
+			usePD = !speed_under_X;
 			SET_SPEED = stateContext.getTargetSpeed();
 		}
 
-		usePD = !speed_under_X;
+
 
 		// vonalkövetés szabályozó
-		if(globalLines.numLines1 != -1)	// ha látunk vonalat
-		{
-			if  (usePD)
+
+		if (steeringControl) {
+			if(globalLines.numLines1 != -1)	// ha látunk vonalat
 			{
-				pid = 1;
-				error = activeLine1 - 15.5;
-				control = UpdatePID1(&PIDs,error,globalLines.pos1[0]);
-				if(speed > 2)
+				if  (usePD)
 				{
-					//control /= (speed/2.0);
-				}
-				SetServo_steering((int)control); // PID-hez
-				HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_SET);
-			} else
-			{
-				pid = 0;
-				if (speed < 0.2)
+					pid = 1;
+					error = activeLine1 - 15.5;
+					control = UpdatePID1(&PIDs,error,globalLines.pos1[0]);
+					if(speed > 2)
+					{
+						//control /= (speed/2.0);
+					}
+					SetServo_steering((int)control); // PID-hez
+					HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_SET);
+				} else
 				{
-					speed = 0.2;
+					pid = 0;
+					if (speed < 0.2)
+					{
+						speed = 0.2;
+					}
+
+
+					control = UpdateStateSpace(A, B, speed, linePosM, angle);
+					SetServo_steering(control);
+					HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_RESET);
 				}
 
-
-				control = UpdateStateSpace(A, B, speed, linePosM, angle);
-				SetServo_steering(control);
-				HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_RESET);
+				no_line_cycle_count = 0; 	// láttunk vonalat
 			}
-
-			no_line_cycle_count = 0; 	// láttunk vonalat
-		}
-		else if (globalLines.numLines2 != -1)
-		{
-			no_line_cycle_count = 0;
-		}
-		else
-		{
-			no_line_cycle_count++;
-			if (no_line_cycle_count > NO_LINE_CYCLES)
+			else if (globalLines.numLines2 != -1)
 			{
-				//SET_SPEED = 0;
-				stateContext.stop();
-				SetServo_motor(0);
-				BT_send_msg(&activeLine1, "LastLine");
-
-				osThreadSuspend(SteerControl_TaskHandle);
+				no_line_cycle_count = 0;
 			}
+			else
+			{
+				no_line_cycle_count++;
+				if (no_line_cycle_count > NO_LINE_CYCLES)
+				{
+					//SET_SPEED = 0;
+					stateContext.stop();
+					SetServo_motor(0);
+					BT_send_msg(&activeLine1, "LastLine");
+
+					osThreadSuspend(SteerControl_TaskHandle);
+				}
+			}
+		} else {
+			SetServo_steering(skillStateContext.state->steeringAngle);
 		}
 
 		if(led_cntr == 30)

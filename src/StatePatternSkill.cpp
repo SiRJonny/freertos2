@@ -11,12 +11,106 @@ KoztesState SkillBaseState::koztes;
 SkillStopState SkillBaseState::skillStopped;
 SkillStartState SkillBaseState::skillStarted;
 
+//EventBasedState(string stateName, SkillBaseState* nState, int waitDistance,
+		//SkillTrackEvent targetEvent, float tSpeed, float angle, bool controlSteer);
 
 //MovingState(string stateName,SkillBaseState* nextState, int howMuchToMove, float angle, float tSpeed) {
 MovingState SkillBaseState::parkolasTolat1("park1", &SkillBaseState::parkolasTolat2, 3000, 0, 2);
 MovingState SkillBaseState::parkolasTolat2("park2", &SkillBaseState::skillStopped, 3000, 0, 2);
 
+//Torkolat
+// 45 fok = 0.78 rad
+EventBasedState SkillBaseState::TorkFalakKozt("Tork1", &SkillBaseState::TorkFalakElhagyva, 100, WALLSEND, SKILLSLOW, 0, false);
+MovingState SkillBaseState::TorkFalakElhagyva("Tork2", &SkillBaseState::parkolasTolat2, 100, 0.78, SKILLSLOW);
+EventBasedState SkillBaseState::TorkVonalKereses("Tork3", &SkillBaseState::koztes, 0, WALLSEND, SKILLSLOW, 0, false);
 
+
+bool bothWall() {
+	if (fal_bal && fal_jobb) {
+		return true;
+	}
+	return false;
+}
+
+bool lineEnd = false;
+bool wall = false;
+
+SkillTrackEvent checkWalls() {
+	SkillTrackEvent event = NONE;
+	if(bothWall()) {
+		if (bordas_jobb) {
+			event = TWOWALL_BORDAS_RIGHT;
+			direction = RIGHT;
+		} else if (bordas_bal) {
+			event = TWOWALL_BORDAS_LEFT;
+			direction = LEFT;
+		} else {
+			event = TWOWALL;
+		}
+	} else if (bordas_jobb) {
+		event = WALL_BORDAS_RIGHT;
+		direction = RIGHT;
+	} else if(bordas_bal) {
+		event = WALL_BORDAS_LEFT;
+		direction = LEFT;
+	} else if (wall) {
+		event = WALLSEND;
+	}
+	if (event != NONE && event != WALLSEND) {
+		wall = true;
+	}
+	return event;
+}
+
+SkillTrackEvent checkStateStart() {
+	SkillTrackEvent event = NONE;
+
+	if (lineEnd) {
+		event = TORKOLAT;
+	}
+
+	return event;
+}
+
+SkillTrackEvent checkNewLine() {
+	SkillTrackEvent event = NONE;
+	if(activeLine1 > 13 && activeLine1 < 18) {
+		event = NEWLINE;
+	}
+	return event;
+}
+
+SkillTrackEvent SkillBaseState::calculateEvent() {
+	SkillTrackEvent event = NONE;
+
+	switch (currentState) {
+		case NONE:
+			direction = UNDEFINED;
+			event = checkStateStart();
+			break;
+		case PARKOLAS:
+			break;
+		case TORKOLAT:
+			event = checkWalls();
+			if (event == NONE) {
+				event = checkNewLine();
+			}
+			break;
+		case TELEPHELY:
+			break;
+		case HATAR:
+			break;
+		case BILLENO:
+			break;
+		case FORDITO:
+			break;
+		case CEL:
+			break;
+		default:
+			break;
+	}
+	return event;
+}
 
 
 
@@ -28,10 +122,10 @@ KoztesState::KoztesState() {
 	distanceToMove = 0;
 }
 
-void KoztesState::update(SkillStateContext& context, StateData data) {
-	switch (data.event) {
-		case PARKOLASSTART:
-			context.setState(&SkillBaseState::parkolasTolat1);
+void KoztesState::update() {
+	switch (stateData.event) {
+		case PARKOLAS:
+			skillStateContext.setState(&SkillBaseState::parkolasTolat1);
 			break;
 	}
 }
@@ -47,40 +141,47 @@ MovingState::MovingState(string stateName,SkillBaseState* nState, int howMuchToM
 	nextState = nState;
 }
 
-void MovingState::update(SkillStateContext& context, StateData data) {
+void MovingState::update() {
 	if (targetSpeed > 0) {
 		if (globalDistance >= triggerGlobalDistance) {
-			context.setState(this->nextState);
+			skillStateContext.setState(this->nextState);
 		}
 	} else {
 		if (globalDistance <= triggerGlobalDistance) {
-			context.setState(this->nextState);
+			skillStateContext.setState(this->nextState);
 		}
 	}
 }
 
 //EventBased
-EventBasedState::EventBasedState(string stateName, SkillBaseState* nState, int waitDistance, SkillTrackEvent targetEvent, float tSpeed) {
+EventBasedState::EventBasedState(string stateName,
+		SkillBaseState* nState,
+		int waitDistance,
+		SkillTrackEvent targetEvent,
+		float tSpeed,
+		float angle,
+		bool controlSteer) {
 	name = stateName;
 	stateId = 3;
 	targetSpeed = tSpeed;
 	distanceToMove = waitDistance;
-	steeringControlled = true;
+	steeringAngle = angle;
+	steeringControlled = controlSteer;
 	nextState = nState;
 	triggerEvent = targetEvent;
 }
 
-void EventBasedState::update(SkillStateContext& context, StateData data) {
+void EventBasedState::update() {
 	if (targetSpeed > 0) {
 		if (globalDistance >= triggerGlobalDistance) {
-			if(data.event == triggerEvent) {
-				context.setState(this->nextState);
+			if(stateData.event == triggerEvent) {
+				skillStateContext.setState(this->nextState);
 			}
 		}
 	} else {
 		if (globalDistance <= triggerGlobalDistance) {
-			if(data.event == triggerEvent) {
-				context.setState(this->nextState);
+			if(stateData.event == triggerEvent) {
+				skillStateContext.setState(this->nextState);
 			}
 		}
 	}
@@ -94,7 +195,7 @@ SkillStopState::SkillStopState() {
 	targetSpeed = 0;
 }
 
-void SkillStopState::update(SkillStateContext& context, StateData data){
+void SkillStopState::update(){
 
 }
 
@@ -105,10 +206,10 @@ SkillStartState::SkillStartState() {
 	targetSpeed = 0;
 }
 
-void SkillStartState::update(SkillStateContext& context, StateData data){
-	switch (data.event) {
+void SkillStartState::update(){
+	switch (stateData.event) {
 			case RADIOSTART:
-				context.setState(&SkillBaseState::parkolasTolat2);
+				skillStateContext.setState(&SkillBaseState::parkolasTolat2);
 				break;
 		}
 }

@@ -86,6 +86,8 @@ extern int pid;
 extern PID_struct PIDs;
 extern PID_struct PIDm;
 
+extern bool steeringControl;
+
 //állapotgépek
 
 extern StateContext stateContext;
@@ -96,7 +98,11 @@ extern char buffer[10];	//bt msg hez
 extern int timer; // idõméréshez
 
 extern int stopped;
+extern bool skillTrack;
 
 extern StateData stateData;
+
+extern Direction direction;
+extern SkillTrackEvent currentState;
 
 #endif /* CONFIG_H_ */

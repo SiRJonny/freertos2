@@ -85,6 +85,8 @@ int pid = 0;
 PID_struct PIDs;
 PID_struct PIDm;
 
+bool steeringControl = true;
+
 //állapotgépek
 
 StateContext stateContext;
@@ -93,5 +95,9 @@ SkillStateContext skillStateContext;
 //egyeb
 char buffer[10];	//bt msg hez
 int timer = 0; // idõméréshez
+
+bool skillTrack = true;
+Direction direction = UNDEFINED;
+SkillTrackEvent currentState = NONE;
 
 int stopped = 0;
