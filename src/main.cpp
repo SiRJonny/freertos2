@@ -283,7 +283,7 @@ void SetServo_motor(int pos)
 	if(pos < -SERVO_RANGE_MOTOR){pos = -SERVO_RANGE_MOTOR;}
 
 	// 1500 = 1,5ms, ez a 0 pozíció
-	__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,1500+pos);
+	__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,1500-pos);
 }
 
 // TODO: sebességmérés külön, és rendes emergency break
@@ -437,7 +437,7 @@ void StartButtonTask()
 			//stateContext.start(encoderPos);
 			stateData.event = PARKOLASSTART;
 
-			giro_init();
+			//giro_init();
 
 			osThreadResume(SteerControl_TaskHandle);
 			osThreadResume(SendRemoteVar_TaskHandle);
@@ -816,8 +816,8 @@ void SteerControlTask()
 		//ReadSensorsDummy();
 
 		//__HAL_TIM_SET_COUNTER(&htim5,0);
-		ADC2_read();		// blokkol, 40us
-		giro_integrate();
+		//ADC2_read();		// blokkol, 40us
+		//giro_integrate();
 		//timer = __HAL_TIM_GET_COUNTER(&htim5);
 		//BT_send_msg(&timer, "time:" + std::string(itoa(timer,buffer,10)) + "\n");
 
