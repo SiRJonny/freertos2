@@ -89,7 +89,7 @@ void ReadSensors()
 
 		SetMUX((uint8_t)i);
 
-		ControlTaskDelay(100);	// szenzor felfutásra várakozás
+		ControlTaskDelay(40);	// szenzor felfutásra várakozás
 		//osDelay(10);
 
 
@@ -112,7 +112,7 @@ void ReadSensors()
 		szenzorsor_2[i+16] = amount - ADC1_BUFFER[2];	// jobb hátsó
 
 		SetMUX((uint8_t)i+8);
-		ControlTaskDelay(100);
+		ControlTaskDelay(40);
 		//osDelay(10);
 
 		ADC1_read();
