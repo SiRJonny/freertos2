@@ -44,6 +44,12 @@ extern uint32_t szenzorsor_2[32];
 extern uint32_t szenzorsor_temp_1[32];
 extern uint32_t szenzorsor_temp_2[32];
 
+//többi szenzor
+extern float giro_drift_X;
+extern float giro_drift_Z;
+extern float giro_accu_X;
+extern float giro_accu_Z;
+
 //vonal
 extern float linePosM;		// vonalpozíció méterben
 extern float angle;
