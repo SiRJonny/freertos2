@@ -19,6 +19,8 @@ extern int Distance_sensors[5];
 
 extern bool fal_jobb;
 extern bool fal_bal;
+extern bool bordas_jobb;
+extern bool bordas_bal;
 
 float refined_max;
 float refined_max2;
@@ -37,14 +39,16 @@ int count_between_values(int * array, int N, int min, int max)
 	return count;
 }
 
+// van_fal: utolsó 5 mérésbõl legalább 4 40-80 között
+// bordas_fal: utolsó 20 mérésbõl legalább 8 közeli és 8 távoli falrész, TRUE marad, amíg van fal
 void wall_detection()
 {
 	static int num_samples_average = 5;
-	static int num_samples_borda = 30;
+	static int num_samples_borda = 20;
 	static int average_array_j[5];
 	static int average_array_b[5];
-	static int borda_array_j[30];
-	static int borda_array_b[30];
+	static int borda_array_j[20];
+	static int borda_array_b[20];
 	static int average_cntr = 0;
 	static int borda_cntr = 0;
 
@@ -68,6 +72,34 @@ void wall_detection()
 		fal_bal = true;
 	}else{
 		fal_bal = false;
+	}
+
+	borda_array_j[borda_cntr] = Distance_sensors[3];
+	borda_array_b[borda_cntr] = Distance_sensors[2];
+
+	if(borda_cntr > num_samples_borda-1){
+		borda_cntr = 0;
+	}else{
+		borda_cntr++;
+	}
+
+	if(count_between_values(borda_array_j,num_samples_borda,40,60) >= 8 && count_between_values(borda_array_j,num_samples_borda,60,80) >= 8)
+	{
+		bordas_jobb = true;
+	}else{
+		if(!fal_jobb)
+		{
+			bordas_jobb = false;
+		}
+	}
+	if(count_between_values(borda_array_b,num_samples_borda,40,60) >= 8 && count_between_values(borda_array_b,num_samples_borda,60,80) >= 8)
+	{
+		bordas_bal = true;
+	}else{
+		if(!fal_bal)
+		{
+			bordas_bal = false;
+		}
 	}
 
 

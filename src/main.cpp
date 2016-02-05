@@ -586,8 +586,11 @@ void SendRemoteVarTask()
 
 
 			//BT_send_msg(&timer, "enc:" + std::string(itoa(encoderPos,buffer,10)) + "\n");
-			BT_send_msg(&timer, "Y:" + std::string(itoa(giro_get_angle_Y(),buffer,10)) + "\n");
-			BT_send_msg(&timer, "Z:" + std::string(itoa(giro_get_angle_Z(),buffer,10)) + "\n");
+			static int vanfal = 0;
+			if(fal_bal){vanfal=1;}
+			else vanfal=0;
+			BT_send_msg(&timer, "fal:" + std::string(itoa(vanfal,buffer,10)) + "\n");
+			//BT_send_msg(&timer, "Z:" + std::string(itoa(giro_get_angle_Z(),buffer,10)) + "\n");
 			//BT_send_msg(&stopped, "stopped");
 			//sendSensors();
 			//sendDebugVars();
@@ -817,7 +820,7 @@ void SteerControlTask()
 
 		//__HAL_TIM_SET_COUNTER(&htim5,0);
 		ADC2_read();		// blokkol, 40us
-		wall_detection()
+		wall_detection();
 		//giro_integrate();
 		//timer = __HAL_TIM_GET_COUNTER(&htim5);
 		//BT_send_msg(&timer, "time:" + std::string(itoa(timer,buffer,10)) + "\n");

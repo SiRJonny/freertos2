@@ -23,6 +23,9 @@ typedef struct
 
 extern void BT_send_msg(int*msg,std::string nev);
 
+
+int count_between_values(int * array, int N, int min, int max);
+void wall_detection();
 LineState getLinePos(int treshold);
 float calculateAngle(float pos1, float pos2);
 float calculateAngle(void);
