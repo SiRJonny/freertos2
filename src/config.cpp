@@ -25,7 +25,7 @@ float speed_global = 0;
 float SKILLSLOW = 1.0;
 
 bool speed_under_X = false;
-float speed_limit = 2.0f;
+float speed_limit = 0.8f;
 
 //kanyarszervo
 int servoOffset = -60;

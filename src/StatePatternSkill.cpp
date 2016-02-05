@@ -13,8 +13,8 @@ SkillStartState SkillBaseState::skillStarted;
 
 
 //MovingState(string stateName,SkillBaseState* nextState, int howMuchToMove, float angle, float tSpeed) {
-MovingState SkillBaseState::parkolasTolat1("park1", &SkillBaseState::skillStopped, 5000, 0, 0.3);
-MovingState SkillBaseState::parkolasTolat2("park2", &SkillBaseState::skillStopped, 5000, 0, 1);
+MovingState SkillBaseState::parkolasTolat1("park1", &SkillBaseState::parkolasTolat2, 3000, 0, 2);
+MovingState SkillBaseState::parkolasTolat2("park2", &SkillBaseState::skillStopped, 3000, 0, 2);
 
 
 

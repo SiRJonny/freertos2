@@ -55,7 +55,7 @@ void wall_detection()
 	average_array_j[average_cntr] = Distance_sensors[3];
 	average_array_b[average_cntr] = Distance_sensors[2];
 
-	if(average_cntr > num_samples_average-1){
+	if(average_cntr > num_samples_average-2){
 		average_cntr = 0;
 	}else{
 		average_cntr++;
@@ -77,7 +77,7 @@ void wall_detection()
 	borda_array_j[borda_cntr] = Distance_sensors[3];
 	borda_array_b[borda_cntr] = Distance_sensors[2];
 
-	if(borda_cntr > num_samples_borda-1){
+	if(borda_cntr > num_samples_borda-2){
 		borda_cntr = 0;
 	}else{
 		borda_cntr++;

@@ -440,8 +440,12 @@ void StartButtonTask()
 
 			//giro_init();
 
+
+
+
 			osThreadResume(SteerControl_TaskHandle);
 			osThreadResume(SendRemoteVar_TaskHandle);
+
 
 
 			wasPressed = 0;
@@ -567,13 +571,13 @@ void SendRemoteVarTask()
 	{
 
 		if (!stopped) {
-			BT_send_msg(&myfloat, "myfloat");
+			//BT_send_msg(&myfloat, "myfloat");
 			myfloat +=1;
 		}
 
 
 		//minden ciklusban elküldi ezeket
-		BT_send_msg(&speed_global, "speed");
+		//BT_send_msg(&speed_global, "speed");
 		//BT_send_msg(&Distance_sensors[2], "contLeft");
 		//BT_send_msg(&Distance_sensors[3], "contRight");
 
@@ -591,6 +595,7 @@ void SendRemoteVarTask()
 			//BT_send_msg(&timer, "fal:" + std::string(itoa(vanfal,buffer,10)) + "\n");
 			//BT_send_msg(&timer, "borda:" + std::string(itoa(bordas_bal,buffer,10)) + "\n");
 			//BT_send_msg(&timer, "Z:" + std::string(itoa(giro_get_angle_Z(),buffer,10)) + "\n");
+			BT_send_msg(&timer, "lim:" + std::string(itoa(speed_under_X,buffer,10)) + "\n");
 			//BT_send_msg(&stopped, "stopped");
 			//sendSensors();
 			//sendDebugVars();
@@ -1006,11 +1011,19 @@ void is_speed_under_X(float speed, float limit)
 	static float array[3];
 	static int cntr = 0;
 	array[cntr] = speed;
+	if(cntr > 1)
+	{
+		cntr = 0;
+	}else{
+		cntr++;
+	}
+
 	for(int i=0; i<3; i++)
 	{
 		if(array[i]>limit)
 		{
 			speed_under_X = false;
+			return;
 		}
 	}
 	speed_under_X = true;
