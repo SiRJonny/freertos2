@@ -19,6 +19,7 @@ float giro_get_angle_Y();	// felfele pozitív
 float giro_get_angle_Z();	// balra pozitív
 void giro_start_measurement();
 void giro_integrate();
+void set_giro_stopped(float Z);
 void giro_init();
 int giro_read_channel(int channel);
 uint8_t giro_read_reg(uint8_t address);
