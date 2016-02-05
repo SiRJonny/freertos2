@@ -27,6 +27,9 @@ extern float speed_global;
 
 extern float SKILLSLOW;
 
+extern bool speed_under_X;
+extern float speed_limit;
+
 //kanyarszervo
 extern int servoOffset;
 

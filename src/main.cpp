@@ -124,6 +124,7 @@ void SetServo_motor(int pos); // -SERVO_RANGE_MOTOR +SERVO_RANGE_MOTOR
 void SetServo_steering(int pos); // -SERVO_RANGE_STEERING +SERVO_RANGE_STEERING
 void SetServo_steering(float angle);  // kormányzás, szöggel
 void getActiveLinePos(LineState * Lines, float *last_pos1, float *last_pos2, float * active1, float * active2);
+void is_speed_under_X(float speed, float limit);
 
 void sendSensors();
 void sendDebugVars();
@@ -826,7 +827,7 @@ void SteerControlTask()
 		ADC2_read();		// blokkol, 40us
 		wall_detection();
 		//giro_integrate();
-
+		is_speed_under_X(speed, speed_limit);
 
 
 		// szenzor adatok feldolgozása
@@ -1000,6 +1001,20 @@ void getActiveLinePos(LineState * Lines, float *last_pos1, float *last_pos2, flo
 
 }
 
+void is_speed_under_X(float speed, float limit)
+{
+	static float array[3];
+	static int cntr = 0;
+	array[cntr] = speed;
+	for(int i=0; i<3; i++)
+	{
+		if(array[i]>limit)
+		{
+			speed_under_X = false;
+		}
+	}
+	speed_under_X = true;
+}
 
 // hal uart callback
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart){
