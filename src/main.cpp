@@ -128,6 +128,7 @@ void SetServo_steering(int pos); // -SERVO_RANGE_STEERING +SERVO_RANGE_STEERING
 void SetServo_steering(float angle);  // kormányzás, szöggel
 void getActiveLinePos(LineState * Lines, float *last_pos1, float *last_pos2, float * active1, float * active2);
 void is_speed_under_X(float speed, float limit);
+void get_stable_line_count(int numlines);
 
 void sendSensors();
 void sendDebugVars();
@@ -841,30 +842,12 @@ void SteerControlTask()
 		is_speed_under_X(speed, speed_limit);
 
 
+
 		// szenzor adatok feldolgozása
 		globalLines = getLinePos(20);
 
-		///// stabil 3 vonal
-		numLinesArray[numLinesArrayIndex] = globalLines.numLines1;
-		numLinesArrayIndex++;
-		if (numLinesArrayIndex >= 5)
-		{
-			numLinesArrayIndex = 0;
-		}
-		numLinesSum = 0;
-		for(int i = 0; i < 5; i++)
-		{
-			numLinesSum += numLinesArray[i];
-		}
-
-		if (numLinesSum > 12)
-		{
-			stable3lines = true;
-			//HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_SET);
-		}else if (numLinesSum < 8){
-			stable3lines = false;
-			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_RESET);
-		}
+		///// stabil vonalszám
+		get_stable_line_count(globalLines.numLines1);
 
 
 		getActiveLinePos(&globalLines, &last_active_line_pos1, &last_active_line_pos2, &activeLine1, &activeLine2);
@@ -976,6 +959,53 @@ void SteerControlTask()
 	}
 }
 
+void get_stable_line_count(int numlines)
+{
+	static int numlines_array[5];
+	static int array_cntr = 0;
+	static int num0, num1, num2, num3;
+
+	num0 = num1 = num2 = num3 = 0;
+	stable0lines = stable1lines = stable2lines = stable3lines = keresztvonal = false;
+
+	if(numlines == -2)	// keresztvonalra nem várunk 5 ütemet
+	{
+		keresztvonal = true;
+		return;
+	}
+
+	numlines_array[array_cntr] = numlines;
+	array_cntr++;
+	if(array_cntr >= 5)
+	{
+		array_cntr = 0;
+	}
+
+	for(int i=0; i<5; i++)
+	{
+		switch (numlines_array[i])
+		{
+			case -1:
+				num0++;
+				break;
+			case 1:
+				num1++;
+				break;
+			case 2:
+				num2++;
+				break;
+			case 3:
+				num3++;
+				break;
+		}
+	}
+
+	if(num0 >= 4){ stable0lines = true; }
+	if(num1 >= 4){ stable1lines = true; }
+	if(num2 >= 4){ stable2lines = true; }
+	if(num3 >= 4){ stable3lines = true; }
+
+}
 
 void getActiveLinePos(LineState * Lines, float *last_pos1, float *last_pos2, float * active1, float * active2)
 {

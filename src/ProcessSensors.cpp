@@ -236,6 +236,7 @@ int find3peaks(uint32_t * data, int * peaks, int treshold)
 	int peakMinPos = 0;
 	int peakMaxValue = 0;
 	int numPeaks = 3;
+	static int average;
 
 	for(int i = 0; i<3; i++)
 	{
@@ -287,7 +288,14 @@ int find3peaks(uint32_t * data, int * peaks, int treshold)
 		swap(&peakValue[1], &peakValue[2]);
 	}
 
-	if(peakMaxValue > calculateAverage(data)*NO_LINE_MULTIPLIER && peakMaxValue > 130) // ha a legnagyobb csúcs nincs az átlag ennyiszerese -> nincs vonal
+
+	average = calculateAverage(data);
+	if (average > 130)
+	{
+		return -2;
+	}
+
+	if(peakMaxValue > average*NO_LINE_MULTIPLIER && peakMaxValue > 130) // ha a legnagyobb csúcs nincs az átlag ennyiszerese -> nincs vonal
 	{
 		return numPeaks;
 	}else{

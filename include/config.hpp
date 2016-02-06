@@ -71,6 +71,10 @@ extern float last_active_line_pos2;
 
 extern LineState globalLines;
 
+extern bool keresztvonal;
+extern bool stable0lines;
+extern bool stable1lines;
+extern bool stable2lines;
 extern bool stable3lines;
 extern float activeLine1;  // középsõ vonal kiválasztása
 extern float activeLine2;

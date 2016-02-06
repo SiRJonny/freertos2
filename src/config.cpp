@@ -70,7 +70,12 @@ float last_active_line_pos2 = 15.5;
 
 LineState globalLines;
 
+bool keresztvonal;
+bool stable0lines;
+bool stable1lines;
+bool stable2lines;
 bool stable3lines;
+
 float activeLine1 = 0;  // középsõ vonal kiválasztása
 float activeLine2 = 0;
 
