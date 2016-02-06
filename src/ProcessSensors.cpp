@@ -132,6 +132,8 @@ void wall_detection()
 		}
 }
 
+
+
 // vonal pozíció, szám, szög számítása, treshold = hány %-al kisebb csúcs érvényes még
 LineState getLinePos(int treshold)
 {

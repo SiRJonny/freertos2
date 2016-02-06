@@ -59,6 +59,8 @@ int stAngle = 0;
 float pAlap = 30;
 float dAlap = -230;
 
+int index = 0;
+
 
 /* Private variables ---------------------------------------------------------*/
 osThreadId defaultTaskHandle;
@@ -602,21 +604,25 @@ void SendRemoteVarTask()
 		//minden slowSendMultiplier ciklusban küldi el ezeket
 		if (sendRemoteCounter % slowSendMultiplier == 0) {
 			//BT_send_msg(&speed_global, "speed");
-			BT_send_msg(&speed_control, "control_speed");
+			//BT_send_msg(&speed_control, "control_speed");
 			BT_send_msg(&globalDistance, "globalDist");
 			eventInt = stateData.event;
 			BT_send_msg(&eventInt, "eventInt");
 			BT_send_msg(&eventInt, "eInt");
 			dirInt = direction;
 			BT_send_msg(&dirInt, "dirInt");
-
+			BT_send_msg(&index, "index");
 			BT_send_msg(stable0lines, "stable0lines");
 			BT_send_msg(stable1lines, "stable1lines");
 
-			BT_send_msg(bordas_bal, "bordas_bal");
-			BT_send_msg(bordas_jobb, "bordas_jobb");
-			BT_send_msg(fal_bal, "fal_bal");
-			BT_send_msg(fal_jobb, "fal_jobb");
+
+			BT_send_msg(&Distance_sensors[2], "left");
+			BT_send_msg(&Distance_sensors[3], "right");
+
+			//BT_send_msg(bordas_bal, "bBordas");
+			//BT_send_msg(bordas_jobb, "jBordas");
+			//BT_send_msg(fal_bal, "bFal");
+			//BT_send_msg(fal_jobb, "jFal");
 			//BT_send_msg(&encoderPos, "encoder");
 
 			//BT_send_msg(&bordas_bal, "bordasBal");
@@ -734,6 +740,55 @@ void sendPIDs() {
 void sendPIDm() {
 	BT_send_msg(&PIDm.pGain, "PIDm_p");
 	BT_send_msg(&PIDm.dGain, "PIDm_s");
+}
+
+int borda_array_j[20];
+int borda_array_b[20];
+
+
+void wall_borda_detection() {
+	static int prevPos = globalDistance;
+
+	static bool checking = true;
+
+	if ((fal_jobb || fal_bal) && checking) {
+
+		int difference = globalDistance - prevPos;
+		int diffTreshold = 15;
+
+		if (difference > diffTreshold ){
+			borda_array_j[index] = Distance_sensors[3];
+			borda_array_b[index] = Distance_sensors[2];
+			prevPos = globalDistance;
+			index++;
+		}
+
+
+	} else {
+		index = 0;
+		checking = true;
+		//direction = UNDEFINED;
+	}
+
+	if (index == 20) {
+		//osThreadSuspend(SendRemoteVar_TaskHandle);
+		int dirInt = -5;
+		for (int i = 1; i < 20; i++) {
+			if (borda_array_j[i] - borda_array_j[i-1] > 8) {
+				direction = LEFT;
+			} else if (borda_array_b[i] - borda_array_b[i-1] > 8) {
+				direction = RIGHT;
+			}
+			//BT_send_msg(&speed_global, "speed");
+			//BT_send_msg(&borda_array_b[i], "contBordArr");
+		}
+		dirInt = direction;
+		dirInt = direction;
+		//BT_send_msg(&dirInt, "dirInt");
+
+		checking = false;
+	}
+
 }
 
 
@@ -873,9 +928,10 @@ void SteerControlTask()
 
 		ADC2_read();		// blokkol, 40us
 		wall_detection();	// falas bool-okat állítja
+		wall_borda_detection();
 		//giro_integrate();
 		is_speed_under_X(speed, speed_limit);
-		update_direction();
+		//update_direction();
 
 
 		// szenzor adatok feldolgozása
