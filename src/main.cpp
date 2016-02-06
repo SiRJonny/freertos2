@@ -837,7 +837,7 @@ void SteerControlTask()
 
 
 		ADC2_read();		// blokkol, 40us
-		wall_detection();
+		wall_detection();	// falas bool-okat állítja
 		//giro_integrate();
 		is_speed_under_X(speed, speed_limit);
 

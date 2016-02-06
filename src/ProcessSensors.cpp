@@ -26,6 +26,20 @@ float refined_max;
 float refined_max2;
 LineState Lines; // TODO: angle nem, másik sor pos igen
 
+
+// átlagtól való átlagos eltérés
+int average_difference(int * array, int N)
+{
+	int ret = 0;
+	int average = calculateAverage(array, N);
+	for(int i=0; i<N; i++)
+	{
+		ret = ret + abs(average-array[i]);
+	}
+	return ret/N;
+}
+
+// tömb elemeinek száma, amik a min-max között vannak
 int count_between_values(int * array, int N, int min, int max)
 {
 	int count = 0;
@@ -45,15 +59,16 @@ void wall_detection()
 {
 	static int num_samples_average = 5;
 	static int num_samples_borda = 20;
-	static int average_array_j[5];
-	static int average_array_b[5];
+	static int array_j[5];
+	static int array_b[5];
 	static int borda_array_j[20];
 	static int borda_array_b[20];
 	static int average_cntr = 0;
-	static int borda_cntr = 0;
+	static int borda_cntr_j = 0;
+	static int borda_cntr_b = 0;
 
-	average_array_j[average_cntr] = Distance_sensors[3];
-	average_array_b[average_cntr] = Distance_sensors[2];
+	array_j[average_cntr] = Distance_sensors[3];
+	array_b[average_cntr] = Distance_sensors[2];
 
 	if(average_cntr > num_samples_average-2){
 		average_cntr = 0;
@@ -61,48 +76,60 @@ void wall_detection()
 		average_cntr++;
 	}
 
-	if(count_between_values(average_array_j,num_samples_average,40,80) >= 4)
+	// van-e fal (bármilyen)
+	if(count_between_values(array_j,num_samples_average,40,100) >= 4)
 	{
 		fal_jobb = true;
+		borda_cntr_j++;		// csak akkor nézzük a bordásságot, ha van fal
 	}else{
 		fal_jobb = false;
+		borda_cntr_j = 0;
 	}
-	if(count_between_values(average_array_b,num_samples_average,40,80) >= 4)
+	if(count_between_values(array_b,num_samples_average,40,100) >= 4)
 	{
 		fal_bal = true;
+		borda_cntr_b++;
 	}else{
 		fal_bal = false;
+		borda_cntr_b = 0;
 	}
 
-	borda_array_j[borda_cntr] = Distance_sensors[3];
-	borda_array_b[borda_cntr] = Distance_sensors[2];
-
-	if(borda_cntr > num_samples_borda-2){
-		borda_cntr = 0;
-	}else{
-		borda_cntr++;
+	// borda számlálókat nullázzuk ha tele (hosszú fal)
+	if(borda_cntr_j > num_samples_borda-2){
+		borda_cntr_j = 0;
+	}
+	if(borda_cntr_b > num_samples_borda-2){
+		borda_cntr_b = 0;
 	}
 
-	if(count_between_values(borda_array_j,num_samples_borda,40,60) >= 8 && count_between_values(borda_array_j,num_samples_borda,60,80) >= 8)
+
+	borda_array_j[borda_cntr_j] = Distance_sensors[3];
+	borda_array_b[borda_cntr_b] = Distance_sensors[2];
+
+	//ha már 10 mintát vettünk falból
+	if(borda_cntr_j > 9)
 	{
-		bordas_jobb = true;
-	}else{
-		if(!fal_jobb)
+		// borda_cntr elemig megnézzük az átlagtól való eltérést
+		if(average_difference(borda_array_j,borda_cntr_j+1) > 5)
 		{
-			bordas_jobb = false;
+			bordas_jobb = true;
 		}
-	}
-	if(count_between_values(borda_array_b,num_samples_borda,40,60) >= 8 && count_between_values(borda_array_b,num_samples_borda,60,80) >= 8)
-	{
-		bordas_bal = true;
 	}else{
-		if(!fal_bal)
-		{
-			bordas_bal = false;
-		}
+		bordas_jobb = false;	// amint eltûnik a fal, ez lesz
 	}
 
 
+	//ha már 10 mintát vettünk falból
+		if(borda_cntr_b > 9)
+		{
+			// borda_cntr elemig megnézzük az átlagtól való eltérést
+			if(average_difference(borda_array_b,borda_cntr_b+1) > 5)
+			{
+				bordas_bal = true;
+			}
+		}else{
+			bordas_bal = false;	// amint eltûnik a fal, ez lesz
+		}
 }
 
 // vonal pozíció, szám, szög számítása, treshold = hány %-al kisebb csúcs érvényes még
@@ -162,6 +189,18 @@ float calculateAngle(float pos1, float pos2)
 
 // átlag számítás
 int calculateAverage(uint32_t * data, int datacount)
+{
+	int average = 0;
+	for(int i = 0; i < datacount; i++)
+	{
+		average += data[i];
+	}
+	average /= datacount;
+	return average;
+}
+
+// átlag számítás
+int calculateAverage(int * data, int datacount)
 {
 	int average = 0;
 	for(int i = 0; i < datacount; i++)
