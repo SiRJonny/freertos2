@@ -44,6 +44,12 @@ extern float activeLine1;
 extern float last_active_line_pos1;
 extern LineState globalLines;
 
+extern bool stable0lines;
+extern bool stable1lines;
+extern bool stable2lines;
+extern bool stable3lines;
+extern bool keresztvonal;
+
 enum Direction {
 	UNDEFINED,
 	RIGHT,
@@ -94,6 +100,7 @@ public:
 	static EventBasedState TorkFalakKozt;
 	static MovingState TorkFalakElhagyva;
 	static EventBasedState TorkVonalKereses;
+	static MovingState TorkVonalKereses2;
 
 	static GiroState giro;
 
@@ -103,7 +110,7 @@ public:
 
 	bool steeringControlled;
 
-	float steeringAngle;
+	int steeringAngle;
 	int distanceToMove;
 	SkillTrackEvent triggerEvent;
 
@@ -145,7 +152,7 @@ public:
 			SkillBaseState* nState,
 			int howMuchToMove,
 			float tSpeed,
-			float angle,
+			int angle,
 			bool controlSteer);
 	virtual void update();
 	//~MovingState() {}
@@ -157,7 +164,7 @@ public:
 			SkillBaseState* nState,
 			int waitDistance,
 			float tSpeed,
-			float angle,
+			int angle,
 			bool controlSteer,
 			SkillTrackEvent targetEvent);
 	virtual void update();

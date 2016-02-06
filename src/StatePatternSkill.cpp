@@ -34,8 +34,9 @@ MovingState SkillBaseState::parkolasTolat2("park2", &SkillBaseState::skillStoppe
 
 //Torkolat
 EventBasedState SkillBaseState::TorkFalakKozt("Tork1", &SkillBaseState::TorkFalakElhagyva, 300, SKILLSLOW, 0, false, NOLINE_NOWALLS);
-MovingState SkillBaseState::TorkFalakElhagyva("Tork2", &SkillBaseState::TorkVonalKereses, 500, 500, SKILLSLOW, false);
-EventBasedState SkillBaseState::TorkVonalKereses("Tork3", &SkillBaseState::koztes, 0, SKILLSLOW, 0, false, NONE);
+MovingState SkillBaseState::TorkFalakElhagyva("Tork2", &SkillBaseState::TorkVonalKereses, 750, SKILLSLOW, 500, false);
+EventBasedState SkillBaseState::TorkVonalKereses("Tork3", &SkillBaseState::TorkVonalKereses2, 0, SKILLSLOW, 0, false, NONE);
+MovingState SkillBaseState::TorkVonalKereses2("Tork4", &SkillBaseState::koztes, 1000, SKILLSLOW, 0, true);
 
 
 
@@ -45,10 +46,7 @@ SkillTrackEvent SkillBaseState::calculateEvent() {
 	static int cntr = 0;
 	SkillTrackEvent event = NONE;
 //todo kirakni
-	bool line = false;
-	bool keresztvonal = false;
-	bool ketvonal = false;
-	bool haromvonal = false;
+
 
 	if (keresztvonal) {
 		return KERESZT;
@@ -56,27 +54,29 @@ SkillTrackEvent SkillBaseState::calculateEvent() {
 
 	if(fal_bal && fal_jobb) {
 		event = TWOWALL;
-	} else if (!line) {
+	} else if (stable0lines) {
 		event = NOLINE_NOWALLS;
-	} else {
+	} else if (stable1lines || stable2lines || stable3lines){
 		//hany vonal van todo
 		event = NONE;
-		if (ketvonal) {
+		if (stable2lines) {
 			if (fal_jobb || fal_bal) {
 				event = STABIL2VONAL;
 			} else {
 				event = SZAGGATOTT2VONAL;
 			}
 		}
-		if (haromvonal) {
+		if (stable3lines) {
 			event = HAROMVONAL;
 		}
 
+	} else {
+		event = UNSTABLE;
 	}
 
 	if (event == lastEvent){
 		if (cntr > 5) {
-			cntr = 0;
+			//cntr = 0;
 			return event;
 		} else {
 			cntr++;
@@ -99,14 +99,21 @@ KoztesState::KoztesState() {
 	stateId = 1;
 	targetSpeed = SKILLSLOW;
 	distanceToMove = 0;
+	steeringAngle = 1;
+	steeringControlled = true;
 }
 
 //TODO switch caset feltölteni, melyik eventre melyi kakadály állapotba lépjen
 void KoztesState::update() {
+	stateData.event = skillStateContext.state->calculateEvent();
+
 	switch (stateData.event) {
 		case NOLINE_NOWALLS:
 			skillStateContext.setState(&SkillBaseState::TorkFalakKozt);
 			break;
+		case KERESZT:
+					skillStateContext.setState(&SkillBaseState::skillStopped);
+					break;
 	}
 }
 
@@ -115,7 +122,7 @@ MovingState::MovingState(string stateName,
 		SkillBaseState* nState,
 		int howMuchToMove,
 		float tSpeed,
-		float angle,
+		int angle,
 		bool controlSteer) {
 	name = stateName;
 	stateId = 2;
@@ -143,7 +150,7 @@ EventBasedState::EventBasedState(string stateName,
 		SkillBaseState* nState,
 		int waitDistance,
 		float tSpeed,
-		float angle,
+		int angle,
 		bool controlSteer,
 		SkillTrackEvent targetEvent) {
 	name = stateName;
@@ -208,7 +215,7 @@ SkillStartState::SkillStartState() {
 void SkillStartState::update(){
 	switch (stateData.event) {
 			case RADIOSTART:
-				skillStateContext.setState(&SkillBaseState::parkolasTolat2);
+				skillStateContext.setState(&SkillBaseState::koztes);
 				break;
 		}
 }

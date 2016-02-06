@@ -55,7 +55,7 @@ extern "C"
 #include "giro.hpp"
 using namespace std;
 
-
+int stAngle = 0;
 float pAlap = 30;
 float dAlap = -230;
 
@@ -442,7 +442,7 @@ void StartButtonTask()
 		if (wasPressed){
 
 			stateContext.start(encoderPos);
-			//stateData.event = PARKOLASSTART;
+			stateData.event = RADIOSTART;
 
 			//giro_init();
 
@@ -565,6 +565,16 @@ void BTReceiveTask()
 	}
 }
 
+void BT_send_msg(bool b, string s) {
+	static int bInt;
+	if (b) {
+		bInt = 1;
+	} else {
+		bInt = 0;
+	}
+	BT_send_msg(&bInt, s);
+}
+
 void SendRemoteVarTask()
 {
 	int sendRemoteCounter = 0;
@@ -573,6 +583,7 @@ void SendRemoteVarTask()
 	osThreadSuspend(SendRemoteVar_TaskHandle);
 	float myfloat = 1;
 	int eventInt = -1;
+	int dirInt = -1;
 	for(;;)
 	{
 
@@ -595,10 +606,20 @@ void SendRemoteVarTask()
 			BT_send_msg(&globalDistance, "globalDist");
 			eventInt = stateData.event;
 			BT_send_msg(&eventInt, "eventInt");
+			BT_send_msg(&eventInt, "eInt");
+			dirInt = direction;
+			BT_send_msg(&dirInt, "dirInt");
 
+			BT_send_msg(stable0lines, "stable0lines");
+			BT_send_msg(stable1lines, "stable1lines");
 
+			BT_send_msg(bordas_bal, "bordas_bal");
+			BT_send_msg(bordas_jobb, "bordas_jobb");
+			BT_send_msg(fal_bal, "fal_bal");
+			BT_send_msg(fal_jobb, "fal_jobb");
 			//BT_send_msg(&encoderPos, "encoder");
 
+			//BT_send_msg(&bordas_bal, "bordasBal");
 
 			//BT_send_msg(&timer, "enc:" + std::string(itoa(encoderPos,buffer,10)) + "\n");
 
@@ -610,8 +631,8 @@ void SendRemoteVarTask()
 			//sendSensors();
 			//sendDebugVars();
 			//sendTuning();
-			//sendStateData();
-			sendPIDs();
+			sendStateData();
+			//sendPIDs();
 		}
 
 		sendRemoteCounter++;
@@ -681,9 +702,18 @@ void sendDebugVars() {
 }
 
 void sendStateData() {
-	int stateId = stateContext.getStateId();
-	//string stName = "stnm" + skillStateContext.state->name;
-	//BT_send_msg(&globalDistance, stName);
+	int stateId = skillStateContext.state->stateId;
+	string stName = "stnm" + skillStateContext.state->name;
+	BT_send_msg(&globalDistance, stName);
+	int controlled =0;
+	if (skillStateContext.state->steeringControlled) {
+		controlled = 1;
+	}
+	BT_send_msg(&controlled, "controlled");
+
+	BT_send_msg(&skillStateContext.state->steeringAngle, "steerAngle");
+	BT_send_msg(&stAngle, "stAngle");
+
 
 
 	BT_send_msg(&stateId, "StateID");
@@ -934,7 +964,7 @@ void SteerControlTask()
 				}
 			}
 		} else {
-			int stAngle = 0;
+
 			if (direction == RIGHT) {
 				stAngle = skillStateContext.state->steeringAngle;
 			} else if (direction == LEFT) {
@@ -1016,7 +1046,11 @@ void get_stable_line_count(int numlines)
 	}
 
 	if(num0 >= 4){ stable0lines = true; }
-	if(num1 >= 4){ stable1lines = true; }
+	if(num1 >= 4){
+			if (globalLines.numLines2 == 1) {
+				stable1lines = true;
+			}
+		}
 	if(num2 >= 4){ stable2lines = true; }
 	if(num3 >= 4){ stable3lines = true; }
 

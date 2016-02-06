@@ -22,7 +22,7 @@ float STOP = 0.0;
 float SET_SPEED = 0;
 float speed_global = 0;
 
-float SKILLSLOW = 0.7;
+float SKILLSLOW = 0.5;
 
 bool speed_under_X = false;
 float speed_limit = 2;
@@ -81,7 +81,7 @@ float activeLine2 = 0;
 
 //szabályzók
 float ACC_MAX = 100;		// egy szabályzó periódusban max ennyivel növekedhet a motor szervo jele
-int NO_LINE_CYCLES = 50;
+int NO_LINE_CYCLES = 50000;
 
 float A = 0.4;	// sebesség függés	// d5% = v*A + B
 float B = 0.4;	// konstans
@@ -104,7 +104,7 @@ char buffer[10];	//bt msg hez
 int timer = 0; // idõméréshez
 
 bool skillTrack = true;
-Direction direction = UNDEFINED;
+Direction direction = RIGHT;
 SkillTrackEvent currentState = NONE;
 
 int stopped = 0;
