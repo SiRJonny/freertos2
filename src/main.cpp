@@ -129,6 +129,7 @@ void SetServo_steering(float angle);  // kormányzás, szöggel
 void getActiveLinePos(LineState * Lines, float *last_pos1, float *last_pos2, float * active1, float * active2);
 void is_speed_under_X(float speed, float limit);
 void get_stable_line_count(int numlines);
+void update_direction();
 
 void sendSensors();
 void sendDebugVars();
@@ -840,7 +841,7 @@ void SteerControlTask()
 		wall_detection();	// falas bool-okat állítja
 		//giro_integrate();
 		is_speed_under_X(speed, speed_limit);
-
+		update_direction();
 
 
 		// szenzor adatok feldolgozása
@@ -956,6 +957,16 @@ void SteerControlTask()
 		//__HAL_TIM_SET_COUNTER(&htim5,0);
 
 		osDelay(9);
+	}
+}
+
+void update_direction()
+{
+	if(bordas_jobb)
+	{
+		direction = LEFT;
+	}else if(bordas_bal){
+		direction = RIGHT;
 	}
 }
 
