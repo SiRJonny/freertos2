@@ -572,7 +572,7 @@ void SendRemoteVarTask()
 	// minden remote változóhez külen kellenek ezek
 	osThreadSuspend(SendRemoteVar_TaskHandle);
 	float myfloat = 1;
-
+	int eventInt = -1;
 	for(;;)
 	{
 
@@ -592,7 +592,11 @@ void SendRemoteVarTask()
 		if (sendRemoteCounter % slowSendMultiplier == 0) {
 			//BT_send_msg(&speed_global, "speed");
 			BT_send_msg(&speed_control, "control_speed");
-			//BT_send_msg(&globalDistance, "globalDist");
+			BT_send_msg(&globalDistance, "globalDist");
+			eventInt = stateData.event;
+			BT_send_msg(&eventInt, "eventInt");
+
+
 			//BT_send_msg(&encoderPos, "encoder");
 
 
