@@ -881,7 +881,7 @@ void SteerControlTask()
 
 
 		if (skillTrack) {
-			stateData.event = skillStateContext.state->calculateEvent();
+
 			skillStateContext.state->update();
 			usePD = false;
 			SET_SPEED = skillStateContext.state->targetSpeed;
@@ -946,7 +946,14 @@ void SteerControlTask()
 				}
 			}
 		} else {
-			SetServo_steering(skillStateContext.state->steeringAngle);
+			int stAngle = 0;
+			if (direction == RIGHT) {
+				stAngle = skillStateContext.state->steeringAngle;
+			} else if (direction == LEFT) {
+				stAngle = skillStateContext.state->steeringAngle*(-1);
+			}
+
+			SetServo_steering(stAngle);
 		}
 
 		if(led_cntr == 30)

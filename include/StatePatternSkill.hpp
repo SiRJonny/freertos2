@@ -29,6 +29,7 @@ class SkillStartState;
 class MovingState;
 class EventBasedState;
 class SkillBaseState;
+class GiroState;
 
 extern StateData stateData;
 extern SkillStateContext skillStateContext;
@@ -51,24 +52,18 @@ enum Direction {
 extern Direction direction;
 
 enum SkillTrackEvent {
+	UNSTABLE,
+	NOLINE_NOWALLS,
 	NONE,
 	RADIOSTART,
-	PARKOLAS,
-	TORKOLAT,
-	TELEPHELY,
-	HATAR,
-	BILLENO,
-	FORDITO,
-	CEL,
 	TWOWALL,
-	TWOWALL_BORDAS_RIGHT,
-	TWOWALL_BORDAS_LEFT,
-	WALL_BORDAS_LEFT,
-	WALL_BORDAS_RIGHT,
-	NOWALLS,
-	NEWLINE
+	KERESZT,
+	STABIL2VONAL,
+	SZAGGATOTT2VONAL,
+	HAROMVONAL
 
 };
+
 extern SkillTrackEvent currentState;
 
 
@@ -99,6 +94,8 @@ public:
 	static EventBasedState TorkFalakKozt;
 	static MovingState TorkFalakElhagyva;
 	static EventBasedState TorkVonalKereses;
+
+	static GiroState giro;
 
 	string name;
 	int stateId;
@@ -144,14 +141,32 @@ public:
 
 class MovingState : public SkillBaseState {
 public:
-	MovingState(string stateName, SkillBaseState* nState, int howMuchToMove, float angle, float tSpeed);
+	MovingState(string stateName,
+			SkillBaseState* nState,
+			int howMuchToMove,
+			float tSpeed,
+			float angle,
+			bool controlSteer);
 	virtual void update();
 	//~MovingState() {}
 };
 
 class EventBasedState : public SkillBaseState {
 public:
-	EventBasedState(string stateName, SkillBaseState* nState, int waitDistance, SkillTrackEvent targetEvent, float tSpeed, float angle, bool controlSteer);
+	EventBasedState(string stateName,
+			SkillBaseState* nState,
+			int waitDistance,
+			float tSpeed,
+			float angle,
+			bool controlSteer,
+			SkillTrackEvent targetEvent);
+	virtual void update();
+	//~EventBasedState() {}
+};
+
+class GiroState : public SkillBaseState {
+public:
+	GiroState();
 	virtual void update();
 	//~EventBasedState() {}
 };

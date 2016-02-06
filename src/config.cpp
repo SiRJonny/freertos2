@@ -22,7 +22,7 @@ float STOP = 0.0;
 float SET_SPEED = 0;
 float speed_global = 0;
 
-float SKILLSLOW = 1.0;
+float SKILLSLOW = 0.7;
 
 bool speed_under_X = false;
 float speed_limit = 2;
