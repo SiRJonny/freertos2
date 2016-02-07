@@ -66,6 +66,8 @@ void wall_detection()
 	static int average_cntr = 0;
 	static int borda_cntr_j = 0;
 	static int borda_cntr_b = 0;
+	static int jArray_counter = 0;
+	static int bArray_counter = 0;
 
 	array_j[average_cntr] = Distance_sensors[3];
 	array_b[average_cntr] = Distance_sensors[2];
@@ -81,6 +83,10 @@ void wall_detection()
 	{
 		fal_jobb = true;
 		borda_cntr_j++;		// csak akkor nézzük a bordásságot, ha van fal
+		if (jArray_counter < num_samples_borda) {
+			jArray_counter++;
+		}
+
 	}else{
 		fal_jobb = false;
 		borda_cntr_j = 0;
@@ -89,6 +95,9 @@ void wall_detection()
 	{
 		fal_bal = true;
 		borda_cntr_b++;
+		if (bArray_counter < num_samples_borda) {
+			bArray_counter++;
+		}
 	}else{
 		fal_bal = false;
 		borda_cntr_b = 0;
@@ -107,27 +116,29 @@ void wall_detection()
 	borda_array_b[borda_cntr_b] = Distance_sensors[2];
 
 	//ha már 10 mintát vettünk falból
-	if(borda_cntr_j > 9)
+	if(jArray_counter > 9)
 	{
 		// borda_cntr elemig megnézzük az átlagtól való eltérést
-		if(average_difference(borda_array_j,borda_cntr_j+1) > 5)
+		int avDiff = average_difference(borda_array_j,jArray_counter);
+		//BT_send_msg(&avDiff, "speed");
+		if(avDiff > 5)
 		{
 			bordas_jobb = true;
 		}
-	}else{
+	}else if (!fal_jobb) {
 		bordas_jobb = false;	// amint eltûnik a fal, ez lesz
 	}
 
 
 	//ha már 10 mintát vettünk falból
-		if(borda_cntr_b > 9)
+		if(bArray_counter > 9)
 		{
 			// borda_cntr elemig megnézzük az átlagtól való eltérést
-			if(average_difference(borda_array_b,borda_cntr_b+1) > 5)
+			if(average_difference(borda_array_b,bArray_counter) > 5)
 			{
 				bordas_bal = true;
 			}
-		}else{
+		}else if (!fal_bal) {
 			bordas_bal = false;	// amint eltûnik a fal, ez lesz
 		}
 }

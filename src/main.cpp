@@ -619,10 +619,10 @@ void SendRemoteVarTask()
 			BT_send_msg(&Distance_sensors[2], "left");
 			BT_send_msg(&Distance_sensors[3], "right");
 
-			//BT_send_msg(bordas_bal, "bBordas");
-			//BT_send_msg(bordas_jobb, "jBordas");
-			//BT_send_msg(fal_bal, "bFal");
-			//BT_send_msg(fal_jobb, "jFal");
+			BT_send_msg(bordas_bal, "bBordas");
+			BT_send_msg(bordas_jobb, "jBordas");
+			BT_send_msg(fal_bal, "bFal");
+			BT_send_msg(fal_jobb, "jFal");
 			//BT_send_msg(&encoderPos, "encoder");
 
 			//BT_send_msg(&bordas_bal, "bordasBal");
@@ -772,18 +772,25 @@ void wall_borda_detection() {
 
 	if (index == 20) {
 		//osThreadSuspend(SendRemoteVar_TaskHandle);
-		int dirInt = -5;
+		//int dirInt = -5;
+		int bordaTresholdMin = 8;
+		int bordaTresholdMax = 40;
+
 		for (int i = 1; i < 20; i++) {
-			if (borda_array_j[i] - borda_array_j[i-1] > 8) {
+			int differentJobb = borda_array_j[i] - borda_array_j[i-1];
+			int differentBal = borda_array_j[i] - borda_array_j[i-1];
+			if ( differentJobb > bordaTresholdMin && differentJobb < bordaTresholdMax) {
 				direction = LEFT;
-			} else if (borda_array_b[i] - borda_array_b[i-1] > 8) {
+			} else if ( differentBal > 8 && differentBal < bordaTresholdMax) {
 				direction = RIGHT;
+			} else {
+				direction = UNDEFINED;
 			}
 			//BT_send_msg(&speed_global, "speed");
 			//BT_send_msg(&borda_array_b[i], "contBordArr");
 		}
-		dirInt = direction;
-		dirInt = direction;
+		//dirInt = direction;
+
 		//BT_send_msg(&dirInt, "dirInt");
 
 		checking = false;
@@ -928,10 +935,10 @@ void SteerControlTask()
 
 		ADC2_read();		// blokkol, 40us
 		wall_detection();	// falas bool-okat állítja
-		wall_borda_detection();
+		//wall_borda_detection();
 		//giro_integrate();
 		is_speed_under_X(speed, speed_limit);
-		//update_direction();
+		update_direction();
 
 
 		// szenzor adatok feldolgozása
@@ -1025,6 +1032,8 @@ void SteerControlTask()
 				stAngle = skillStateContext.state->steeringAngle;
 			} else if (direction == LEFT) {
 				stAngle = skillStateContext.state->steeringAngle*(-1);
+			} else {
+				stAngle = skillStateContext.state->steeringAngle;
 			}
 
 			SetServo_steering(stAngle);
