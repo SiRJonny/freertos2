@@ -130,6 +130,7 @@ void getActiveLinePos(LineState * Lines, float *last_pos1, float *last_pos2, flo
 void is_speed_under_X(float speed, float limit);
 void get_stable_line_count(int numlines);
 void update_direction();
+bool DIP(int num);
 
 void sendSensors();
 void sendDebugVars();
@@ -594,15 +595,16 @@ void SendRemoteVarTask()
 
 
 		//minden ciklusban elküldi ezeket
-		BT_send_msg(&speed_global, "speed");
+		//BT_send_msg(&speed_global, "speed");
 		//BT_send_msg(&Distance_sensors[2], "contLeft");
 		//BT_send_msg(&Distance_sensors[3], "contRight");
 
 
 		//minden slowSendMultiplier ciklusban küldi el ezeket
 		if (sendRemoteCounter % slowSendMultiplier == 0) {
+
 			//BT_send_msg(&speed_global, "speed");
-			BT_send_msg(&speed_control, "control_speed");
+			/*BT_send_msg(&speed_control, "control_speed");
 			BT_send_msg(&globalDistance, "globalDist");
 			eventInt = stateData.event;
 			BT_send_msg(&eventInt, "eventInt");
@@ -616,7 +618,7 @@ void SendRemoteVarTask()
 			BT_send_msg(bordas_bal, "bordas_bal");
 			BT_send_msg(bordas_jobb, "bordas_jobb");
 			BT_send_msg(fal_bal, "fal_bal");
-			BT_send_msg(fal_jobb, "fal_jobb");
+			BT_send_msg(fal_jobb, "fal_jobb");*/
 			//BT_send_msg(&encoderPos, "encoder");
 
 			//BT_send_msg(&bordas_bal, "bordasBal");
@@ -631,7 +633,7 @@ void SendRemoteVarTask()
 			//sendSensors();
 			//sendDebugVars();
 			//sendTuning();
-			sendStateData();
+			//sendStateData();
 			//sendPIDs();
 		}
 
@@ -993,6 +995,34 @@ void SteerControlTask()
 		osDelay(9);
 	}
 }
+
+bool DIP(int num)
+{
+	bool ret = false;
+	switch (num)
+	{
+	case 1:
+		if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_11)){return false;}
+		else {return true;}
+		break;
+	case 2:
+		if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_9)){return false;}
+		else {return true;}
+		break;
+	case 3:
+		if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_8)){return false;}
+		else {return true;}
+		break;
+	case 4:
+		if(HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_8)){return false;}
+		else {return true;}
+		break;
+	default:
+		return false;
+		break;
+	}
+}
+
 
 void update_direction()
 {

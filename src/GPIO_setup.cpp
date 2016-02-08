@@ -74,13 +74,13 @@ void GPIO_Init(){
 	// DIP1
 	GPIO_InitStruct.Pin = GPIO_PIN_8;//|GPIO_PIN_13;//|GPIO_PIN_14;
 	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	GPIO_InitStruct.Pull = GPIO_PULLUP;
 	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
 	// DIP4, DIP3, DIP2
-	GPIO_InitStruct.Pin = GPIO_PIN_8|GPIO_PIN_9; //GPIO_PIN_11|
+	GPIO_InitStruct.Pin = GPIO_PIN_8|GPIO_PIN_9 | GPIO_PIN_11;
 	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	GPIO_InitStruct.Pull = GPIO_PULLUP;
 	HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
 
