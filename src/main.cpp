@@ -891,6 +891,7 @@ void SteerControlTask()
 
 		///// stabil vonalszám
 		get_stable_line_count(globalLines.numLines1);
+		get_stable_line_count2(globalLines.numLines1, globalLines.numLines2);
 
 
 		getActiveLinePos(&globalLines, &last_active_line_pos1, &last_active_line_pos2, &activeLine1, &activeLine2);
@@ -1063,6 +1064,40 @@ void get_stable_line_count(int numlines)
 		}
 	if(num2 >= 4){ stable2lines = true; }
 	if(num3 >= 4){ stable3lines = true; }
+
+}
+
+void get_stable_line_count2(int numlines1, int numlines2)
+{
+	static int numlines_array1[5];
+	static int numlines_array2[5];
+	static int array_cntr = 0;
+	static int num1;
+
+	num1 = 0;
+	stable1linesForBoth = false;
+
+	numlines_array1[array_cntr] = numlines1;
+	numlines_array2[array_cntr] = numlines2;
+	array_cntr++;
+	if(array_cntr >= 5)
+	{
+		array_cntr = 0;
+	}
+
+	for(int i=0; i<5; i++)
+	{
+		if (numlines_array1[i] == 1 && numlines_array2[i] == 1) {
+			num1++;
+		}
+	}
+
+	//if(num0 >= 4){ stable0lines = true; }
+	if(num1 >= 4){
+		stable1linesForBoth = true;
+	}
+	//if(num2 >= 4){ stable2lines = true; }
+	//if(num3 >= 4){ stable3lines = true; }
 
 }
 

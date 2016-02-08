@@ -76,6 +76,9 @@ extern bool stable0lines;
 extern bool stable1lines;
 extern bool stable2lines;
 extern bool stable3lines;
+
+extern bool stable1linesForBoth;
+
 extern float activeLine1;  // középsõ vonal kiválasztása
 extern float activeLine2;
 

@@ -76,6 +76,8 @@ bool stable1lines;
 bool stable2lines;
 bool stable3lines;
 
+bool stable1linesForBoth;
+
 float activeLine1 = 0;  // középsõ vonal kiválasztása
 float activeLine2 = 0;
 

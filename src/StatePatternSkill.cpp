@@ -56,17 +56,17 @@ SkillTrackEvent SkillBaseState::calculateEvent() {
 		event = TWOWALL;
 	} else if (stable0lines) {
 		event = NOLINE_NOWALLS;
-	} else if (stable1lines || stable2lines || stable3lines){
+	} else if (stable1linesForBoth || stable2lines || stable3lines){
 		//hany vonal van todo
-		event = NONE;
-		if (stable2lines) {
+		if (stable1linesForBoth) {
+			event = NONE;
+		} else if (stable2lines) {
 			if (fal_jobb || fal_bal) {
 				event = STABIL2VONAL;
 			} else {
 				event = SZAGGATOTT2VONAL;
 			}
-		}
-		if (stable3lines) {
+		} else if (stable3lines) {
 			event = HAROMVONAL;
 		}
 

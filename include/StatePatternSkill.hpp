@@ -48,6 +48,9 @@ extern bool stable0lines;
 extern bool stable1lines;
 extern bool stable2lines;
 extern bool stable3lines;
+
+extern bool stable1linesForBoth;
+
 extern bool keresztvonal;
 
 enum Direction {
