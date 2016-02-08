@@ -143,7 +143,10 @@ void wall_detection()
 		}
 }
 
+extern int globalDistance;
 void wall_borda_detection() {
+	static int index = 0;
+
 	static int prevPos = globalDistance;
 	static int borda_array_j[20];
 	static int borda_array_b[20];

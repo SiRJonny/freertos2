@@ -13,6 +13,7 @@
 #include <cmath>
 #include <string>
 #include <stdlib.h>
+#include "EnumsStructs.hpp"
 
 typedef struct
 {
@@ -26,7 +27,7 @@ extern void BT_send_msg(int*msg,std::string nev);
 int average_difference(int * array, int N);
 int count_between_values(int * array, int N, int min, int max);
 void wall_detection();
-//void wall_borda_detection();
+void wall_borda_detection();
 LineState getLinePos(int treshold);
 float calculateAngle(float pos1, float pos2);
 float calculateAngle(void);

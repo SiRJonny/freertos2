@@ -10,6 +10,8 @@
 
 #include <string>
 #include "ProcessSensors.h"
+#include "EnumsStructs.hpp"
+
 
 
 using namespace std;
@@ -54,25 +56,6 @@ extern bool stable1linesForBoth;
 
 extern bool keresztvonal;
 
-enum Direction {
-	UNDEFINED,
-	RIGHT,
-	LEFT
-};
-extern Direction direction;
-
-enum SkillTrackEvent {
-	UNSTABLE,
-	NOLINE_NOWALLS,
-	NONE,
-	RADIOSTART,
-	TWOWALL,
-	KERESZT,
-	STABIL2VONAL,
-	SZAGGATOTT2VONAL,
-	HAROMVONAL
-
-};
 
 extern SkillTrackEvent currentState;
 
@@ -193,6 +176,7 @@ class GiroState : public SkillBaseState {
 public:
 	bool started;
 	float startAngle; //kell?
+
 
 	GiroState(string stateName, SkillBaseState* nState);
 	virtual void update();

@@ -59,7 +59,6 @@ int stAngle = 0;
 float pAlap = 30;
 float dAlap = -230;
 
-int index = 0;
 
 
 /* Private variables ---------------------------------------------------------*/
@@ -131,6 +130,8 @@ void SetServo_steering(float angle);  // kormányzás, szöggel
 void getActiveLinePos(LineState * Lines, float *last_pos1, float *last_pos2, float * active1, float * active2);
 void is_speed_under_X(float speed, float limit);
 void get_stable_line_count(int numlines);
+void get_stable_line_count2(int numlines1, int numlines2);
+
 void update_direction();
 
 void sendSensors();
@@ -611,7 +612,7 @@ void SendRemoteVarTask()
 			BT_send_msg(&eventInt, "eInt");
 			dirInt = direction;
 			BT_send_msg(&dirInt, "dirInt");
-			BT_send_msg(&index, "index");
+			//BT_send_msg(&index, "index");
 			BT_send_msg(stable0lines, "stable0lines");
 			BT_send_msg(stable1lines, "stable1lines");
 
