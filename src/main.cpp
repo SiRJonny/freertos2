@@ -742,25 +742,33 @@ void sendPIDm() {
 	BT_send_msg(&PIDm.dGain, "PIDm_s");
 }
 
-int borda_array_j[20];
-int borda_array_b[20];
+
 
 
 void wall_borda_detection() {
 	static int prevPos = globalDistance;
-
+	static int borda_array_j[20];
+	static int borda_array_b[20];
 	static bool checking = true;
+	static int arraySize = 20;
+
+	int distanceRight = 0;
+	int distanceLeft = 0;
 
 	if ((fal_jobb || fal_bal) && checking) {
 
 		int difference = globalDistance - prevPos;
-		int diffTreshold = 15;
+		int diffTreshold = 10;
 
 		if (difference > diffTreshold ){
-			borda_array_j[index] = Distance_sensors[3];
-			borda_array_b[index] = Distance_sensors[2];
-			prevPos = globalDistance;
-			index++;
+			distanceRight = Distance_sensors[3];
+			distanceLeft = Distance_sensors[2];
+			if (distanceRight < 200 && distanceLeft < 200) {
+				borda_array_j[index] = distanceRight;
+				borda_array_b[index] = distanceLeft;
+				prevPos = globalDistance;
+				index++;
+			}
 		}
 
 
@@ -770,15 +778,29 @@ void wall_borda_detection() {
 		//direction = UNDEFINED;
 	}
 
-	if (index == 20) {
+	if (index == arraySize) {
 		//osThreadSuspend(SendRemoteVar_TaskHandle);
 		//int dirInt = -5;
-		int bordaTresholdMin = 8;
-		int bordaTresholdMax = 40;
+		int bordaTresholdMin = 5;
+		int bordaTresholdMax = 30;
 
+		int aveDiffRight = average_difference(borda_array_j, arraySize);
+		int aveDiffLeft = average_difference(borda_array_b, arraySize);
+
+		if ( aveDiffRight > bordaTresholdMin && aveDiffRight < bordaTresholdMax) {
+			direction = LEFT;
+		} else if ( aveDiffLeft > 8 && aveDiffLeft < bordaTresholdMax) {
+			direction = RIGHT;
+		} else {
+			direction = UNDEFINED;
+		}
+
+		/*
 		for (int i = 1; i < 20; i++) {
+
 			int differentJobb = borda_array_j[i] - borda_array_j[i-1];
-			int differentBal = borda_array_j[i] - borda_array_j[i-1];
+			int differentBal = borda_array_b[i] - borda_array_b[i-1];
+
 			if ( differentJobb > bordaTresholdMin && differentJobb < bordaTresholdMax) {
 				direction = LEFT;
 			} else if ( differentBal > 8 && differentBal < bordaTresholdMax) {
@@ -790,7 +812,7 @@ void wall_borda_detection() {
 			//BT_send_msg(&borda_array_b[i], "contBordArr");
 		}
 		//dirInt = direction;
-
+*/
 		//BT_send_msg(&dirInt, "dirInt");
 
 		checking = false;
