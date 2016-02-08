@@ -44,9 +44,9 @@ MovingState SkillBaseState::ParkEloremegy2("P2Elore", &SkillBaseState::ParkTolat
 MovingState SkillBaseState::ParkTolatKanyar1("P3Tolat", &SkillBaseState::ParkTolatAtlo, 500, SKILLSLOW, 500, false);
 MovingState SkillBaseState::ParkTolatAtlo("P4Tolat", &SkillBaseState::ParkTolatKanyar2, 500, SKILLSLOW, 0, false);
 MovingState SkillBaseState::ParkTolatKanyar2("P5Tolat", &SkillBaseState::ParkTolatEgyenesen, 500, SKILLSLOW, -500, false);
-MovingState SkillBaseState::ParkTolatEgyenesen("P6Tolat", &SkillBaseState::ParkKiKanyar1, 750, SKILLSLOW, 0, false);
+MovingState SkillBaseState::ParkTolatEgyenesen("P6Tolat", &SkillBaseState::ParkVar, 750, SKILLSLOW, 0, false);
 
-//wait state?
+TimeState SkillBaseState::ParkVar("PVar", &SkillBaseState::ParkKiKanyar1, 100);
 
 MovingState SkillBaseState::ParkKiKanyar1("P7Elore", &SkillBaseState::ParkKiAtlo, 750, SKILLSLOW, -500, false);
 EventBasedState SkillBaseState::ParkKiAtlo("P8Elore", &SkillBaseState::ParkKiTeljesen, 0, SKILLSLOW, 0, false, NONE);
@@ -194,16 +194,53 @@ void EventBasedState::update() {
 }
 
 
-GiroState::GiroState() {
-	name = "giro";
+GiroState::GiroState(string stateName, SkillBaseState* nState) {
+	name = stateName;
 	stateId = 4;
 	targetSpeed = 0;
 	distanceToMove = 0;
-	//nextState =
+	nextState = nState;
 }
 
 //ebbe kell, hogy mikor lépjen a következõ eventbe a girostate
 void GiroState::update() {
+	int currentAngle = 0; //currentAngle?
+	if (!started) {
+		//startGiro
+		started = true;
+	} else {
+		bool turned = false;//checkTurning();
+		if (turned) {
+			skillStateContext.setState(this->nextState);
+		}
+	}
+}
+
+//Idore varo state
+TimeState::TimeState(string stateName,
+		SkillBaseState* nState,
+		int wait) {
+	name = stateName;
+	stateId = 5;
+	targetSpeed = 0;
+	distanceToMove = wait;
+	nextState = nState;
+	started = false;
+	triggerTime = 100000000000000;
+}
+
+//ebbe kell, hogy mikor lépjen a következõ eventbe a
+void TimeState::update() {
+	int currentTime = 0; //currentTime?
+	if (!started) {
+		startTime = currentTime;
+		triggerTime = startTime + distanceToMove;
+		started = true;
+	} else {
+		if (currentTime > triggerTime) {
+			skillStateContext.setState(this->nextState);
+		}
+	}
 
 }
 

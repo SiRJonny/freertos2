@@ -25,6 +25,7 @@ class StateData;
 class KoztesState;
 class SkillStopState;
 class SkillStartState;
+class TimeState;
 
 class MovingState;
 class EventBasedState;
@@ -113,6 +114,8 @@ public:
 	static MovingState ParkTolatKanyar2;
 	static MovingState ParkTolatEgyenesen;
 
+	static TimeState ParkVar;
+
 	static MovingState ParkKiKanyar1;
 	static EventBasedState ParkKiAtlo;
 	static EventBasedState ParkKiTeljesen;
@@ -188,9 +191,23 @@ public:
 
 class GiroState : public SkillBaseState {
 public:
-	GiroState();
+	bool started;
+	float startAngle; //kell?
+
+	GiroState(string stateName, SkillBaseState* nState);
 	virtual void update();
 	//~EventBasedState() {}
+};
+
+class TimeState : public SkillBaseState {
+public:
+	bool started;
+	int startTime;
+	int triggerTime;
+	TimeState(string stateName,
+			SkillBaseState* nState,
+			int wait);
+	virtual void update();
 };
 
 
