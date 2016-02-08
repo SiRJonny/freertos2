@@ -131,6 +131,8 @@ void is_speed_under_X(float speed, float limit);
 void get_stable_line_count(int numlines);
 void update_direction();
 bool DIP(int num);
+bool START_PIN();
+uint8_t Radio_get_char();
 
 void sendSensors();
 void sendDebugVars();
@@ -603,6 +605,9 @@ void SendRemoteVarTask()
 		//minden slowSendMultiplier ciklusban küldi el ezeket
 		if (sendRemoteCounter % slowSendMultiplier == 0) {
 
+
+
+			//BT_send_msg(&timer, "radio:" + std::string(itoa(Radio_get_char(),buffer,10)) + "\n");
 			//BT_send_msg(&speed_global, "speed");
 			/*BT_send_msg(&speed_control, "control_speed");
 			BT_send_msg(&globalDistance, "globalDist");
@@ -996,9 +1001,28 @@ void SteerControlTask()
 	}
 }
 
+// 5 sec blokk, ha nem jön üzenet
+// start: 53-52-51-50-49...48  // 77 = timeout, 88 egyéb hiba
+uint8_t Radio_get_char()
+{
+	static HAL_StatusTypeDef uart_status;
+	static uint8_t msg = 99;
+
+	uart_status = HAL_UART_Receive(&huart1,&msg,(uint16_t)1,5000);
+	if(uart_status == HAL_OK)
+	{
+		return msg;
+	}else if(uart_status == HAL_TIMEOUT)
+	{
+		return 77;
+	}else{
+		return 88;
+	}
+}
+
+// true, ha ON felé van
 bool DIP(int num)
 {
-	bool ret = false;
 	switch (num)
 	{
 	case 1:
@@ -1023,6 +1047,16 @@ bool DIP(int num)
 	}
 }
 
+// true, ha le van húzva
+bool START_PIN()
+{
+	if(HAL_GPIO_ReadPin(GPIOE,GPIO_PIN_6))
+	{
+		return true;
+	}else{
+		return false;
+	}
+}
 
 void update_direction()
 {
