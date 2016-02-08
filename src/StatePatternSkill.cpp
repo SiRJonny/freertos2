@@ -38,6 +38,19 @@ MovingState SkillBaseState::TorkFalakElhagyva("Tork2", &SkillBaseState::TorkVona
 EventBasedState SkillBaseState::TorkVonalKereses("Tork3", &SkillBaseState::TorkVonalKereses2, 0, SKILLSLOW, 0, false, NONE);
 MovingState SkillBaseState::TorkVonalKereses2("Tork4", &SkillBaseState::koztes, 1000, SKILLSLOW, 0, true);
 
+//Parkol
+EventBasedState SkillBaseState::ParkEloremegy1("P1Elore", &SkillBaseState::ParkEloremegy2, 2000, SKILLSLOW, 0, true, TWOWALL);
+MovingState SkillBaseState::ParkEloremegy2("P2Elore", &SkillBaseState::ParkTolatKanyar1, 100, SKILLSLOW, 0, true);
+MovingState SkillBaseState::ParkTolatKanyar1("P3Tolat", &SkillBaseState::ParkTolatAtlo, 500, SKILLSLOW, 500, false);
+MovingState SkillBaseState::ParkTolatAtlo("P4Tolat", &SkillBaseState::ParkTolatKanyar2, 500, SKILLSLOW, 0, false);
+MovingState SkillBaseState::ParkTolatKanyar2("P5Tolat", &SkillBaseState::ParkTolatEgyenesen, 500, SKILLSLOW, -500, false);
+MovingState SkillBaseState::ParkTolatEgyenesen("P6Tolat", &SkillBaseState::ParkKiKanyar1, 750, SKILLSLOW, 0, false);
+
+//wait state?
+
+MovingState SkillBaseState::ParkKiKanyar1("P7Elore", &SkillBaseState::ParkKiAtlo, 750, SKILLSLOW, -500, false);
+EventBasedState SkillBaseState::ParkKiAtlo("P8Elore", &SkillBaseState::ParkKiTeljesen, 0, SKILLSLOW, 0, false, NONE);
+EventBasedState SkillBaseState::ParkKiTeljesen("P9Ki", &SkillBaseState::koztes, 2000, SKILLSLOW, 0, true, NOLINE_NOWALLS);
 
 
 

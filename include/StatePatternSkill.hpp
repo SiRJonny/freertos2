@@ -105,6 +105,18 @@ public:
 	static EventBasedState TorkVonalKereses;
 	static MovingState TorkVonalKereses2;
 
+	//Parkolas
+	static EventBasedState ParkEloremegy1; 	//masodik 2 falig
+	static MovingState ParkEloremegy2;		//kicsit még elõrébb?
+	static MovingState ParkTolatKanyar1;
+	static MovingState ParkTolatAtlo;
+	static MovingState ParkTolatKanyar2;
+	static MovingState ParkTolatEgyenesen;
+
+	static MovingState ParkKiKanyar1;
+	static EventBasedState ParkKiAtlo;
+	static EventBasedState ParkKiTeljesen;
+
 	static GiroState giro;
 
 	string name;
