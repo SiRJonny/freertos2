@@ -39,7 +39,7 @@ GyorsitoState::GyorsitoState() {
 	stateId = 2;
 	steeringPD = false;
 	targetSpeed = SLOW;
-	encoderPosDifference = 750;
+	encoderPosDifference = 1200;
 }
 
 void GyorsitoState::handleEvent(StateContext& context, Event event) {
@@ -148,7 +148,7 @@ bool StateContext::isSteeringPD(){
 
 void StateContext::stop(){
 	state->stop(*this);
-	SetServo_motor(0);
+	//SetServo_motor(0);
 }
 
 void StateContext::start(int encoderPos) {

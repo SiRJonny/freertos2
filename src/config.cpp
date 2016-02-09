@@ -13,7 +13,7 @@ int SERVO_RANGE_STEERING = 260;	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a m
 StateData stateData;
 
 //sebességes dolgok
-volatile float SLOW = 0.8;
+volatile float SLOW = 1.5;
 
 volatile float FAST = 4.5;
 

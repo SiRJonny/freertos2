@@ -514,8 +514,9 @@ void BTReceiveTask()
 				stateContext.stop();
 				stopped = 1;
 				HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
-				//osDelay(2000);
+				osDelay(500);
 				osThreadSuspend(SteerControl_TaskHandle);
+				SetServo_motor(0);
 				break;
 			case 1:
 
@@ -582,14 +583,16 @@ void SendRemoteVarTask()
 
 		//minden ciklusban elküldi ezeket
 		BT_send_msg(&speed_global, "speed");
+		BT_send_msg(&speed_control, "control_speed");
+		BT_send_msg(&PIDm.iState, "mIState");
 		//BT_send_msg(&Distance_sensors[2], "contLeft");
 		//BT_send_msg(&Distance_sensors[3], "contRight");
 
 
 		//minden slowSendMultiplier ciklusban küldi el ezeket
 		if (sendRemoteCounter % slowSendMultiplier == 0) {
-			//BT_send_msg(&speed_global, "speed");
-			BT_send_msg(&speed_control, "control_speed");
+
+			//BT_send_msg(&speed_control, "control_speed");
 			//BT_send_msg(&globalDistance, "globalDist");
 			//BT_send_msg(&encoderPos, "encoder");
 
@@ -604,8 +607,8 @@ void SendRemoteVarTask()
 			//sendSensors();
 			//sendDebugVars();
 			//sendTuning();
-			//sendStateData();
-			sendPIDs();
+			sendStateData();
+			//sendPIDs();
 		}
 
 		sendRemoteCounter++;
@@ -742,11 +745,11 @@ void SteerControlTask()
 
 
 	// motor PI szabályzó struktúra
-	PIDm.pGain = 300;		// 100-> 5m/s hibánál lesz 500 a jel (max)
-	PIDm.iGain = 0.4;			// pGain/100?
+	PIDm.pGain = 400;		// 100-> 5m/s hibánál lesz 500 a jel (max)
+	PIDm.iGain = 0.7;			// pGain/100?
 	PIDm.dGain = 0;
-	PIDm.iMax = 150;
-	PIDm.iMin = -100;
+	PIDm.iMax = 100;
+	PIDm.iMin = 0;
 	PIDm.iState = 0;
 	PIDm.dState = 0;
 
@@ -835,8 +838,8 @@ void SteerControlTask()
 
 
 
-		ADC2_read();		// blokkol, 40us
-		wall_detection();
+		//ADC2_read();		// blokkol, 40us
+		//wall_detection();
 		//giro_integrate();
 		is_speed_under_X(speed, speed_limit);
 
