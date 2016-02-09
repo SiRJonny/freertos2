@@ -9,6 +9,7 @@
 
 int SERVO_RANGE_MOTOR = 700;	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a max kiadott jel
 int SERVO_RANGE_STEERING = 260;	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a max kiadott jel
+int SERVO_RANGE_SENSOR = 400;
 
 StateData stateData;
 
@@ -56,6 +57,7 @@ bool fal_jobb = false;
 bool bordas_bal = false;
 bool bordas_jobb = false;
 int Distance_sensors[5];
+int FrontSensorTurn = 140;
 
 
 //vonal

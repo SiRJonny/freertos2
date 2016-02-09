@@ -17,6 +17,7 @@
 
 extern int SERVO_RANGE_MOTOR;	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a max kiadott jel
 extern int SERVO_RANGE_STEERING;	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a max kiadott jel
+extern int SERVO_RANGE_SENSOR;
 
 //sebességes dolgok
 extern volatile float SLOW;
@@ -58,6 +59,7 @@ extern bool fal_jobb;
 extern bool bordas_bal;
 extern bool bordas_jobb;
 extern int Distance_sensors[5];
+extern int FrontSensorTurn;
 
 //vonal
 extern float linePosM;		// vonalpozíció méterben

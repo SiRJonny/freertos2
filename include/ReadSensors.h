@@ -13,6 +13,10 @@
 #include <string>
 #include <stdlib.h>
 
+
+int ReadFrontLeft();
+int ReadFrontRight();
+int ReadFrontMiddle();
 void ReadSensors();
 void ReadSensorsDummy();
 void ADC1_read();

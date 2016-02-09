@@ -26,11 +26,39 @@ HAL_StatusTypeDef status;
 
 
 extern void BT_send_msg(int*msg,std::string nev);
+extern void SetServo_sensor_jobb();
+extern void SetServo_sensor_bal();
+extern void SetServo_sensor(int pos);
 extern int timer;
 extern char buffer[10];
 
 extern int testLinePos;
 
+
+//elsõ távolságszenzor
+int ReadFrontLeft()
+{
+	SetServo_sensor_bal();
+	osDelay(200);
+	ADC2_read();
+	return (int)Distance_sensors[1];
+}
+
+int ReadFrontRight()
+{
+	SetServo_sensor_jobb();
+	osDelay(200);
+	ADC2_read();
+	return (int)Distance_sensors[1];
+}
+
+int ReadFrontMiddle()
+{
+	SetServo_sensor(0);
+	osDelay(200);
+	ADC2_read();
+	return (int)Distance_sensors[1];
+}
 
 // teljes szenzorsor beolvasás
 void ReadSensorsDummy()

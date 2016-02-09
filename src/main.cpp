@@ -123,6 +123,7 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart);
 void BT_send_msg(int msg, char* nev);*/
 void BT_send_msg(int * msg, string nev);
 //void BT_send_msg(float * msg, string nev);
+void SetServo_sensor(int pos);
 void SetServo_motor(int pos); // -SERVO_RANGE_MOTOR +SERVO_RANGE_MOTOR
 void SetServo_steering(int pos); // -SERVO_RANGE_STEERING +SERVO_RANGE_STEERING
 void SetServo_steering(float angle);  // kormányzás, szöggel
@@ -133,6 +134,8 @@ void update_direction();
 bool DIP(int num);
 bool START_PIN();
 uint8_t Radio_get_char();
+void SetServo_sensor_jobb();
+void SetServo_sensor_bal();
 
 void sendSensors();
 void sendDebugVars();
@@ -286,6 +289,16 @@ void BT_send_msg(float * msg, string nev){
 }
 
 
+// bal = pozitív
+void SetServo_sensor(int pos)
+{
+	if(pos > SERVO_RANGE_SENSOR){pos = SERVO_RANGE_SENSOR;}
+	if(pos < -SERVO_RANGE_SENSOR){pos = -SERVO_RANGE_SENSOR;}
+
+	// 1500 = 1,5ms, ez a 0 pozíció
+	__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_4,1500+pos);
+}
+
 // -500 és 500 közötti értéket fogad
 void SetServo_motor(int pos)
 {
@@ -434,6 +447,7 @@ void StartButtonTask()
 {
 	uint8_t wasPressed = 0;
 
+	int ten = 130;
 
 	for (;;){
 
@@ -444,16 +458,23 @@ void StartButtonTask()
 
 		if (wasPressed){
 
-			stateContext.start(encoderPos);
-			stateData.event = RADIOSTART;
+			//stateContext.start(encoderPos);
+			//stateData.event = RADIOSTART;
 
 			//giro_init();
 
+			while(1){
 
+			BT_send_msg(&timer, "sen:" + std::string(itoa(ReadFrontLeft(),buffer,10)) + "\n");
+			osDelay(1000);
+			BT_send_msg(&timer, "sen:" + std::string(itoa(ReadFrontRight(),buffer,10)) + "\n");
+			osDelay(1000);
+			BT_send_msg(&timer, "sen:" + std::string(itoa(ReadFrontMiddle(),buffer,10)) + "\n");
+			osDelay(1000);
 
-
-			osThreadResume(SteerControl_TaskHandle);
-			osThreadResume(SendRemoteVar_TaskHandle);
+			}
+			//osThreadResume(SteerControl_TaskHandle);
+			//osThreadResume(SendRemoteVar_TaskHandle);
 
 
 
@@ -1000,6 +1021,16 @@ void SteerControlTask()
 		osDelay(9);
 	}
 }
+
+void SetServo_sensor_jobb()
+{
+	SetServo_sensor(-1*FrontSensorTurn);
+}
+void SetServo_sensor_bal()
+{
+	SetServo_sensor(FrontSensorTurn);
+}
+
 
 // 5 sec blokk, ha nem jön üzenet
 // start: 53-52-51-50-49...48  // 77 = timeout, 88 egyéb hiba
