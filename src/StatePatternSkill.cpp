@@ -53,9 +53,17 @@ EventBasedState SkillBaseState::ParkKiAtlo("P8Elore", &SkillBaseState::ParkKiTel
 EventBasedState SkillBaseState::ParkKiTeljesen("P9Ki", &SkillBaseState::koztes, 2000, SKILLSLOW, 0, true, NOLINE_NOWALLS);
 
 //giro
-EventBasedState SkillBaseState::giroStart("giroStart", &SkillBaseState::koztes, 2000, SKILLSLOW, 0, true, KERESZT);
-GiroState SkillBaseState::giro("Giro", &SkillBaseState::giroLejon);
+EventBasedState SkillBaseState::giroStart("giroStart", &SkillBaseState::giroFel, 0, SKILLSLOW, 0, true, KERESZT);
+EventBasedState SkillBaseState::giroFel("giroFel", &SkillBaseState::giroPark, 200, SKILLSLOW, 0, true, KERESZT);
+MovingState SkillBaseState::giroPark("giroPark", &SkillBaseState::giro, 100, SKILLSLOW, 0, true);
+
+GiroState SkillBaseState::giro("Giro", &SkillBaseState::giroLejon, true);
 MovingState SkillBaseState::giroLejon("giroLejon", &SkillBaseState::skillStopped, 2000, SKILLSLOW, 0, true);
+
+
+//libikoka
+GiroState SkillBaseState::libikoka("libikoka", &SkillBaseState::libiLassu, false);
+MovingState SkillBaseState::libiLassu("giroLejon", &SkillBaseState::skillStopped, 100, SKILLSLOW, 0, true);
 
 
 SkillTrackEvent SkillBaseState::calculateEvent() {
@@ -201,7 +209,7 @@ void EventBasedState::update() {
 }
 
 
-GiroState::GiroState(string stateName, SkillBaseState* nState) {
+GiroState::GiroState(string stateName, SkillBaseState* nState, bool Z) {
 	name = stateName;
 	stateId = 4;
 	targetSpeed = 0;
@@ -209,19 +217,29 @@ GiroState::GiroState(string stateName, SkillBaseState* nState) {
 	nextState = nState;
 	startAngle = 0;
 	started = false;
+	zAxis = Z;
 }
 
 extern bool giro_stopped;
+extern bool giro_fall;
 //ebbe kell, hogy mikor lépjen a következõ eventbe a girostate
 void GiroState::update() {
 	if (!started) {
 		giro_start_measurement();
 		started = true;
 	} else {
-		bool turned = false;//checkTurning();
-		float angle = giro_get_angle_Z();
-		if ((angle < 100 && angle >80) || (angle < -260 && angle > -280) ) {
-			if (giro_stopped) {
+		if (zAxis) {
+			bool turned = false;//checkTurning();
+			float angle = giro_get_angle_Z();
+			if ((angle < 135 && angle > 45) || (angle < -225 && angle > -315) ) {
+				if (giro_stopped) {
+					started = false;
+					skillStateContext.setState(this->nextState);
+				}
+
+			}
+		} else {
+			if (giro_fall) {
 				started = false;
 				skillStateContext.setState(this->nextState);
 			}
@@ -241,6 +259,7 @@ TimeState::TimeState(string stateName,
 	nextState = nState;
 	started = false;
 	triggerTime = 100000000000000;
+	startTime = 0;
 }
 
 //ebbe kell, hogy mikor lépjen a következõ eventbe a
@@ -293,7 +312,7 @@ void SkillStateContext::setState(SkillBaseState* newState) {
 }
 
 SkillStateContext::SkillStateContext() {
-	setState(&SkillBaseState::koztes);
+	setState(&SkillBaseState::libikoka);
 }
 
 void SkillBaseState::stop(SkillStateContext& context) {

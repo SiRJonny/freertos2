@@ -106,9 +106,15 @@ public:
 
 	//giro
 	static EventBasedState giroStart;
+	static EventBasedState giroFel;
+	static MovingState giroPark;
 
 	static GiroState giro;
 	static MovingState giroLejon;
+
+	//libikoka
+	static GiroState libikoka;
+	static MovingState libiLassu;
 
 
 	string name;
@@ -182,9 +188,9 @@ class GiroState : public SkillBaseState {
 public:
 	bool started;
 	float startAngle; //kell?
+	bool zAxis;
 
-
-	GiroState(string stateName, SkillBaseState* nState);
+	GiroState(string stateName, SkillBaseState* nState, bool Z);
 	virtual void update();
 	//~EventBasedState() {}
 };

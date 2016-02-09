@@ -16,6 +16,7 @@ extern float giro_drift_Z;
 extern float giro_accu_Y;
 extern float giro_accu_Z;
 extern bool giro_stopped;
+extern bool giro_fall;
 
 uint8_t data;
 uint8_t temp;
@@ -45,11 +46,37 @@ void giro_start_measurement()
 
 void giro_integrate()
 {
+	static float giro_Y;
 	static float giro_Z;
+	giro_Y = (float)giro_read_channel(1);
 	giro_accu_Y += (float)giro_read_channel(1)-giro_drift_Y;
 	giro_Z = (float)giro_read_channel(2);
 	giro_accu_Z += giro_Z-giro_drift_Z;
 	set_giro_stopped(giro_Z);
+	set_giro_fall(giro_Y);
+}
+
+void set_giro_fall(float Y)
+{
+	static float array_Y[5];
+	static int cntr = 0;
+
+	array_Y[cntr] = Y;
+	cntr++;
+	if(cntr >= 5)
+	{
+		cntr = 0;
+	}
+
+	for(int i=0; i<5; i++)
+	{
+		if(array_Y[i] > -100)
+		{
+			giro_fall = false;
+			return;
+		}
+	}
+	giro_fall = true;
 }
 
 void set_giro_stopped(float Z)
