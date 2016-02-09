@@ -52,6 +52,10 @@ MovingState SkillBaseState::ParkKiKanyar1("P7Elore", &SkillBaseState::ParkKiAtlo
 EventBasedState SkillBaseState::ParkKiAtlo("P8Elore", &SkillBaseState::ParkKiTeljesen, 0, SKILLSLOW, 0, false, NONE);
 EventBasedState SkillBaseState::ParkKiTeljesen("P9Ki", &SkillBaseState::koztes, 2000, SKILLSLOW, 0, true, NOLINE_NOWALLS);
 
+//giro
+EventBasedState SkillBaseState::giroStart("giroStart", &SkillBaseState::koztes, 2000, SKILLSLOW, 0, true, KERESZT);
+GiroState SkillBaseState::giro("Giro", &SkillBaseState::giroLejon);
+MovingState SkillBaseState::giroLejon("giroLejon", &SkillBaseState::skillStopped, 2000, SKILLSLOW, 0, true);
 
 
 SkillTrackEvent SkillBaseState::calculateEvent() {
@@ -125,8 +129,11 @@ void KoztesState::update() {
 			skillStateContext.setState(&SkillBaseState::TorkFalakKozt);
 			break;
 		case KERESZT:
-					skillStateContext.setState(&SkillBaseState::skillStopped);
-					break;
+			skillStateContext.setState(&SkillBaseState::skillStopped);
+			break;
+		case SZAGGATOTT2VONAL:
+			skillStateContext.setState(&SkillBaseState::giroStart);
+			break;
 	}
 }
 
@@ -200,18 +207,25 @@ GiroState::GiroState(string stateName, SkillBaseState* nState) {
 	targetSpeed = 0;
 	distanceToMove = 0;
 	nextState = nState;
+	startAngle = 0;
+	started = false;
 }
 
+extern bool giro_stopped;
 //ebbe kell, hogy mikor lépjen a következõ eventbe a girostate
 void GiroState::update() {
-	int currentAngle = 0; //currentAngle?
 	if (!started) {
-		//startGiro
+		giro_start_measurement();
 		started = true;
 	} else {
 		bool turned = false;//checkTurning();
-		if (turned) {
-			skillStateContext.setState(this->nextState);
+		float angle = giro_get_angle_Z();
+		if ((angle < 100 && angle >80) || (angle < -260 && angle > -280) ) {
+			if (giro_stopped) {
+				started = false;
+				skillStateContext.setState(this->nextState);
+			}
+
 		}
 	}
 }

@@ -11,6 +11,7 @@
 #include <string>
 #include "ProcessSensors.h"
 #include "EnumsStructs.hpp"
+#include "giro.hpp"
 
 
 
@@ -103,7 +104,12 @@ public:
 	static EventBasedState ParkKiAtlo;
 	static EventBasedState ParkKiTeljesen;
 
+	//giro
+	static EventBasedState giroStart;
+
 	static GiroState giro;
+	static MovingState giroLejon;
+
 
 	string name;
 	int stateId;

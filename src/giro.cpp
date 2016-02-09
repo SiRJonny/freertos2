@@ -66,7 +66,7 @@ void set_giro_stopped(float Z)
 
 	for(int i=0; i<5; i++)
 	{
-		if(array_Z[i] > 200)
+		if(array_Z[i] > 100 || array_Z[i] < -100)
 		{
 			giro_stopped = false;
 			return;

@@ -444,6 +444,8 @@ void StartButtonTask()
 
 		if (wasPressed){
 
+			giro_init();
+
 			stateContext.start(encoderPos);
 			stateData.event = RADIOSTART;
 
@@ -578,6 +580,12 @@ void BT_send_msg(bool b, string s) {
 	BT_send_msg(&bInt, s);
 }
 
+void BT_send_msgFloat(float data, string s) {
+	static float dataFloat;
+	dataFloat = data;
+	BT_send_msg(&dataFloat, s);
+}
+
 void SendRemoteVarTask()
 {
 	int sendRemoteCounter = 0;
@@ -604,7 +612,8 @@ void SendRemoteVarTask()
 
 		//minden slowSendMultiplier ciklusban küldi el ezeket
 		if (sendRemoteCounter % slowSendMultiplier == 0) {
-			//BT_send_msg(&speed_global, "speed");
+			BT_send_msgFloat(giro_get_angle_Z(), "giroAngle");
+			BT_send_msg(giro_stopped, "giroStopped");
 			//BT_send_msg(&speed_control, "control_speed");
 			BT_send_msg(&globalDistance, "globalDist");
 			eventInt = stateData.event;
@@ -613,17 +622,17 @@ void SendRemoteVarTask()
 			dirInt = direction;
 			BT_send_msg(&dirInt, "dirInt");
 			//BT_send_msg(&index, "index");
-			BT_send_msg(stable0lines, "stable0lines");
-			BT_send_msg(stable1lines, "stable1lines");
+			//BT_send_msg(stable0lines, "stable0lines");
+			//BT_send_msg(stable1lines, "stable1lines");
 
 
-			BT_send_msg(&Distance_sensors[2], "left");
-			BT_send_msg(&Distance_sensors[3], "right");
+			//BT_send_msg(&Distance_sensors[2], "left");
+			//BT_send_msg(&Distance_sensors[3], "right");
 
-			BT_send_msg(bordas_bal, "bBordas");
-			BT_send_msg(bordas_jobb, "jBordas");
-			BT_send_msg(fal_bal, "bFal");
-			BT_send_msg(fal_jobb, "jFal");
+			//BT_send_msg(bordas_bal, "bBordas");
+			//BT_send_msg(bordas_jobb, "jBordas");
+			//BT_send_msg(fal_bal, "bFal");
+			//BT_send_msg(fal_jobb, "jFal");
 			//BT_send_msg(&encoderPos, "encoder");
 
 			//BT_send_msg(&bordas_bal, "bordasBal");
@@ -635,7 +644,7 @@ void SendRemoteVarTask()
 			//BT_send_msg(&timer, "Z:" + std::string(itoa(giro_get_angle_Z(),buffer,10)) + "\n");
 			//BT_send_msg(&timer, "lim:" + std::string(itoa(speed_under_X,buffer,10)) + "\n");
 			//BT_send_msg(&stopped, "stopped");
-			//sendSensors();
+			sendSensors();
 			//sendDebugVars();
 			//sendTuning();
 			sendStateData();
@@ -668,7 +677,7 @@ void sendSensors() {
 		}
 	}
 
-	BT_send_msg(&speed_global, "speed");
+	//BT_send_msg(&speed_global, "speed");
 }
 
 
@@ -712,14 +721,14 @@ void sendStateData() {
 	int stateId = skillStateContext.state->stateId;
 	string stName = "stnm" + skillStateContext.state->name;
 	BT_send_msg(&globalDistance, stName);
-	int controlled =0;
-	if (skillStateContext.state->steeringControlled) {
-		controlled = 1;
-	}
-	BT_send_msg(&controlled, "controlled");
+	//int controlled =0;
+	//if (skillStateContext.state->steeringControlled) {
+		//controlled = 1;
+	//}
+	//BT_send_msg(&controlled, "controlled");
 
-	BT_send_msg(&skillStateContext.state->steeringAngle, "steerAngle");
-	BT_send_msg(&stAngle, "stAngle");
+	//BT_send_msg(&skillStateContext.state->steeringAngle, "steerAngle");
+	//BT_send_msg(&stAngle, "stAngle");
 
 
 
@@ -882,7 +891,7 @@ void SteerControlTask()
 		ADC2_read();		// blokkol, 40us
 		wall_detection();	// falas bool-okat állítja
 		wall_borda_detection();
-		//giro_integrate();
+		giro_integrate();
 		is_speed_under_X(speed, speed_limit);
 		//update_direction();
 
