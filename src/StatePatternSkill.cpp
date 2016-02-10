@@ -277,6 +277,22 @@ void TimeState::update() {
 
 }
 
+//hataratkelo
+HatarState::HatarState(string stateName,
+		SkillBaseState* nState) {
+	name = stateName;
+	stateId = 6;
+	targetSpeed = 0;
+	distanceToMove = 0;
+	nextState = nState;
+}
+
+//ebbe kell, hogy mikor lépjen a következõ eventbe a
+void HatarState::update() {
+	ReadFrontLeft();
+
+}
+
 //Stop state
 SkillStopState::SkillStopState() {
 	name = "stop";

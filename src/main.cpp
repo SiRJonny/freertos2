@@ -640,7 +640,7 @@ void SendRemoteVarTask()
 			BT_send_msg(&dirInt, "dirInt");
 			//BT_send_msg(&index, "index");
 			//BT_send_msg(stable0lines, "stable0lines");
-			//BT_send_msg(stable1lines, "stable1lines");
+			//BT_send_msg(stable1lines, "stable1lines");*/
 
 
 			//BT_send_msg(&Distance_sensors[2], "left");

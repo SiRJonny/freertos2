@@ -10,6 +10,7 @@
 
 #include <string>
 #include "ProcessSensors.h"
+#include "ReadSensors.h"
 #include "EnumsStructs.hpp"
 #include "giro.hpp"
 
@@ -203,6 +204,13 @@ public:
 	TimeState(string stateName,
 			SkillBaseState* nState,
 			int wait);
+	virtual void update();
+};
+
+class HatarState : public SkillBaseState {
+public:
+	HatarState(string stateName,
+			SkillBaseState* nState);
 	virtual void update();
 };
 
