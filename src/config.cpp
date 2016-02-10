@@ -110,7 +110,7 @@ char buffer[10];	//bt msg hez
 int timer = 0; // idõméréshez
 
 bool skillTrack = true;
-Direction direction = UNDEFINED;
+Direction direction = LEFT;
 SkillTrackEvent currentState = NONE;
 
 int stopped = 0;

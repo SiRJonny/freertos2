@@ -35,6 +35,7 @@ class MovingState;
 class EventBasedState;
 class SkillBaseState;
 class GiroState;
+class HatarState;
 
 extern StateData stateData;
 extern SkillStateContext skillStateContext;
@@ -116,6 +117,13 @@ public:
 	//libikoka
 	static GiroState libikoka;
 	static MovingState libiLassu;
+
+	//határ
+	static MovingState hatarStart;
+	static HatarState hatarWait;
+	static MovingState hatarMove;
+
+
 
 
 	string name;

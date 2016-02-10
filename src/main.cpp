@@ -623,7 +623,7 @@ void SendRemoteVarTask()
 		//BT_send_msg(&speed_global, "speed");
 		//BT_send_msg(&Distance_sensors[2], "contLeft");
 		//BT_send_msg(&Distance_sensors[3], "contRight");
-
+		BT_send_msg(&Distance_sensors[1], "FrontSensor");
 
 		//minden slowSendMultiplier ciklusban küldi el ezeket
 		if (sendRemoteCounter % slowSendMultiplier == 0) {
@@ -664,7 +664,7 @@ void SendRemoteVarTask()
 			//sendSensors();
 			//sendDebugVars();
 			//sendTuning();
-			//sendStateData();
+			sendStateData();
 			//sendPIDs();
 		}
 
@@ -1206,15 +1206,30 @@ void getActiveLinePos(LineState * Lines, float *last_pos1, float *last_pos2, flo
 	if (Lines->numLines1 == 3) {
 		*active1 = Lines->pos1[1];
 	}
-	else if(Lines->numLines1 == 2)
+	else if(Lines->numLines1 == 2)		// elöl 2 vonal
 	{
-		if( abs( (*last_pos1) - Lines->pos1[0] ) < abs( (*last_pos1) - Lines->pos1[1]) )
+		//ha ügyességi
+		if(skillTrack)
 		{
-			*active1 = Lines->pos1[0];
+			if(direction == LEFT)
+			{
+				*active1 = Lines->pos1[0];
+			}
+			else
+			{
+				*active1 = Lines->pos1[1];
+			}
 		}
-		else
+		else	// ha gorsasági
 		{
-			*active1 = Lines->pos1[1];
+			if( abs( (*last_pos1) - Lines->pos1[0] ) < abs( (*last_pos1) - Lines->pos1[1]) )
+			{
+				*active1 = Lines->pos1[0];
+			}
+			else
+			{
+				*active1 = Lines->pos1[1];
+			}
 		}
 	}
 	else if (Lines->numLines1 == 1)
@@ -1231,13 +1246,28 @@ void getActiveLinePos(LineState * Lines, float *last_pos1, float *last_pos2, flo
 	}
 	else if(Lines->numLines2 == 2)
 	{
-		if( abs( (*last_pos2) - Lines->pos2[0]) < abs( (*last_pos2) - Lines->pos2[1]) )
+		//ha ügyességi
+		if(skillTrack)
 		{
-			*active2 = Lines->pos2[0];
+			if(direction == LEFT)
+			{
+				*active2 = Lines->pos2[0];
+			}
+			else
+			{
+				*active2 = Lines->pos2[1];
+			}
 		}
-		else
+		else	// ha gorsasági
 		{
-			*active2 = Lines->pos2[1];
+			if( abs( (*last_pos2) - Lines->pos2[0]) < abs( (*last_pos2) - Lines->pos2[1]) )
+			{
+				*active2 = Lines->pos2[0];
+			}
+			else
+			{
+				*active2 = Lines->pos2[1];
+			}
 		}
 	}
 	else if (Lines->numLines2 == 1)

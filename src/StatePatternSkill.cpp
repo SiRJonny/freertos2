@@ -65,6 +65,11 @@ MovingState SkillBaseState::giroLejon("giroLejon", &SkillBaseState::skillStopped
 GiroState SkillBaseState::libikoka("libikoka", &SkillBaseState::libiLassu, false);
 MovingState SkillBaseState::libiLassu("giroLejon", &SkillBaseState::skillStopped, 100, SKILLSLOW, 0, true);
 
+// határ
+MovingState SkillBaseState::hatarStart("hatarStart", &SkillBaseState::hatarWait, 150, SKILLSLOW, 0, true);
+HatarState SkillBaseState::hatarWait("hatarWait", &SkillBaseState::hatarMove);
+MovingState SkillBaseState::hatarMove("hatarMove", &SkillBaseState::skillStopped, 1500, SKILLSLOW, 0, true);
+
 
 SkillTrackEvent SkillBaseState::calculateEvent() {
 	static SkillTrackEvent lastEvent;
@@ -141,6 +146,9 @@ void KoztesState::update() {
 			break;
 		case SZAGGATOTT2VONAL:
 			skillStateContext.setState(&SkillBaseState::giroStart);
+			break;
+		case HAROMVONAL:
+			skillStateContext.setState(&SkillBaseState::hatarStart);
 			break;
 	}
 }
@@ -289,8 +297,15 @@ HatarState::HatarState(string stateName,
 
 //ebbe kell, hogy mikor lépjen a következõ eventbe a
 void HatarState::update() {
-	ReadFrontLeft();
-
+	if(ReadFrontLeft() < 40)
+	{
+		direction = LEFT;
+		skillStateContext.setState(this->nextState);
+	}else if(ReadFrontRight() < 40)
+	{
+		direction = RIGHT;
+		skillStateContext.setState(this->nextState);
+	}
 }
 
 //Stop state
@@ -328,7 +343,7 @@ void SkillStateContext::setState(SkillBaseState* newState) {
 }
 
 SkillStateContext::SkillStateContext() {
-	setState(&SkillBaseState::libikoka);
+	setState(&SkillBaseState::koztes);
 }
 
 void SkillBaseState::stop(SkillStateContext& context) {
