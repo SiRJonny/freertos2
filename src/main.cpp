@@ -136,6 +136,7 @@ bool START_PIN();
 uint8_t Radio_get_char();
 void SetServo_sensor_jobb();
 void SetServo_sensor_bal();
+int systick_count();
 
 void sendSensors();
 void sendDebugVars();
@@ -458,23 +459,13 @@ void StartButtonTask()
 
 		if (wasPressed){
 
-			//stateContext.start(encoderPos);
-			//stateData.event = RADIOSTART;
+			stateContext.start(encoderPos);
+			stateData.event = RADIOSTART;
 
 			//giro_init();
 
-			while(1){
-
-			BT_send_msg(&timer, "sen:" + std::string(itoa(ReadFrontLeft(),buffer,10)) + "\n");
-			osDelay(1000);
-			BT_send_msg(&timer, "sen:" + std::string(itoa(ReadFrontRight(),buffer,10)) + "\n");
-			osDelay(1000);
-			BT_send_msg(&timer, "sen:" + std::string(itoa(ReadFrontMiddle(),buffer,10)) + "\n");
-			osDelay(1000);
-
-			}
-			//osThreadResume(SteerControl_TaskHandle);
-			//osThreadResume(SendRemoteVar_TaskHandle);
+			osThreadResume(SteerControl_TaskHandle);
+			osThreadResume(SendRemoteVar_TaskHandle);
 
 
 
@@ -627,7 +618,7 @@ void SendRemoteVarTask()
 		if (sendRemoteCounter % slowSendMultiplier == 0) {
 
 
-
+			//BT_send_msg(&timer, "tick:" + std::string(itoa(systick_count(),buffer,10)) + "\n");
 			//BT_send_msg(&timer, "radio:" + std::string(itoa(Radio_get_char(),buffer,10)) + "\n");
 			//BT_send_msg(&speed_global, "speed");
 			/*BT_send_msg(&speed_control, "control_speed");
@@ -1020,6 +1011,12 @@ void SteerControlTask()
 
 		osDelay(9);
 	}
+}
+
+// indítás óta eltelt millisecec száma
+int systick_count()
+{
+	return xTaskGetTickCount();
 }
 
 void SetServo_sensor_jobb()

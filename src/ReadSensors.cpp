@@ -35,6 +35,8 @@ extern char buffer[10];
 extern int testLinePos;
 
 
+
+
 //elsõ távolságszenzor
 int ReadFrontLeft()
 {
