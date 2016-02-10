@@ -52,6 +52,8 @@ float giro_drift_Z;
 float giro_accu_Y;
 float giro_accu_Z;
 bool giro_stopped = true;
+bool giro_fall = false;
+
 bool fal_bal = false;
 bool fal_jobb = false;
 bool bordas_bal = false;
@@ -77,6 +79,8 @@ bool stable0lines;
 bool stable1lines;
 bool stable2lines;
 bool stable3lines;
+
+bool stable1linesForBoth;
 
 float activeLine1 = 0;  // középsõ vonal kiválasztása
 float activeLine2 = 0;
@@ -106,7 +110,7 @@ char buffer[10];	//bt msg hez
 int timer = 0; // idõméréshez
 
 bool skillTrack = true;
-Direction direction = RIGHT;
+Direction direction = UNDEFINED;
 SkillTrackEvent currentState = NONE;
 
 int stopped = 0;

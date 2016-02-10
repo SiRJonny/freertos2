@@ -60,6 +60,7 @@ float pAlap = 30;
 float dAlap = -230;
 
 
+
 /* Private variables ---------------------------------------------------------*/
 osThreadId defaultTaskHandle;
 osThreadId BT_TaskHandle;
@@ -130,6 +131,8 @@ void SetServo_steering(float angle);  // kormányzás, szöggel
 void getActiveLinePos(LineState * Lines, float *last_pos1, float *last_pos2, float * active1, float * active2);
 void is_speed_under_X(float speed, float limit);
 void get_stable_line_count(int numlines);
+void get_stable_line_count2(int numlines1, int numlines2);
+
 void update_direction();
 bool DIP(int num);
 bool START_PIN();
@@ -459,6 +462,8 @@ void StartButtonTask()
 
 		if (wasPressed){
 
+			giro_init();
+
 			stateContext.start(encoderPos);
 			stateData.event = RADIOSTART;
 
@@ -590,6 +595,12 @@ void BT_send_msg(bool b, string s) {
 	BT_send_msg(&bInt, s);
 }
 
+void BT_send_msgFloat(float data, string s) {
+	static float dataFloat;
+	dataFloat = data;
+	BT_send_msg(&dataFloat, s);
+}
+
 void SendRemoteVarTask()
 {
 	int sendRemoteCounter = 0;
@@ -620,7 +631,6 @@ void SendRemoteVarTask()
 
 			//BT_send_msg(&timer, "tick:" + std::string(itoa(systick_count(),buffer,10)) + "\n");
 			//BT_send_msg(&timer, "radio:" + std::string(itoa(Radio_get_char(),buffer,10)) + "\n");
-			//BT_send_msg(&speed_global, "speed");
 			/*BT_send_msg(&speed_control, "control_speed");
 			BT_send_msg(&globalDistance, "globalDist");
 			eventInt = stateData.event;
@@ -628,14 +638,18 @@ void SendRemoteVarTask()
 			BT_send_msg(&eventInt, "eInt");
 			dirInt = direction;
 			BT_send_msg(&dirInt, "dirInt");
+			//BT_send_msg(&index, "index");
+			//BT_send_msg(stable0lines, "stable0lines");
+			//BT_send_msg(stable1lines, "stable1lines");
 
-			BT_send_msg(stable0lines, "stable0lines");
-			BT_send_msg(stable1lines, "stable1lines");
 
-			BT_send_msg(bordas_bal, "bordas_bal");
-			BT_send_msg(bordas_jobb, "bordas_jobb");
-			BT_send_msg(fal_bal, "fal_bal");
-			BT_send_msg(fal_jobb, "fal_jobb");*/
+			//BT_send_msg(&Distance_sensors[2], "left");
+			//BT_send_msg(&Distance_sensors[3], "right");
+
+			//BT_send_msg(bordas_bal, "bBordas");
+			//BT_send_msg(bordas_jobb, "jBordas");
+			//BT_send_msg(fal_bal, "bFal");
+			//BT_send_msg(fal_jobb, "jFal");
 			//BT_send_msg(&encoderPos, "encoder");
 
 			//BT_send_msg(&bordas_bal, "bordasBal");
@@ -680,7 +694,7 @@ void sendSensors() {
 		}
 	}
 
-	BT_send_msg(&speed_global, "speed");
+	//BT_send_msg(&speed_global, "speed");
 }
 
 
@@ -724,14 +738,14 @@ void sendStateData() {
 	int stateId = skillStateContext.state->stateId;
 	string stName = "stnm" + skillStateContext.state->name;
 	BT_send_msg(&globalDistance, stName);
-	int controlled =0;
-	if (skillStateContext.state->steeringControlled) {
-		controlled = 1;
-	}
-	BT_send_msg(&controlled, "controlled");
+	//int controlled =0;
+	//if (skillStateContext.state->steeringControlled) {
+		//controlled = 1;
+	//}
+	//BT_send_msg(&controlled, "controlled");
 
-	BT_send_msg(&skillStateContext.state->steeringAngle, "steerAngle");
-	BT_send_msg(&stAngle, "stAngle");
+	//BT_send_msg(&skillStateContext.state->steeringAngle, "steerAngle");
+	//BT_send_msg(&stAngle, "stAngle");
 
 
 
@@ -754,6 +768,7 @@ void sendPIDm() {
 	BT_send_msg(&PIDm.pGain, "PIDm_p");
 	BT_send_msg(&PIDm.dGain, "PIDm_s");
 }
+
 
 
 // szabályzó task
@@ -892,9 +907,10 @@ void SteerControlTask()
 
 		ADC2_read();		// blokkol, 40us
 		wall_detection();	// falas bool-okat állítja
-		//giro_integrate();
+		wall_borda_detection();
+		giro_integrate();
 		is_speed_under_X(speed, speed_limit);
-		update_direction();
+		//update_direction();
 
 
 		// szenzor adatok feldolgozása
@@ -902,6 +918,7 @@ void SteerControlTask()
 
 		///// stabil vonalszám
 		get_stable_line_count(globalLines.numLines1);
+		get_stable_line_count2(globalLines.numLines1, globalLines.numLines2);
 
 
 		getActiveLinePos(&globalLines, &last_active_line_pos1, &last_active_line_pos2, &activeLine1, &activeLine2);
@@ -988,6 +1005,8 @@ void SteerControlTask()
 				stAngle = skillStateContext.state->steeringAngle;
 			} else if (direction == LEFT) {
 				stAngle = skillStateContext.state->steeringAngle*(-1);
+			} else {
+				stAngle = skillStateContext.state->steeringAngle;
 			}
 
 			SetServo_steering(stAngle);
@@ -1145,6 +1164,40 @@ void get_stable_line_count(int numlines)
 		}
 	if(num2 >= 4){ stable2lines = true; }
 	if(num3 >= 4){ stable3lines = true; }
+
+}
+
+void get_stable_line_count2(int numlines1, int numlines2)
+{
+	static int numlines_array1[5];
+	static int numlines_array2[5];
+	static int array_cntr = 0;
+	static int num1;
+
+	num1 = 0;
+	stable1linesForBoth = false;
+
+	numlines_array1[array_cntr] = numlines1;
+	numlines_array2[array_cntr] = numlines2;
+	array_cntr++;
+	if(array_cntr >= 5)
+	{
+		array_cntr = 0;
+	}
+
+	for(int i=0; i<5; i++)
+	{
+		if (numlines_array1[i] == 1 && numlines_array2[i] == 1) {
+			num1++;
+		}
+	}
+
+	//if(num0 >= 4){ stable0lines = true; }
+	if(num1 >= 4){
+		stable1linesForBoth = true;
+	}
+	//if(num2 >= 4){ stable2lines = true; }
+	//if(num3 >= 4){ stable3lines = true; }
 
 }
 

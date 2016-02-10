@@ -54,6 +54,8 @@ extern float giro_drift_Z;
 extern float giro_accu_X;
 extern float giro_accu_Z;
 extern bool giro_stopped;
+extern bool giro_fall;
+
 extern bool fal_bal;
 extern bool fal_jobb;
 extern bool bordas_bal;
@@ -78,6 +80,9 @@ extern bool stable0lines;
 extern bool stable1lines;
 extern bool stable2lines;
 extern bool stable3lines;
+
+extern bool stable1linesForBoth;
+
 extern float activeLine1;  // középsõ vonal kiválasztása
 extern float activeLine2;
 

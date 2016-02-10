@@ -38,7 +38,32 @@ MovingState SkillBaseState::TorkFalakElhagyva("Tork2", &SkillBaseState::TorkVona
 EventBasedState SkillBaseState::TorkVonalKereses("Tork3", &SkillBaseState::TorkVonalKereses2, 0, SKILLSLOW, 0, false, NONE);
 MovingState SkillBaseState::TorkVonalKereses2("Tork4", &SkillBaseState::koztes, 1000, SKILLSLOW, 0, true);
 
+//Parkol
+EventBasedState SkillBaseState::ParkEloremegy1("P1Elore", &SkillBaseState::ParkEloremegy2, 2000, SKILLSLOW, 0, true, TWOWALL);
+MovingState SkillBaseState::ParkEloremegy2("P2Elore", &SkillBaseState::ParkTolatKanyar1, 100, SKILLSLOW, 0, true);
+MovingState SkillBaseState::ParkTolatKanyar1("P3Tolat", &SkillBaseState::ParkTolatAtlo, 500, SKILLSLOW, 500, false);
+MovingState SkillBaseState::ParkTolatAtlo("P4Tolat", &SkillBaseState::ParkTolatKanyar2, 500, SKILLSLOW, 0, false);
+MovingState SkillBaseState::ParkTolatKanyar2("P5Tolat", &SkillBaseState::ParkTolatEgyenesen, 500, SKILLSLOW, -500, false);
+MovingState SkillBaseState::ParkTolatEgyenesen("P6Tolat", &SkillBaseState::ParkVar, 750, SKILLSLOW, 0, false);
 
+TimeState SkillBaseState::ParkVar("PVar", &SkillBaseState::ParkKiKanyar1, 100);
+
+MovingState SkillBaseState::ParkKiKanyar1("P7Elore", &SkillBaseState::ParkKiAtlo, 750, SKILLSLOW, -500, false);
+EventBasedState SkillBaseState::ParkKiAtlo("P8Elore", &SkillBaseState::ParkKiTeljesen, 0, SKILLSLOW, 0, false, NONE);
+EventBasedState SkillBaseState::ParkKiTeljesen("P9Ki", &SkillBaseState::koztes, 2000, SKILLSLOW, 0, true, NOLINE_NOWALLS);
+
+//giro
+EventBasedState SkillBaseState::giroStart("giroStart", &SkillBaseState::giroFel, 0, SKILLSLOW, 0, true, KERESZT);
+EventBasedState SkillBaseState::giroFel("giroFel", &SkillBaseState::giroPark, 200, SKILLSLOW, 0, true, KERESZT);
+MovingState SkillBaseState::giroPark("giroPark", &SkillBaseState::giro, 100, SKILLSLOW, 0, true);
+
+GiroState SkillBaseState::giro("Giro", &SkillBaseState::giroLejon, true);
+MovingState SkillBaseState::giroLejon("giroLejon", &SkillBaseState::skillStopped, 2000, SKILLSLOW, 0, true);
+
+
+//libikoka
+GiroState SkillBaseState::libikoka("libikoka", &SkillBaseState::libiLassu, false);
+MovingState SkillBaseState::libiLassu("giroLejon", &SkillBaseState::skillStopped, 100, SKILLSLOW, 0, true);
 
 
 SkillTrackEvent SkillBaseState::calculateEvent() {
@@ -56,17 +81,17 @@ SkillTrackEvent SkillBaseState::calculateEvent() {
 		event = TWOWALL;
 	} else if (stable0lines) {
 		event = NOLINE_NOWALLS;
-	} else if (stable1lines || stable2lines || stable3lines){
+	} else if (stable1linesForBoth || stable2lines || stable3lines){
 		//hany vonal van todo
-		event = NONE;
-		if (stable2lines) {
+		if (stable1linesForBoth) {
+			event = NONE;
+		} else if (stable2lines) {
 			if (fal_jobb || fal_bal) {
 				event = STABIL2VONAL;
 			} else {
 				event = SZAGGATOTT2VONAL;
 			}
-		}
-		if (stable3lines) {
+		} else if (stable3lines) {
 			event = HAROMVONAL;
 		}
 
@@ -112,8 +137,11 @@ void KoztesState::update() {
 			skillStateContext.setState(&SkillBaseState::TorkFalakKozt);
 			break;
 		case KERESZT:
-					skillStateContext.setState(&SkillBaseState::skillStopped);
-					break;
+			skillStateContext.setState(&SkillBaseState::skillStopped);
+			break;
+		case SZAGGATOTT2VONAL:
+			skillStateContext.setState(&SkillBaseState::giroStart);
+			break;
 	}
 }
 
@@ -181,16 +209,71 @@ void EventBasedState::update() {
 }
 
 
-GiroState::GiroState() {
-	name = "giro";
+GiroState::GiroState(string stateName, SkillBaseState* nState, bool Z) {
+	name = stateName;
 	stateId = 4;
 	targetSpeed = 0;
 	distanceToMove = 0;
-	//nextState =
+	nextState = nState;
+	startAngle = 0;
+	started = false;
+	zAxis = Z;
 }
 
+extern bool giro_stopped;
+extern bool giro_fall;
 //ebbe kell, hogy mikor lépjen a következõ eventbe a girostate
 void GiroState::update() {
+	if (!started) {
+		giro_start_measurement();
+		started = true;
+	} else {
+		if (zAxis) {
+			bool turned = false;//checkTurning();
+			float angle = giro_get_angle_Z();
+			if ((angle < 135 && angle > 45) || (angle < -225 && angle > -315) ) {
+				if (giro_stopped) {
+					started = false;
+					skillStateContext.setState(this->nextState);
+				}
+
+			}
+		} else {
+			if (giro_fall) {
+				started = false;
+				skillStateContext.setState(this->nextState);
+			}
+
+		}
+	}
+}
+
+//Idore varo state
+TimeState::TimeState(string stateName,
+		SkillBaseState* nState,
+		int wait) {
+	name = stateName;
+	stateId = 5;
+	targetSpeed = 0;
+	distanceToMove = wait;
+	nextState = nState;
+	started = false;
+	triggerTime = 100000000000000;
+	startTime = 0;
+}
+
+//ebbe kell, hogy mikor lépjen a következõ eventbe a
+void TimeState::update() {
+	int currentTime = 0; //currentTime?
+	if (!started) {
+		startTime = currentTime;
+		triggerTime = startTime + distanceToMove;
+		started = true;
+	} else {
+		if (currentTime > triggerTime) {
+			skillStateContext.setState(this->nextState);
+		}
+	}
 
 }
 
@@ -229,7 +312,7 @@ void SkillStateContext::setState(SkillBaseState* newState) {
 }
 
 SkillStateContext::SkillStateContext() {
-	setState(&SkillBaseState::koztes);
+	setState(&SkillBaseState::libikoka);
 }
 
 void SkillBaseState::stop(SkillStateContext& context) {

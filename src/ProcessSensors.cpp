@@ -66,6 +66,8 @@ void wall_detection()
 	static int average_cntr = 0;
 	static int borda_cntr_j = 0;
 	static int borda_cntr_b = 0;
+	static int jArray_counter = 0;
+	static int bArray_counter = 0;
 
 	array_j[average_cntr] = Distance_sensors[3];
 	array_b[average_cntr] = Distance_sensors[2];
@@ -81,6 +83,10 @@ void wall_detection()
 	{
 		fal_jobb = true;
 		borda_cntr_j++;		// csak akkor nézzük a bordásságot, ha van fal
+		if (jArray_counter < num_samples_borda) {
+			jArray_counter++;
+		}
+
 	}else{
 		fal_jobb = false;
 		borda_cntr_j = 0;
@@ -89,6 +95,9 @@ void wall_detection()
 	{
 		fal_bal = true;
 		borda_cntr_b++;
+		if (bArray_counter < num_samples_borda) {
+			bArray_counter++;
+		}
 	}else{
 		fal_bal = false;
 		borda_cntr_b = 0;
@@ -107,30 +116,112 @@ void wall_detection()
 	borda_array_b[borda_cntr_b] = Distance_sensors[2];
 
 	//ha már 10 mintát vettünk falból
-	if(borda_cntr_j > 9)
+	if(jArray_counter > 9)
 	{
 		// borda_cntr elemig megnézzük az átlagtól való eltérést
-		if(average_difference(borda_array_j,borda_cntr_j+1) > 5)
+		int avDiff = average_difference(borda_array_j,jArray_counter);
+		//BT_send_msg(&avDiff, "speed");
+		if(avDiff > 5)
 		{
 			bordas_jobb = true;
 		}
-	}else{
+	}else if (!fal_jobb) {
 		bordas_jobb = false;	// amint eltûnik a fal, ez lesz
 	}
 
 
 	//ha már 10 mintát vettünk falból
-		if(borda_cntr_b > 9)
+		if(bArray_counter > 9)
 		{
 			// borda_cntr elemig megnézzük az átlagtól való eltérést
-			if(average_difference(borda_array_b,borda_cntr_b+1) > 5)
+			if(average_difference(borda_array_b,bArray_counter) > 5)
 			{
 				bordas_bal = true;
 			}
-		}else{
+		}else if (!fal_bal) {
 			bordas_bal = false;	// amint eltûnik a fal, ez lesz
 		}
 }
+
+extern int globalDistance;
+void wall_borda_detection() {
+	static int index = 0;
+
+	static int prevPos = globalDistance;
+	static int borda_array_j[20];
+	static int borda_array_b[20];
+	static bool checking = true;
+	static int arraySize = 20;
+
+	int distanceRight = 0;
+	int distanceLeft = 0;
+
+	if ((fal_jobb || fal_bal) && checking) {
+
+		int difference = globalDistance - prevPos;
+		int diffTreshold = 10;
+
+		if (difference > diffTreshold ){
+			distanceRight = Distance_sensors[3];
+			distanceLeft = Distance_sensors[2];
+			if (distanceRight < 200 && distanceLeft < 200) {
+				borda_array_j[index] = distanceRight;
+				borda_array_b[index] = distanceLeft;
+				prevPos = globalDistance;
+				index++;
+			}
+		}
+
+
+	} else {
+		index = 0;
+		checking = true;
+		//direction = UNDEFINED;
+	}
+
+	if (index == arraySize) {
+		//osThreadSuspend(SendRemoteVar_TaskHandle);
+		//int dirInt = -5;
+		int bordaTresholdMin = 5;
+		int bordaTresholdMax = 30;
+
+		int aveDiffRight = average_difference(borda_array_j, arraySize);
+		int aveDiffLeft = average_difference(borda_array_b, arraySize);
+
+		if ( aveDiffRight > bordaTresholdMin && aveDiffRight < bordaTresholdMax) {
+			direction = LEFT;
+		} else if ( aveDiffLeft > 8 && aveDiffLeft < bordaTresholdMax) {
+			direction = RIGHT;
+		} else {
+			direction = UNDEFINED;
+		}
+
+		/*
+		for (int i = 1; i < 20; i++) {
+
+			int differentJobb = borda_array_j[i] - borda_array_j[i-1];
+			int differentBal = borda_array_b[i] - borda_array_b[i-1];
+
+			if ( differentJobb > bordaTresholdMin && differentJobb < bordaTresholdMax) {
+				direction = LEFT;
+			} else if ( differentBal > 8 && differentBal < bordaTresholdMax) {
+				direction = RIGHT;
+			} else {
+				direction = UNDEFINED;
+			}
+			//BT_send_msg(&speed_global, "speed");
+			//BT_send_msg(&borda_array_b[i], "contBordArr");
+		}
+		//dirInt = direction;
+*/
+		//BT_send_msg(&dirInt, "dirInt");
+
+		checking = false;
+	}
+
+}
+
+
 
 // vonal pozíció, szám, szög számítása, treshold = hány %-al kisebb csúcs érvényes még
 LineState getLinePos(int treshold)

@@ -10,6 +10,9 @@
 
 #include <string>
 #include "ProcessSensors.h"
+#include "EnumsStructs.hpp"
+#include "giro.hpp"
+
 
 
 using namespace std;
@@ -25,6 +28,7 @@ class StateData;
 class KoztesState;
 class SkillStopState;
 class SkillStartState;
+class TimeState;
 
 class MovingState;
 class EventBasedState;
@@ -48,27 +52,11 @@ extern bool stable0lines;
 extern bool stable1lines;
 extern bool stable2lines;
 extern bool stable3lines;
+
+extern bool stable1linesForBoth;
+
 extern bool keresztvonal;
 
-enum Direction {
-	UNDEFINED,
-	RIGHT,
-	LEFT
-};
-extern Direction direction;
-
-enum SkillTrackEvent {
-	UNSTABLE,
-	NOLINE_NOWALLS,
-	NONE,
-	RADIOSTART,
-	TWOWALL,
-	KERESZT,
-	STABIL2VONAL,
-	SZAGGATOTT2VONAL,
-	HAROMVONAL
-
-};
 
 extern SkillTrackEvent currentState;
 
@@ -102,7 +90,32 @@ public:
 	static EventBasedState TorkVonalKereses;
 	static MovingState TorkVonalKereses2;
 
+	//Parkolas
+	static EventBasedState ParkEloremegy1; 	//masodik 2 falig
+	static MovingState ParkEloremegy2;		//kicsit még elõrébb?
+	static MovingState ParkTolatKanyar1;
+	static MovingState ParkTolatAtlo;
+	static MovingState ParkTolatKanyar2;
+	static MovingState ParkTolatEgyenesen;
+
+	static TimeState ParkVar;
+
+	static MovingState ParkKiKanyar1;
+	static EventBasedState ParkKiAtlo;
+	static EventBasedState ParkKiTeljesen;
+
+	//giro
+	static EventBasedState giroStart;
+	static EventBasedState giroFel;
+	static MovingState giroPark;
+
 	static GiroState giro;
+	static MovingState giroLejon;
+
+	//libikoka
+	static GiroState libikoka;
+	static MovingState libiLassu;
+
 
 	string name;
 	int stateId;
@@ -173,9 +186,24 @@ public:
 
 class GiroState : public SkillBaseState {
 public:
-	GiroState();
+	bool started;
+	float startAngle; //kell?
+	bool zAxis;
+
+	GiroState(string stateName, SkillBaseState* nState, bool Z);
 	virtual void update();
 	//~EventBasedState() {}
+};
+
+class TimeState : public SkillBaseState {
+public:
+	bool started;
+	int startTime;
+	int triggerTime;
+	TimeState(string stateName,
+			SkillBaseState* nState,
+			int wait);
+	virtual void update();
 };
 
 
