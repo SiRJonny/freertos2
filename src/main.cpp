@@ -868,8 +868,8 @@ void SteerControlTask()
 			if(speed_control < 0)
 			{
 				//speed_control *= 10;
-				if (speed_control > -120) {
-					speed_control = -120;
+				if (speed_control > -80) {
+					speed_control = -80;
 				}
 				if (last_speed_control < 0) {
 					//speed_control = 0;
