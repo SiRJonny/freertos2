@@ -136,6 +136,9 @@ void ReadSensors()
 	DisableMUX();
 
 
+	szenzorsor_1[7] = (szenzorsor_1[6] + szenzorsor_1[8])/2.0f;
+
+
 }
 
 
