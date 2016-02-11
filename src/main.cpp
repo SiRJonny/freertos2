@@ -620,39 +620,40 @@ void SendRemoteVarTask()
 
 
 		//minden ciklusban elküldi ezeket
-		//BT_send_msg(&speed_global, "speed");
+		BT_send_msg(&speed_global, "speed");
 		//BT_send_msg(&Distance_sensors[2], "contLeft");
 		//BT_send_msg(&Distance_sensors[3], "contRight");
-		BT_send_msg(&Distance_sensors[1], "FrontSensor");
+
 
 		//minden slowSendMultiplier ciklusban küldi el ezeket
 		if (sendRemoteCounter % slowSendMultiplier == 0) {
+			BT_send_msg(&Distance_sensors[1], "frontSensor");
 
+			dirInt = direction;
+			BT_send_msg(&dirInt, "dirInt");
 
 			//BT_send_msg(&timer, "tick:" + std::string(itoa(systick_count(),buffer,10)) + "\n");
 			//BT_send_msg(&timer, "radio:" + std::string(itoa(Radio_get_char(),buffer,10)) + "\n");
-			/*BT_send_msg(&speed_control, "control_speed");
+			BT_send_msg(&speed_control, "control_speed");
 			BT_send_msg(&globalDistance, "globalDist");
 			eventInt = stateData.event;
 			BT_send_msg(&eventInt, "eventInt");
 			BT_send_msg(&eventInt, "eInt");
-			dirInt = direction;
-			BT_send_msg(&dirInt, "dirInt");
+
 			//BT_send_msg(&index, "index");
 			//BT_send_msg(stable0lines, "stable0lines");
-			//BT_send_msg(stable1lines, "stable1lines");*/
+			//BT_send_msg(stable1lines, "stable1lines");
 
 
-			//BT_send_msg(&Distance_sensors[2], "left");
-			//BT_send_msg(&Distance_sensors[3], "right");
+			BT_send_msg(&Distance_sensors[2], "left");
+			BT_send_msg(&Distance_sensors[3], "right");
 
-			//BT_send_msg(bordas_bal, "bBordas");
-			//BT_send_msg(bordas_jobb, "jBordas");
-			//BT_send_msg(fal_bal, "bFal");
-			//BT_send_msg(fal_jobb, "jFal");
-			//BT_send_msg(&encoderPos, "encoder");
+			BT_send_msg(bordas_bal, "bBordas");
+			BT_send_msg(bordas_jobb, "jBordas");
+			BT_send_msg(fal_bal, "bFal");
+			BT_send_msg(fal_jobb, "jFal");
+			BT_send_msg(&encoderPos, "encoder");
 
-			//BT_send_msg(&bordas_bal, "bordasBal");
 
 			//BT_send_msg(&timer, "enc:" + std::string(itoa(encoderPos,buffer,10)) + "\n");
 
@@ -1209,7 +1210,7 @@ void getActiveLinePos(LineState * Lines, float *last_pos1, float *last_pos2, flo
 	else if(Lines->numLines1 == 2)		// elöl 2 vonal
 	{
 		//ha ügyességi
-		if(skillTrack)
+		if(skillTrack && stable2lines)
 		{
 			if(direction == LEFT)
 			{

@@ -105,7 +105,7 @@ SkillTrackEvent SkillBaseState::calculateEvent() {
 	}
 
 	if (event == lastEvent){
-		if (cntr > 5) {
+		if (cntr > 10) {
 			//cntr = 0;
 			return event;
 		} else {
