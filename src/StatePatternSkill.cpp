@@ -66,9 +66,9 @@ GiroState SkillBaseState::libikoka("libikoka", &SkillBaseState::libiLassu, false
 MovingState SkillBaseState::libiLassu("giroLejon", &SkillBaseState::skillStopped, 100, SKILLSLOW, 0, true);
 
 // határ
-MovingState SkillBaseState::hatarStart("hatarStart", &SkillBaseState::hatarWait, 150, SKILLSLOW, 0, true);
+MovingState SkillBaseState::hatarStart("hatarStart", &SkillBaseState::hatarWait, 250, SKILLSLOW, 0, true);
 HatarState SkillBaseState::hatarWait("hatarWait", &SkillBaseState::hatarMove);
-MovingState SkillBaseState::hatarMove("hatarMove", &SkillBaseState::skillStopped, 1500, SKILLSLOW, 0, true);
+MovingState SkillBaseState::hatarMove("hatarMove", &SkillBaseState::skillStopped, 2500, SKILLSLOW, 0, true);
 
 
 SkillTrackEvent SkillBaseState::calculateEvent() {
