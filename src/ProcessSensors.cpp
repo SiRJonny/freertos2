@@ -125,22 +125,24 @@ void wall_detection()
 		{
 			bordas_jobb = true;
 		}
-	}else if (!fal_jobb) {
+	}
+	if (!fal_jobb) {
 		bordas_jobb = false;	// amint eltûnik a fal, ez lesz
 	}
 
 
 	//ha már 10 mintát vettünk falból
-		if(bArray_counter > 9)
+	if(bArray_counter > 9)
+	{
+		// borda_cntr elemig megnézzük az átlagtól való eltérést
+		if(average_difference(borda_array_b,bArray_counter) > 5)
 		{
-			// borda_cntr elemig megnézzük az átlagtól való eltérést
-			if(average_difference(borda_array_b,bArray_counter) > 5)
-			{
-				bordas_bal = true;
-			}
-		}else if (!fal_bal) {
-			bordas_bal = false;	// amint eltûnik a fal, ez lesz
+			bordas_bal = true;
 		}
+	}
+	if (!fal_bal) {
+		bordas_bal = false;	// amint eltûnik a fal, ez lesz
+	}
 }
 
 extern int globalDistance;
@@ -173,7 +175,7 @@ void wall_borda_detection() {
 		}
 
 
-	} else {
+	} else if (!(fal_jobb || fal_bal)){
 		index = 0;
 		checking = true;
 		//direction = UNDEFINED;
@@ -190,7 +192,7 @@ void wall_borda_detection() {
 
 		if ( aveDiffRight > bordaTresholdMin && aveDiffRight < bordaTresholdMax) {
 			direction = LEFT;
-		} else if ( aveDiffLeft > 8 && aveDiffLeft < bordaTresholdMax) {
+		} else if ( aveDiffLeft > bordaTresholdMin && aveDiffLeft < bordaTresholdMax) {
 			direction = RIGHT;
 		} else {
 			direction = UNDEFINED;

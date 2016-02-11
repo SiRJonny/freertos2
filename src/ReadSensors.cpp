@@ -165,7 +165,7 @@ void ReadSensors()
 	HAL_TIM_Base_Stop_IT(&htim6);
 	DisableMUX();
 
-
+	szenzorsor_1[7] = (szenzorsor_1[6] + szenzorsor_1[8])/2.0f;
 }
 
 

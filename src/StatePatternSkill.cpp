@@ -39,12 +39,12 @@ EventBasedState SkillBaseState::TorkVonalKereses("Tork3", &SkillBaseState::TorkV
 MovingState SkillBaseState::TorkVonalKereses2("Tork4", &SkillBaseState::koztes, 1000, SKILLSLOW, 0, true);
 
 //Parkol
-EventBasedState SkillBaseState::ParkEloremegy1("P1Elore", &SkillBaseState::ParkEloremegy2, 2000, SKILLSLOW, 0, true, TWOWALL);
-MovingState SkillBaseState::ParkEloremegy2("P2Elore", &SkillBaseState::ParkTolatKanyar1, 100, SKILLSLOW, 0, true);
-MovingState SkillBaseState::ParkTolatKanyar1("P3Tolat", &SkillBaseState::ParkTolatAtlo, 500, SKILLSLOW, 500, false);
-MovingState SkillBaseState::ParkTolatAtlo("P4Tolat", &SkillBaseState::ParkTolatKanyar2, 500, SKILLSLOW, 0, false);
-MovingState SkillBaseState::ParkTolatKanyar2("P5Tolat", &SkillBaseState::ParkTolatEgyenesen, 500, SKILLSLOW, -500, false);
-MovingState SkillBaseState::ParkTolatEgyenesen("P6Tolat", &SkillBaseState::ParkVar, 750, SKILLSLOW, 0, false);
+EventBasedState SkillBaseState::ParkEloremegy1("P1Elore", &SkillBaseState::ParkEloremegy2, 1500, SKILLSLOW, 0, true, TWOWALL);
+MovingState SkillBaseState::ParkEloremegy2("P2Elore", &SkillBaseState::ParkTolatKanyar1, 300, SKILLSLOW, 0, true);
+MovingState SkillBaseState::ParkTolatKanyar1("P3Tolat", &SkillBaseState::ParkTolatKanyar2, -700, -SKILLSLOW, -500, false);
+MovingState SkillBaseState::ParkTolatAtlo("P4Tolat", &SkillBaseState::ParkTolatKanyar2, -10, -SKILLSLOW, 0, false);
+MovingState SkillBaseState::ParkTolatKanyar2("P5Tolat", &SkillBaseState::ParkTolatEgyenesen, -700, -SKILLSLOW, 500, false);
+MovingState SkillBaseState::ParkTolatEgyenesen("P6Tolat", &SkillBaseState::ParkVar, 750, -SKILLSLOW, 0, false);
 
 TimeState SkillBaseState::ParkVar("PVar", &SkillBaseState::ParkKiKanyar1, 100);
 
@@ -63,7 +63,7 @@ MovingState SkillBaseState::giroLejon("giroLejon", &SkillBaseState::skillStopped
 
 //libikoka
 GiroState SkillBaseState::libikoka("libikoka", &SkillBaseState::libiLassu, false);
-MovingState SkillBaseState::libiLassu("giroLejon", &SkillBaseState::skillStopped, 100, SKILLSLOW, 0, true);
+MovingState SkillBaseState::libiLassu("libiLassu", &SkillBaseState::skillStopped, 100, SKILLSLOW, 0, true);
 
 // határ
 MovingState SkillBaseState::hatarStart("hatarStart", &SkillBaseState::hatarWait, 250, SKILLSLOW, 0, true);
@@ -149,6 +149,9 @@ void KoztesState::update() {
 			break;
 		case HAROMVONAL:
 			skillStateContext.setState(&SkillBaseState::hatarStart);
+			break;
+		case TWOWALL:
+			skillStateContext.setState(&SkillBaseState::ParkEloremegy1);
 			break;
 	}
 }
