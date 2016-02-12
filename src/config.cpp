@@ -112,8 +112,9 @@ int timer = 0; // idõméréshez
 bool skillTrack = true;
 Direction direction = UNDEFINED;
 SkillTrackEvent currentState = NONE;
+bool checkDirection = true;
 
 int stopped = 0;
 
-int timerCounter = 0;
+int timeCounter = 0;
 

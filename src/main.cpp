@@ -533,6 +533,7 @@ void BTReceiveTask()
 			case 0:
 				//SET_SPEED = 0;
 				//state_struct.state = -1;
+				skillStateContext.setState(&SkillBaseState::skillStopped);
 				stateContext.stop();
 				stopped = 1;
 				HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
@@ -601,6 +602,12 @@ void BT_send_msgFloat(float data, string s) {
 	BT_send_msg(&dataFloat, s);
 }
 
+void BT_send_msgInt(int data, string s) {
+	static int dataInt;
+	dataInt = data;
+	BT_send_msg(&dataInt, s);
+}
+
 void SendRemoteVarTask()
 {
 	int sendRemoteCounter = 0;
@@ -643,7 +650,7 @@ void SendRemoteVarTask()
 			//BT_send_msg(&index, "index");
 			//BT_send_msg(stable0lines, "stable0lines");
 			//BT_send_msg(stable1lines, "stable1lines");
-
+			BT_send_msgInt(skillStateContext.state->triggerGlobalDistance, "trigDist");
 
 			BT_send_msg(&Distance_sensors[2], "left");
 			BT_send_msg(&Distance_sensors[3], "right");
@@ -653,6 +660,8 @@ void SendRemoteVarTask()
 			BT_send_msg(fal_bal, "bFal");
 			BT_send_msg(fal_jobb, "jFal");
 			BT_send_msg(&encoderPos, "encoder");
+			BT_send_msg(checkDirection, "checkDir");
+
 
 
 			//BT_send_msg(&timer, "enc:" + std::string(itoa(encoderPos,buffer,10)) + "\n");
@@ -832,7 +841,7 @@ void SteerControlTask()
 	{
 
 		//__HAL_TIM_SET_COUNTER(&htim5,0);
-		timerCounter++;
+		timeCounter++;
 
 
 		// sebesség mérés
@@ -866,7 +875,7 @@ void SteerControlTask()
 
 			// negatív irányt megerõsíteni	// motor bekötéstõl függ!!!
 
-			if(speed_control < 0)
+			if(speed_control < 0 && !skillTrack)
 			{
 				//speed_control *= 10;
 				if (speed_control > -80) {
@@ -941,6 +950,7 @@ void SteerControlTask()
 			usePD = false;
 			SET_SPEED = skillStateContext.state->targetSpeed;
 			steeringControl = skillStateContext.state->steeringControlled;
+			checkDirection = skillStateContext.state->chkDir;
 		}else {
 			steeringControl = true;
 			stateContext.update(stable3lines, encoderPos);
@@ -1001,14 +1011,18 @@ void SteerControlTask()
 				}
 			}
 		} else {
-
-			if (direction == RIGHT) {
-				stAngle = skillStateContext.state->steeringAngle;
-			} else if (direction == LEFT) {
-				stAngle = skillStateContext.state->steeringAngle*(-1);
+			if (checkDirection) {
+				if (direction == RIGHT) {
+					stAngle = skillStateContext.state->steeringAngle;
+				} else if (direction == LEFT) {
+					stAngle = skillStateContext.state->steeringAngle*(-1);
+				} else {
+					stAngle = skillStateContext.state->steeringAngle;
+				}
 			} else {
 				stAngle = skillStateContext.state->steeringAngle;
 			}
+
 
 			SetServo_steering(stAngle);
 		}

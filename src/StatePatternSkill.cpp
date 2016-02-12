@@ -17,7 +17,8 @@ MovingState(string stateName,
 			int howMuchToMove,
 			float tSpeed,
 			float angle,
-			bool controlSteer);
+			bool controlSteer,
+			bool checkDir);
 
 EventBasedState(string stateName,
 			SkillBaseState* nState,
@@ -25,50 +26,52 @@ EventBasedState(string stateName,
 			float tSpeed,
 			float angle,
 			bool controlSteer,
-			SkillTrackEvent targetEvent);
+			SkillTrackEvent targetEvent,
+			bool checkDir);
 			*/
 
-MovingState SkillBaseState::parkolasTolat1("park1", &SkillBaseState::parkolasTolat2, 3000, 0, 2, false);
-MovingState SkillBaseState::parkolasTolat2("park2", &SkillBaseState::skillStopped, 3000, 0, 2, false);
+//Teszt
+MovingState SkillBaseState::tolatTeszt("tolat", &SkillBaseState::eloreTeszt, -750, -SKILLSLOW, 0, false, true);
+MovingState SkillBaseState::eloreTeszt("elore", &SkillBaseState::tolatTeszt, 750, SKILLSLOW, 0, false, true);
 
 
 //Torkolat
-EventBasedState SkillBaseState::TorkFalakKozt("Tork1", &SkillBaseState::TorkFalakElhagyva, 300, SKILLSLOW, 0, false, NOLINE_NOWALLS);
-MovingState SkillBaseState::TorkFalakElhagyva("Tork2", &SkillBaseState::TorkVonalKereses, 750, SKILLSLOW, 500, false);
-EventBasedState SkillBaseState::TorkVonalKereses("Tork3", &SkillBaseState::TorkVonalKereses2, 0, SKILLSLOW, 0, false, NONE);
-MovingState SkillBaseState::TorkVonalKereses2("Tork4", &SkillBaseState::koztes, 1000, SKILLSLOW, 0, true);
+EventBasedState SkillBaseState::TorkFalakKozt("Tork1", &SkillBaseState::TorkFalakElhagyva, 300, SKILLSLOW, 0, false, NOLINE_NOWALLS, true);
+MovingState SkillBaseState::TorkFalakElhagyva("Tork2", &SkillBaseState::TorkVonalKereses, 750, SKILLSLOW, 500, false, true);
+EventBasedState SkillBaseState::TorkVonalKereses("Tork3", &SkillBaseState::TorkVonalKereses2, 0, SKILLSLOW, 0, false, NONE, true);
+MovingState SkillBaseState::TorkVonalKereses2("Tork4", &SkillBaseState::koztes, 1000, SKILLSLOW, 0, true, true);
 
 //Parkol
-EventBasedState SkillBaseState::ParkEloremegy1("P1Elore", &SkillBaseState::ParkEloremegy2, 1500, SKILLSLOW, 0, true, TWOWALL);
-MovingState SkillBaseState::ParkEloremegy2("P2Elore", &SkillBaseState::ParkTolatKanyar1, 300, SKILLSLOW, 0, true);
-MovingState SkillBaseState::ParkTolatKanyar1("P3Tolat", &SkillBaseState::ParkTolatKanyar2, -700, -SKILLSLOW, -500, false);
-MovingState SkillBaseState::ParkTolatAtlo("P4Tolat", &SkillBaseState::ParkTolatKanyar2, -10, -SKILLSLOW, 0, false);
-MovingState SkillBaseState::ParkTolatKanyar2("P5Tolat", &SkillBaseState::ParkTolatEgyenesen, -700, -SKILLSLOW, 500, false);
-MovingState SkillBaseState::ParkTolatEgyenesen("P6Tolat", &SkillBaseState::ParkVar, 750, -SKILLSLOW, 0, false);
+EventBasedState SkillBaseState::ParkEloremegy1("P1Elore", &SkillBaseState::ParkEloremegy2, 1500, SKILLSLOW, 0, true, TWOWALL, false);
+MovingState SkillBaseState::ParkEloremegy2("P2Elore", &SkillBaseState::ParkTolatKanyar1, 420, SKILLSLOW, 0, true, false);
+MovingState SkillBaseState::ParkTolatKanyar1("P3Tolat", &SkillBaseState::ParkTolatKanyar2, -710, -SKILLSLOW, 500, false, false);
+MovingState SkillBaseState::ParkTolatAtlo("P4Tolat", &SkillBaseState::ParkTolatKanyar2, -50, -SKILLSLOW, 0, false, false);
+MovingState SkillBaseState::ParkTolatKanyar2("P5Tolat", &SkillBaseState::ParkTolatEgyenesen, -710, -SKILLSLOW, -500, false, false);
+MovingState SkillBaseState::ParkTolatEgyenesen("P6Tolat", &SkillBaseState::ParkVar, -60, -SKILLSLOW, 0, false, false);
 
-TimeState SkillBaseState::ParkVar("PVar", &SkillBaseState::ParkKiKanyar1, 100);
+TimeState SkillBaseState::ParkVar("PVar", &SkillBaseState::ParkKiKanyar1, 200);
 
-MovingState SkillBaseState::ParkKiKanyar1("P7Elore", &SkillBaseState::ParkKiAtlo, 750, SKILLSLOW, -500, false);
-EventBasedState SkillBaseState::ParkKiAtlo("P8Elore", &SkillBaseState::ParkKiTeljesen, 0, SKILLSLOW, 0, false, NONE);
-EventBasedState SkillBaseState::ParkKiTeljesen("P9Ki", &SkillBaseState::koztes, 2000, SKILLSLOW, 0, true, NOLINE_NOWALLS);
+MovingState SkillBaseState::ParkKiKanyar1("P7Elore", &SkillBaseState::ParkKiAtlo, 500, SKILLSLOW, -500, false, false);
+EventBasedState SkillBaseState::ParkKiAtlo("P8Elore", &SkillBaseState::ParkKiTeljesen, 0, SKILLSLOW, 0, false, NONE, false);
+EventBasedState SkillBaseState::ParkKiTeljesen("P9Ki", &SkillBaseState::skillStopped, 300, SKILLSLOW, 0, true, NONE, false);
 
 //giro
-EventBasedState SkillBaseState::giroStart("giroStart", &SkillBaseState::giroFel, 0, SKILLSLOW, 0, true, KERESZT);
-EventBasedState SkillBaseState::giroFel("giroFel", &SkillBaseState::giroPark, 200, SKILLSLOW, 0, true, KERESZT);
-MovingState SkillBaseState::giroPark("giroPark", &SkillBaseState::giro, 100, SKILLSLOW, 0, true);
+EventBasedState SkillBaseState::giroStart("giroStart", &SkillBaseState::giroFel, 0, SKILLSLOW, 0, true, KERESZT, true);
+EventBasedState SkillBaseState::giroFel("giroFel", &SkillBaseState::giroPark, 200, SKILLSLOW, 0, true, KERESZT, true);
+MovingState SkillBaseState::giroPark("giroPark", &SkillBaseState::giro, 100, SKILLSLOW, 0, true, true);
 
 GiroState SkillBaseState::giro("Giro", &SkillBaseState::giroLejon, true);
-MovingState SkillBaseState::giroLejon("giroLejon", &SkillBaseState::skillStopped, 2000, SKILLSLOW, 0, true);
+MovingState SkillBaseState::giroLejon("giroLejon", &SkillBaseState::skillStopped, 2000, SKILLSLOW, 0, true, true);
 
 
 //libikoka
 GiroState SkillBaseState::libikoka("libikoka", &SkillBaseState::libiLassu, false);
-MovingState SkillBaseState::libiLassu("libiLassu", &SkillBaseState::skillStopped, 100, SKILLSLOW, 0, true);
+MovingState SkillBaseState::libiLassu("libiLassu", &SkillBaseState::skillStopped, 100, SKILLSLOW, 0, true, true);
 
 // határ
-MovingState SkillBaseState::hatarStart("hatarStart", &SkillBaseState::hatarWait, 250, SKILLSLOW, 0, true);
+MovingState SkillBaseState::hatarStart("hatarStart", &SkillBaseState::hatarWait, 250, SKILLSLOW, 0, true, true);
 HatarState SkillBaseState::hatarWait("hatarWait", &SkillBaseState::hatarMove);
-MovingState SkillBaseState::hatarMove("hatarMove", &SkillBaseState::skillStopped, 2500, SKILLSLOW, 0, true);
+MovingState SkillBaseState::hatarMove("hatarMove", &SkillBaseState::skillStopped, 2500, SKILLSLOW, 0, true, true);
 
 
 SkillTrackEvent SkillBaseState::calculateEvent() {
@@ -131,6 +134,7 @@ KoztesState::KoztesState() {
 	distanceToMove = 0;
 	steeringAngle = 1;
 	steeringControlled = true;
+	chkDir = true;
 }
 
 //TODO switch caset feltölteni, melyik eventre melyi kakadály állapotba lépjen
@@ -162,7 +166,8 @@ MovingState::MovingState(string stateName,
 		int howMuchToMove,
 		float tSpeed,
 		int angle,
-		bool controlSteer) {
+		bool controlSteer,
+		bool checkDir) {
 	name = stateName;
 	stateId = 2;
 	targetSpeed = tSpeed;
@@ -170,6 +175,7 @@ MovingState::MovingState(string stateName,
 	steeringAngle = angle;
 	steeringControlled = controlSteer;
 	nextState = nState;
+	chkDir = checkDir;
 }
 
 void MovingState::update() {
@@ -191,7 +197,8 @@ EventBasedState::EventBasedState(string stateName,
 		float tSpeed,
 		int angle,
 		bool controlSteer,
-		SkillTrackEvent targetEvent) {
+		SkillTrackEvent targetEvent,
+		bool checkDir) {
 	name = stateName;
 	stateId = 3;
 	targetSpeed = tSpeed;
@@ -200,6 +207,7 @@ EventBasedState::EventBasedState(string stateName,
 	steeringControlled = controlSteer;
 	nextState = nState;
 	triggerEvent = targetEvent;
+	chkDir = checkDir;
 }
 
 void EventBasedState::update() {
@@ -229,6 +237,7 @@ GiroState::GiroState(string stateName, SkillBaseState* nState, bool Z) {
 	startAngle = 0;
 	started = false;
 	zAxis = Z;
+	chkDir = true;
 }
 
 extern bool giro_stopped;
@@ -273,16 +282,19 @@ TimeState::TimeState(string stateName,
 	started = false;
 	triggerTime = 100000000;
 	startTime = 0;
+	chkDir = false;
 }
 
+
+extern int timeCounter;
 //ebbe kell, hogy mikor lépjen a következõ eventbe a
 void TimeState::update() {
 	if (!started) {
-		startTime = timerCounter;
+		startTime = timeCounter;
 		triggerTime = startTime + distanceToMove;
 		started = true;
 	} else {
-		if (timerCounter > triggerTime) {
+		if (timeCounter > triggerTime) {
 			skillStateContext.setState(this->nextState);
 		}
 	}
@@ -297,6 +309,7 @@ HatarState::HatarState(string stateName,
 	targetSpeed = 0;
 	distanceToMove = 0;
 	nextState = nState;
+	chkDir = true;
 }
 
 //ebbe kell, hogy mikor lépjen a következõ eventbe a
@@ -317,6 +330,7 @@ SkillStopState::SkillStopState() {
 	name = "stop";
 	stateId = -1;
 	targetSpeed = 0;
+	chkDir = true;
 }
 
 void SkillStopState::update(){
@@ -328,6 +342,7 @@ SkillStartState::SkillStartState() {
 	name = "start";
 	stateId = 0;
 	targetSpeed = 0;
+	chkDir = true;
 }
 
 void SkillStartState::update(){

@@ -58,7 +58,7 @@ extern bool stable3lines;
 extern bool stable1linesForBoth;
 
 extern bool keresztvonal;
-
+extern bool checkDirection;
 
 extern SkillTrackEvent currentState;
 
@@ -83,8 +83,8 @@ public:
 	static SkillStartState skillStarted;
 	static KoztesState koztes;
 
-	static MovingState parkolasTolat1;
-	static MovingState parkolasTolat2;
+	static MovingState tolatTeszt;
+	static MovingState eloreTeszt;
 
 	//Torkolat
 	static EventBasedState TorkFalakKozt;
@@ -129,6 +129,7 @@ public:
 	string name;
 	int stateId;
 	float targetSpeed;
+	bool chkDir;
 
 	bool steeringControlled;
 
@@ -175,7 +176,8 @@ public:
 			int howMuchToMove,
 			float tSpeed,
 			int angle,
-			bool controlSteer);
+			bool controlSteer,
+			bool checkDir);
 	virtual void update();
 	//~MovingState() {}
 };
@@ -188,7 +190,8 @@ public:
 			float tSpeed,
 			int angle,
 			bool controlSteer,
-			SkillTrackEvent targetEvent);
+			SkillTrackEvent targetEvent,
+			bool checkDir);
 	virtual void update();
 	//~EventBasedState() {}
 };

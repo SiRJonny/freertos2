@@ -116,6 +116,7 @@ extern StateData stateData;
 
 extern Direction direction;
 extern SkillTrackEvent currentState;
+extern bool checkDirection;
 
 extern int timeCounter;
 
