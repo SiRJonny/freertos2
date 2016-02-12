@@ -55,6 +55,8 @@ extern float giro_accu_X;
 extern float giro_accu_Z;
 extern bool giro_stopped;
 extern bool giro_fall;
+extern bool giro_lejto;
+extern bool giro_emelkedo;
 
 extern bool fal_bal;
 extern bool fal_jobb;

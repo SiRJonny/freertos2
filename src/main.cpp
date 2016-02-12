@@ -634,7 +634,7 @@ void SendRemoteVarTask()
 
 		//minden slowSendMultiplier ciklusban küldi el ezeket
 		if (sendRemoteCounter % slowSendMultiplier == 0) {
-			BT_send_msg(&Distance_sensors[1], "frontSensor");
+			//BT_send_msg(&Distance_sensors[1], "frontSensor");
 
 			dirInt = direction;
 			BT_send_msg(&dirInt, "dirInt");
@@ -662,6 +662,10 @@ void SendRemoteVarTask()
 			BT_send_msg(&encoderPos, "encoder");
 			BT_send_msg(checkDirection, "checkDir");
 
+			BT_send_msg(giro_fall, "fall");
+			BT_send_msg(giro_lejto, "lejto");
+			BT_send_msg(giro_emelkedo, "emelked");
+			BT_send_msgFloat(giro_get_angle_Y(), "lejtSzog");
 
 
 			//BT_send_msg(&timer, "enc:" + std::string(itoa(encoderPos,buffer,10)) + "\n");

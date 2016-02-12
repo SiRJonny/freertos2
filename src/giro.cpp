@@ -17,6 +17,8 @@ extern float giro_accu_Y;
 extern float giro_accu_Z;
 extern bool giro_stopped;
 extern bool giro_fall;
+extern bool giro_lejto;
+extern bool giro_emelkedo;
 
 uint8_t data;
 uint8_t temp;
@@ -54,6 +56,36 @@ void giro_integrate()
 	giro_accu_Z += giro_Z-giro_drift_Z;
 	set_giro_stopped(giro_Z);
 	set_giro_fall(giro_Y);
+	set_giro_lejto(giro_accu_Y/10000.0f);
+}
+
+void set_giro_lejto(float Y)
+{
+	static float array_Y[5];
+	static int cntr = 0;
+
+	array_Y[cntr] = Y;
+	cntr++;
+	if(cntr >= 5)
+	{
+		cntr = 0;
+	}
+	giro_lejto = true;
+	giro_emelkedo = true;
+	for(int i=0; i<5; i++)
+	{
+		if(array_Y[i] > -10)
+		{
+			giro_lejto = false;
+
+		}
+		if(array_Y[i] < 10)
+		{
+			giro_emelkedo = false;
+
+		}
+	}
+
 }
 
 void set_giro_fall(float Y)

@@ -53,25 +53,36 @@ TimeState SkillBaseState::ParkVar("PVar", &SkillBaseState::ParkKiKanyar1, 200);
 
 MovingState SkillBaseState::ParkKiKanyar1("P7Elore", &SkillBaseState::ParkKiAtlo, 500, SKILLSLOW, -500, false, false);
 EventBasedState SkillBaseState::ParkKiAtlo("P8Elore", &SkillBaseState::ParkKiTeljesen, 0, SKILLSLOW, 0, false, NONE, false);
-EventBasedState SkillBaseState::ParkKiTeljesen("P9Ki", &SkillBaseState::skillStopped, 300, SKILLSLOW, 0, true, NONE, false);
+EventBasedState SkillBaseState::ParkKiTeljesen("P9Ki", &SkillBaseState::koztes, 300, SKILLSLOW, 0, true, NONE, false);
 
 //giro
 EventBasedState SkillBaseState::giroStart("giroStart", &SkillBaseState::giroFel, 0, SKILLSLOW, 0, true, KERESZT, true);
 EventBasedState SkillBaseState::giroFel("giroFel", &SkillBaseState::giroPark, 200, SKILLSLOW, 0, true, KERESZT, true);
 MovingState SkillBaseState::giroPark("giroPark", &SkillBaseState::giro, 100, SKILLSLOW, 0, true, true);
 
-GiroState SkillBaseState::giro("Giro", &SkillBaseState::giroLejon, true);
+GiroState SkillBaseState::giro("Giro", &SkillBaseState::giroLejon, true, 0);
 MovingState SkillBaseState::giroLejon("giroLejon", &SkillBaseState::skillStopped, 2000, SKILLSLOW, 0, true, true);
 
 
-//libikoka
-GiroState SkillBaseState::libikoka("libikoka", &SkillBaseState::libiLassu, false);
-MovingState SkillBaseState::libiLassu("libiLassu", &SkillBaseState::skillStopped, 100, SKILLSLOW, 0, true, true);
 
 // határ
-MovingState SkillBaseState::hatarStart("hatarStart", &SkillBaseState::hatarWait, 250, SKILLSLOW, 0, true, true);
+MovingState SkillBaseState::hatarStart("hatarStart", &SkillBaseState::hatarWait, 200, SKILLSLOW, 0, true, true);
 HatarState SkillBaseState::hatarWait("hatarWait", &SkillBaseState::hatarMove);
-MovingState SkillBaseState::hatarMove("hatarMove", &SkillBaseState::skillStopped, 2500, SKILLSLOW, 0, true, true);
+MovingState SkillBaseState::hatarMove("hatarMove", &SkillBaseState::emelkedo_elott, 2500, SKILLSLOW, 0, true, true);
+
+//libikoka
+
+EventBasedState SkillBaseState::emelkedo_elott("emelElott", &SkillBaseState::emelkedo, 100, SKILLSLOW, 0, true, EMELKEDO, true);
+
+EventBasedState SkillBaseState::emelkedo("libEmel", &SkillBaseState::libiStop, 200, SKILLSLOW, 0, true, NONE, true);
+TimeState SkillBaseState::libiStop("libiStop", &SkillBaseState::lejto, 300);
+
+EventBasedState SkillBaseState::lejto("libLejt", &SkillBaseState::libiLassu, 200, SKILLSLOW, 0, true, SZAGGATOTT2VONAL, true);
+MovingState SkillBaseState::libiLassu("libiLassu", &SkillBaseState::koztes, 500, SKILLSLOW, 0, true, true);
+
+
+MovingState SkillBaseState::libiStart("libiStart", &SkillBaseState::emelkedo, 1000, SKILLSLOW, 0, true, true);
+GiroState SkillBaseState::libikoka("libikoka", &SkillBaseState::libiStop, false, SKILLSLOW);
 
 
 SkillTrackEvent SkillBaseState::calculateEvent() {
@@ -92,7 +103,9 @@ SkillTrackEvent SkillBaseState::calculateEvent() {
 	} else if (stable1linesForBoth || stable2lines || stable3lines){
 		//hany vonal van todo
 		if (stable1linesForBoth) {
-			event = NONE;
+				event = NONE;
+
+
 		} else if (stable2lines) {
 			if (fal_jobb || fal_bal) {
 				event = STABIL2VONAL;
@@ -228,10 +241,10 @@ void EventBasedState::update() {
 }
 
 
-GiroState::GiroState(string stateName, SkillBaseState* nState, bool Z) {
+GiroState::GiroState(string stateName, SkillBaseState* nState, bool Z, float tarSpeed) {
 	name = stateName;
 	stateId = 4;
-	targetSpeed = 0;
+	targetSpeed = tarSpeed;
 	distanceToMove = 0;
 	nextState = nState;
 	startAngle = 0;
@@ -240,9 +253,7 @@ GiroState::GiroState(string stateName, SkillBaseState* nState, bool Z) {
 	chkDir = true;
 }
 
-extern bool giro_stopped;
-extern bool giro_fall;
-extern bool giro_downAngle;
+
 //ebbe kell, hogy mikor lépjen a következõ eventbe a girostate
 void GiroState::update() {
 	if (!started) {
@@ -260,8 +271,7 @@ void GiroState::update() {
 
 			}
 		} else {
-			float angle = giro_get_angle_Y();
-			if (angle < -10) {
+			if (giro_fall) {
 				started = false;
 				skillStateContext.setState(this->nextState);
 			}

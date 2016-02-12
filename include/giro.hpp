@@ -21,6 +21,7 @@ void giro_start_measurement();
 void giro_integrate();
 void set_giro_stopped(float Z);
 void set_giro_fall(float Y);
+void set_giro_lejto(float Y);
 
 void giro_init();
 int giro_read_channel(int channel);

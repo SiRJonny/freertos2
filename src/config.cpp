@@ -53,6 +53,8 @@ float giro_accu_Y;
 float giro_accu_Z;
 bool giro_stopped = true;
 bool giro_fall = false;
+bool giro_lejto = false;
+bool giro_emelkedo = false;
 
 bool fal_bal = false;
 bool fal_jobb = false;

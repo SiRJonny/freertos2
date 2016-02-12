@@ -62,6 +62,10 @@ extern bool checkDirection;
 
 extern SkillTrackEvent currentState;
 
+extern bool giro_stopped;
+extern bool giro_lejto;
+extern bool giro_fall;
+extern bool giro_emelkedo;
 
 
 class StateData {
@@ -115,8 +119,14 @@ public:
 	static MovingState giroLejon;
 
 	//libikoka
+	static MovingState libiStart;
 	static GiroState libikoka;
+	static TimeState libiStop;
 	static MovingState libiLassu;
+
+	static EventBasedState emelkedo_elott;
+	static EventBasedState emelkedo;
+	static EventBasedState lejto;
 
 	//határ
 	static MovingState hatarStart;
@@ -202,7 +212,7 @@ public:
 	float startAngle; //kell?
 	bool zAxis;
 
-	GiroState(string stateName, SkillBaseState* nState, bool Z);
+	GiroState(string stateName, SkillBaseState* nState, bool Z, float tarSpeed);
 	virtual void update();
 	//~EventBasedState() {}
 };
