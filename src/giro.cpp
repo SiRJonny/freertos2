@@ -79,6 +79,7 @@ void set_giro_fall(float Y)
 	giro_fall = true;
 }
 
+
 void set_giro_stopped(float Z)
 {
 	static float array_Z[5];

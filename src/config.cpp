@@ -114,3 +114,6 @@ Direction direction = UNDEFINED;
 SkillTrackEvent currentState = NONE;
 
 int stopped = 0;
+
+int timerCounter = 0;
+

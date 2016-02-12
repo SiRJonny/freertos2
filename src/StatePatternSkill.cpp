@@ -233,6 +233,7 @@ GiroState::GiroState(string stateName, SkillBaseState* nState, bool Z) {
 
 extern bool giro_stopped;
 extern bool giro_fall;
+extern bool giro_downAngle;
 //ebbe kell, hogy mikor lépjen a következõ eventbe a girostate
 void GiroState::update() {
 	if (!started) {
@@ -240,7 +241,7 @@ void GiroState::update() {
 		started = true;
 	} else {
 		if (zAxis) {
-			bool turned = false;//checkTurning();
+
 			float angle = giro_get_angle_Z();
 			if ((angle < 135 && angle > 45) || (angle < -225 && angle > -315) ) {
 				if (giro_stopped) {
@@ -250,7 +251,8 @@ void GiroState::update() {
 
 			}
 		} else {
-			if (giro_fall) {
+			float angle = giro_get_angle_Y();
+			if (angle < -10) {
 				started = false;
 				skillStateContext.setState(this->nextState);
 			}
@@ -269,19 +271,18 @@ TimeState::TimeState(string stateName,
 	distanceToMove = wait;
 	nextState = nState;
 	started = false;
-	triggerTime = 100000000000000;
+	triggerTime = 100000000;
 	startTime = 0;
 }
 
 //ebbe kell, hogy mikor lépjen a következõ eventbe a
 void TimeState::update() {
-	int currentTime = 0; //currentTime?
 	if (!started) {
-		startTime = currentTime;
+		startTime = timerCounter;
 		triggerTime = startTime + distanceToMove;
 		started = true;
 	} else {
-		if (currentTime > triggerTime) {
+		if (timerCounter > triggerTime) {
 			skillStateContext.setState(this->nextState);
 		}
 	}

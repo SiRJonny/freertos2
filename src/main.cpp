@@ -832,7 +832,7 @@ void SteerControlTask()
 	{
 
 		//__HAL_TIM_SET_COUNTER(&htim5,0);
-
+		timerCounter++;
 
 
 		// sebesség mérés

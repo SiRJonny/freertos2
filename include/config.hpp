@@ -117,4 +117,6 @@ extern StateData stateData;
 extern Direction direction;
 extern SkillTrackEvent currentState;
 
+extern int timeCounter;
+
 #endif /* CONFIG_H_ */
