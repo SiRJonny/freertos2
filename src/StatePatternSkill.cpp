@@ -161,6 +161,9 @@ void KoztesState::update() {
 		case SZAGGATOTT2VONAL:
 			skillStateContext.setState(&SkillBaseState::giroStart);
 			break;
+		case STABIL2VONAL:
+			skillStateContext.setState(&SkillBaseState::lerakoStart);
+			break;
 		case HAROMVONAL:
 			skillStateContext.setState(&SkillBaseState::hatarStart);
 			break;
@@ -342,6 +345,7 @@ LibiState::LibiState(string stateName,
 	distanceToMove = 0;
 	nextState = nState1;
 	nextState2 = nState2;
+	steeringControlled = true;
 	chkDir = true;
 }
 
