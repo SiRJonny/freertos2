@@ -63,26 +63,23 @@ MovingState SkillBaseState::giroPark("giroPark", &SkillBaseState::giro, 100, SKI
 GiroState SkillBaseState::giro("Giro", &SkillBaseState::giroLejon, true, 0);
 MovingState SkillBaseState::giroLejon("giroLejon", &SkillBaseState::skillStopped, 2000, SKILLSLOW, 0, true, true);
 
-
-
 // határ
 MovingState SkillBaseState::hatarStart("hatarStart", &SkillBaseState::hatarWait, 200, SKILLSLOW, 0, true, true);
 HatarState SkillBaseState::hatarWait("hatarWait", &SkillBaseState::hatarMove);
-MovingState SkillBaseState::hatarMove("hatarMove", &SkillBaseState::emelkedo_elott, 2500, SKILLSLOW, 0, true, true);
+MovingState SkillBaseState::hatarMove("hatarMove", &SkillBaseState::libStart, 2000, SKILLSLOW, 0, true, true);
 
 //libikoka
 
-EventBasedState SkillBaseState::emelkedo_elott("emelElott", &SkillBaseState::emelkedo, 100, SKILLSLOW, 0, true, EMELKEDO, true);
+LibiState SkillBaseState::libStart("libStart", &SkillBaseState::libikoka, &SkillBaseState::libVeg);
+MovingState SkillBaseState::libVeg("libKi", &SkillBaseState::koztes, 500, SKILLSLOW, 0, true, true);
 
-EventBasedState SkillBaseState::emelkedo("libEmel", &SkillBaseState::libiStop, 200, SKILLSLOW, 0, true, NONE, true);
-TimeState SkillBaseState::libiStop("libiStop", &SkillBaseState::lejto, 300);
-
-EventBasedState SkillBaseState::lejto("libLejt", &SkillBaseState::libiLassu, 200, SKILLSLOW, 0, true, SZAGGATOTT2VONAL, true);
-MovingState SkillBaseState::libiLassu("libiLassu", &SkillBaseState::koztes, 500, SKILLSLOW, 0, true, true);
-
-
-MovingState SkillBaseState::libiStart("libiStart", &SkillBaseState::emelkedo, 1000, SKILLSLOW, 0, true, true);
 GiroState SkillBaseState::libikoka("libikoka", &SkillBaseState::libiStop, false, SKILLSLOW);
+TimeState SkillBaseState::libiStop("libiStop", &SkillBaseState::lejto, 300);
+EventBasedState SkillBaseState::lejto("libLejt", &SkillBaseState::libVeg, 200, SKILLSLOW, 0, true, SZAGGATOTT2VONAL, true);
+
+//lerako
+EventBasedState SkillBaseState::lerakoStart("leStart", &SkillBaseState::lerakoVeg, 300, SKILLSLOW, 0, true, SZAGGATOTT2VONAL, true);
+MovingState SkillBaseState::lerakoVeg("leVeg", &SkillBaseState::koztes, 300, SKILLSLOW, 0, true, true);
 
 
 SkillTrackEvent SkillBaseState::calculateEvent() {
@@ -333,6 +330,31 @@ void HatarState::update() {
 		direction = RIGHT;
 		skillStateContext.setState(this->nextState);
 	}
+}
+
+//libikoka elejehez
+LibiState::LibiState(string stateName,
+		SkillBaseState* nState1,
+		SkillBaseState* nState2) {
+	name = stateName;
+	stateId = 7;
+	targetSpeed = SKILLSLOW;
+	distanceToMove = 0;
+	nextState = nState1;
+	nextState2 = nState2;
+	chkDir = true;
+}
+
+//ebbe kell, hogy mikor lépjen a következõ eventbe a
+void LibiState::update() {
+	stateData.event = skillStateContext.state->calculateEvent();
+
+	if (giro_emelkedo) {
+		skillStateContext.setState(this->nextState);
+	} else if (stateData.event == SZAGGATOTT2VONAL) {
+		skillStateContext.setState(this->nextState2);
+	}
+
 }
 
 //Stop state

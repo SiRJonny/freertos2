@@ -36,6 +36,7 @@ class EventBasedState;
 class SkillBaseState;
 class GiroState;
 class HatarState;
+class LibiState;
 
 extern StateData stateData;
 extern SkillStateContext skillStateContext;
@@ -118,23 +119,24 @@ public:
 	static GiroState giro;
 	static MovingState giroLejon;
 
-	//libikoka
-	static MovingState libiStart;
-	static GiroState libikoka;
-	static TimeState libiStop;
-	static MovingState libiLassu;
-
-	static EventBasedState emelkedo_elott;
-	static EventBasedState emelkedo;
-	static EventBasedState lejto;
 
 	//határ
 	static MovingState hatarStart;
 	static HatarState hatarWait;
 	static MovingState hatarMove;
 
+	//libikoka
 
+	static LibiState libStart;
+	static GiroState libikoka;
+	static TimeState libiStop;
+	static EventBasedState lejto;
+	static MovingState libVeg;
 
+	//lerak
+	static EventBasedState lerakoStart;
+
+	static MovingState lerakoVeg;
 
 	string name;
 	int stateId;
@@ -232,6 +234,15 @@ class HatarState : public SkillBaseState {
 public:
 	HatarState(string stateName,
 			SkillBaseState* nState);
+	virtual void update();
+};
+
+class LibiState : public SkillBaseState {
+public:
+	SkillBaseState* nextState2;
+	LibiState(string stateName,
+			SkillBaseState* nState1,
+			SkillBaseState* nState2);
 	virtual void update();
 };
 
