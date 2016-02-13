@@ -61,7 +61,7 @@ EventBasedState SkillBaseState::giroFel("giroFel", &SkillBaseState::giroPark, 20
 MovingState SkillBaseState::giroPark("giroPark", &SkillBaseState::giro, 100, SKILLSLOW, 0, true, true);
 
 GiroState SkillBaseState::giro("Giro", &SkillBaseState::giroLejon, true, 0);
-MovingState SkillBaseState::giroLejon("giroLejon", &SkillBaseState::skillStopped, 2000, SKILLSLOW, 0, true, true);
+MovingState SkillBaseState::giroLejon("giroLejon", &SkillBaseState::koztes, 2000, SKILLSLOW, 0, true, true);
 
 // határ
 MovingState SkillBaseState::hatarStart("hatarStart", &SkillBaseState::hatarWait, 200, SKILLSLOW, 0, true, true);
@@ -70,16 +70,18 @@ MovingState SkillBaseState::hatarMove("hatarMove", &SkillBaseState::libStart, 20
 
 //libikoka
 
-LibiState SkillBaseState::libStart("libStart", &SkillBaseState::libikoka, &SkillBaseState::libVeg);
+LibiState SkillBaseState::libStart("libStart", &SkillBaseState::libPos, &SkillBaseState::libVeg);
 MovingState SkillBaseState::libVeg("libKi", &SkillBaseState::koztes, 500, SKILLSLOW, 0, true, true);
 
+MovingState SkillBaseState::libPos("libPos", &SkillBaseState::libiStop, 1250, SKILLSLOW, 0, true, true);
+
 GiroState SkillBaseState::libikoka("libikoka", &SkillBaseState::libiStop, false, SKILLSLOW);
-TimeState SkillBaseState::libiStop("libiStop", &SkillBaseState::lejto, 300);
+TimeState SkillBaseState::libiStop("libiStop", &SkillBaseState::lejto, 500);
 EventBasedState SkillBaseState::lejto("libLejt", &SkillBaseState::libVeg, 200, SKILLSLOW, 0, true, SZAGGATOTT2VONAL, true);
 
 //lerako
-EventBasedState SkillBaseState::lerakoStart("leStart", &SkillBaseState::lerakoVeg, 300, SKILLSLOW, 0, true, SZAGGATOTT2VONAL, true);
-MovingState SkillBaseState::lerakoVeg("leVeg", &SkillBaseState::koztes, 300, SKILLSLOW, 0, true, true);
+EventBasedState SkillBaseState::lerakoStart("leStart", &SkillBaseState::lerakoVeg, 1500, SKILLSLOW, 0, true, SZAGGATOTT2VONAL, true);
+MovingState SkillBaseState::lerakoVeg("leVeg", &SkillBaseState::koztes, 1000, SKILLSLOW, 0, true, true);
 
 
 SkillTrackEvent SkillBaseState::calculateEvent() {

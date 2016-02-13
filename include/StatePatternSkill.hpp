@@ -129,6 +129,9 @@ public:
 
 	static LibiState libStart;
 	static GiroState libikoka;
+
+	static MovingState libPos;
+
 	static TimeState libiStop;
 	static EventBasedState lejto;
 	static MovingState libVeg;
