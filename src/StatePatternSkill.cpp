@@ -35,6 +35,11 @@ MovingState SkillBaseState::tolatTeszt("tolat", &SkillBaseState::eloreTeszt, -75
 MovingState SkillBaseState::eloreTeszt("elore", &SkillBaseState::tolatTeszt, 750, SKILLSLOW, 0, false, true);
 
 
+//start
+EventBasedState SkillBaseState::startWait("startWait", &SkillBaseState::startMove, 0, 0, 0, true, RADIOSTART, true);
+MovingState SkillBaseState::startMove("startMove", &SkillBaseState::koztes, 1000, SKILLSLOW, 0, true, true);
+
+
 //Torkolat
 EventBasedState SkillBaseState::TorkFalakKozt("Tork1", &SkillBaseState::TorkFalakElhagyva, 300, SKILLSLOW, 0, false, NOLINE_NOWALLS, true);
 MovingState SkillBaseState::TorkFalakElhagyva("Tork2", &SkillBaseState::TorkVonalKereses, 750, SKILLSLOW, 500, false, true);
@@ -381,12 +386,13 @@ SkillStartState::SkillStartState() {
 	stateId = 0;
 	targetSpeed = 0;
 	chkDir = true;
+	steeringControlled = true;
 }
 
 void SkillStartState::update(){
 	switch (stateData.event) {
 			case RADIOSTART:
-				skillStateContext.setState(&SkillBaseState::koztes);
+				skillStateContext.setState(&SkillBaseState::startMove);
 				break;
 		}
 }
@@ -400,7 +406,7 @@ void SkillStateContext::setState(SkillBaseState* newState) {
 }
 
 SkillStateContext::SkillStateContext() {
-	setState(&SkillBaseState::koztes);
+	setState(&SkillBaseState::skillStarted);
 }
 
 void SkillBaseState::stop(SkillStateContext& context) {

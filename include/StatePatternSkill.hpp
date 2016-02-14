@@ -91,6 +91,11 @@ public:
 	static MovingState tolatTeszt;
 	static MovingState eloreTeszt;
 
+	//start
+	static EventBasedState startWait;
+	static MovingState startMove;
+
+
 	//Torkolat
 	static EventBasedState TorkFalakKozt;
 	static MovingState TorkFalakElhagyva;
