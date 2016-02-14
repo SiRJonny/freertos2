@@ -20,8 +20,8 @@ using namespace std;
 
 extern int globalDistance;
 extern float SKILLSLOW;
-
-
+extern float SKILLMEDIUM;
+extern float SKILLPARK;
 
 class SkillStateContext;
 class StateData;
@@ -57,6 +57,8 @@ extern bool stable2lines;
 extern bool stable3lines;
 
 extern bool stable1linesForBoth;
+extern bool stable0linesForBoth;
+
 
 extern bool keresztvonal;
 extern bool checkDirection;
@@ -105,6 +107,9 @@ public:
 	//Parkolas
 	static EventBasedState ParkEloremegy1; 	//masodik 2 falig
 	static MovingState ParkEloremegy2;		//kicsit még elõrébb?
+	static TimeState parkElolVar;
+	static EventBasedState ParkElolTolat;
+
 	static MovingState ParkTolatKanyar1;
 	static MovingState ParkTolatAtlo;
 	static MovingState ParkTolatKanyar2;
@@ -126,6 +131,8 @@ public:
 
 
 	//határ
+	static TimeState hTime;
+
 	static MovingState hatarStart;
 	static HatarState hatarWait;
 	static MovingState hatarMove;
@@ -234,7 +241,8 @@ public:
 	int triggerTime;
 	TimeState(string stateName,
 			SkillBaseState* nState,
-			int wait);
+			int wait,
+			float tarSpeed);
 	virtual void update();
 };
 

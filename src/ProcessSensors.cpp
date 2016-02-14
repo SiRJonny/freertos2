@@ -420,7 +420,7 @@ int find3peaks(uint32_t * data, int * peaks, int treshold)
 		swap(&peakValue[1], &peakValue[2]);
 	}
 
-
+	//keresztvonal
 	average = calculateAverage(data);
 	if (average > 130)
 	{

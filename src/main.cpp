@@ -472,6 +472,7 @@ void StartButtonTask()
 			//stateData.event = RADIOSTART;
 			skillStateContext.setState(&SkillBaseState::koztes);
 			//giro_init();
+			start_radio_done = true;
 
 			osThreadResume(SteerControl_TaskHandle);
 			osThreadResume(SendRemoteVar_TaskHandle);
@@ -638,7 +639,7 @@ void SendRemoteVarTask()
 
 		//minden slowSendMultiplier ciklusban küldi el ezeket
 		if (sendRemoteCounter % slowSendMultiplier == 0) {
-			//BT_send_msg(&Distance_sensors[1], "frontSensor");
+			BT_send_msgInt(ReadFrontMiddle(), "frontSensor");
 
 
 
@@ -670,7 +671,7 @@ void SendRemoteVarTask()
 			BT_send_msg(checkDirection, "checkDir");
 
 			BT_send_msg(giro_fall, "fall");
-			BT_send_msg(giro_lejto, "lejto");
+			//BT_send_msg(giro_lejto, "lejto");
 			BT_send_msg(giro_emelkedo, "emelked");
 			BT_send_msgFloat(giro_get_angle_Y(), "lejtSzog");
 
@@ -795,7 +796,7 @@ void sendPIDm() {
 // szabályzó task
 void SteerControlTask()
 {
-	bool start_radio_done = false;
+	start_radio_done = false;
 	float speed = 0;
 
 	int led_cntr = 0;
@@ -833,10 +834,10 @@ void SteerControlTask()
 
 
 	// motor PI szabályzó struktúra
-	PIDm.pGain = 300;		// 100-> 5m/s hibánál lesz 500 a jel (max)
-	PIDm.iGain = 0.4;			// pGain/100?
+	PIDm.pGain = 500;		// 100-> 5m/s hibánál lesz 500 a jel (max)
+	PIDm.iGain = 3;			// pGain/100?
 	PIDm.dGain = 0;
-	PIDm.iMax = 150;
+	PIDm.iMax = 500;
 	PIDm.iMin = -100;
 	PIDm.iState = 0;
 	PIDm.dState = 0;
@@ -882,6 +883,9 @@ void SteerControlTask()
 	*/	PIDs.pGain = pAlap;
 		PIDs.dGain = dAlap;
 
+
+
+
 		/*if (SET_SPEED > 2.4)
 		{
 			PIDm.iGain = 2;
@@ -890,12 +894,17 @@ void SteerControlTask()
 		}*/
 
 
+
 		// motor szabályozás
 		{
 			speed_error = SET_SPEED - speed;
 			speed_control = UpdatePID1(&PIDm, speed_error, speed);
 
 			// negatív irányt megerõsíteni	// motor bekötéstõl függ!!!
+
+			if ( SET_SPEED == 0) {
+				PIDm.iState = 0;
+			}
 
 			if(speed_control < 0 && SET_SPEED > -0.1)
 			{
@@ -1235,9 +1244,7 @@ void get_stable_line_count(int numlines)
 
 	if(num0 >= 4){ stable0lines = true; }
 	if(num1 >= 4){
-			if (globalLines.numLines2 == 1) {
 				stable1lines = true;
-			}
 		}
 	if(num2 >= 4){ stable2lines = true; }
 	if(num3 >= 4){ stable3lines = true; }
@@ -1250,9 +1257,12 @@ void get_stable_line_count2(int numlines1, int numlines2)
 	static int numlines_array2[5];
 	static int array_cntr = 0;
 	static int num1;
+	static int num0;
 
-	num1 = 0;
+	num0 = num1 = 0;
 	stable1linesForBoth = false;
+	stable0linesForBoth = false;
+
 
 	numlines_array1[array_cntr] = numlines1;
 	numlines_array2[array_cntr] = numlines2;
@@ -1266,10 +1276,14 @@ void get_stable_line_count2(int numlines1, int numlines2)
 	{
 		if (numlines_array1[i] == 1 && numlines_array2[i] == 1) {
 			num1++;
+		} else if (numlines_array1[i] == -1 && numlines_array2[i] == -1) {
+			num0++;
 		}
 	}
 
-	//if(num0 >= 4){ stable0lines = true; }
+	if(num0 >= 4) {
+		stable0linesForBoth = true;
+	}
 	if(num1 >= 4){
 		stable1linesForBoth = true;
 	}

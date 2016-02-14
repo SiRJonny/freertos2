@@ -41,7 +41,7 @@ extern int testLinePos;
 int ReadFrontLeft()
 {
 	SetServo_sensor_bal();
-	osDelay(200);
+	osDelay(300);
 	ADC2_read();
 	return (int)Distance_sensors[1];
 }
@@ -49,7 +49,7 @@ int ReadFrontLeft()
 int ReadFrontRight()
 {
 	SetServo_sensor_jobb();
-	osDelay(200);
+	osDelay(300);
 	ADC2_read();
 	return (int)Distance_sensors[1];
 }
@@ -57,7 +57,7 @@ int ReadFrontRight()
 int ReadFrontMiddle()
 {
 	SetServo_sensor(0);
-	osDelay(200);
+	osDelay(300);
 	ADC2_read();
 	return (int)Distance_sensors[1];
 }
@@ -165,7 +165,7 @@ void ReadSensors()
 	HAL_TIM_Base_Stop_IT(&htim6);
 	DisableMUX();
 
-	szenzorsor_1[7] = (szenzorsor_1[6] + szenzorsor_1[8])/2.0f;
+	szenzorsor_1[7] = ((szenzorsor_1[6] + szenzorsor_1[8])/2.0f)*1.5f;
 }
 
 

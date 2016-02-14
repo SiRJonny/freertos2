@@ -24,7 +24,8 @@ float SET_SPEED = 0;
 float speed_global = 0;
 
 float SKILLSLOW = 0.5;
-float SKILLMEDIUM = 1;
+float SKILLMEDIUM = 0.8;
+float SKILLPARK = 0.4;
 
 
 bool speed_under_X = false;
@@ -85,6 +86,7 @@ bool stable2lines;
 bool stable3lines;
 
 bool stable1linesForBoth;
+bool stable0linesForBoth;
 
 float activeLine1 = 0;  // középsõ vonal kiválasztása
 float activeLine2 = 0;
@@ -121,4 +123,6 @@ bool checkDirection = true;
 int stopped = 0;
 
 int timeCounter = 0;
+
+bool start_radio_done;
 

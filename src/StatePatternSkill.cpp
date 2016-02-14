@@ -36,8 +36,8 @@ MovingState SkillBaseState::eloreTeszt("elore", &SkillBaseState::tolatTeszt, 750
 
 
 //start
-EventBasedState SkillBaseState::startWait("startWait", &SkillBaseState::startMove, 0, 0, 0, true, RADIOSTART, true);
-MovingState SkillBaseState::startMove("startMove", &SkillBaseState::koztes, 1000, SKILLSLOW, 0, true, true);
+EventBasedState SkillBaseState::startWait("sWait", &SkillBaseState::startMove, 0, 0, 0, true, RADIOSTART, true);
+MovingState SkillBaseState::startMove("sMove", &SkillBaseState::koztes, 1000, SKILLSLOW, 0, true, true);
 
 
 //Torkolat
@@ -48,41 +48,52 @@ MovingState SkillBaseState::TorkVonalKereses2("Tork4", &SkillBaseState::koztes, 
 
 //Parkol
 EventBasedState SkillBaseState::ParkEloremegy1("P1Elore", &SkillBaseState::ParkEloremegy2, 1500, SKILLSLOW, 0, true, TWOWALL, false);
-MovingState SkillBaseState::ParkEloremegy2("P2Elore", &SkillBaseState::ParkTolatKanyar1, 420, SKILLSLOW, 0, true, false);
-MovingState SkillBaseState::ParkTolatKanyar1("P3Tolat", &SkillBaseState::ParkTolatKanyar2, -710, -SKILLSLOW, 500, false, false);
-MovingState SkillBaseState::ParkTolatAtlo("P4Tolat", &SkillBaseState::ParkTolatKanyar2, -50, -SKILLSLOW, 0, false, false);
-MovingState SkillBaseState::ParkTolatKanyar2("P5Tolat", &SkillBaseState::ParkTolatEgyenesen, -710, -SKILLSLOW, -500, false, false);
-MovingState SkillBaseState::ParkTolatEgyenesen("P6Tolat", &SkillBaseState::ParkVar, -60, -SKILLSLOW, 0, false, false);
+MovingState SkillBaseState::ParkEloremegy2("P2Elore", &SkillBaseState::parkElolVar, 420, SKILLPARK, 0, true, false);
 
-TimeState SkillBaseState::ParkVar("PVar", &SkillBaseState::ParkKiKanyar1, 200);
+EventBasedState SkillBaseState::ParkElolTolat("P251T", &SkillBaseState::ParkTolatKanyar1, 1500, -0.1, 0, true, TWOWALL, false);
 
-MovingState SkillBaseState::ParkKiKanyar1("P7Elore", &SkillBaseState::ParkKiAtlo, 500, SKILLSLOW, -500, false, false);
-EventBasedState SkillBaseState::ParkKiAtlo("P8Elore", &SkillBaseState::ParkKiTeljesen, 0, SKILLSLOW, 0, false, NONE, false);
-EventBasedState SkillBaseState::ParkKiTeljesen("P9Ki", &SkillBaseState::koztes, 300, SKILLSLOW, 0, true, NONE, false);
+
+
+TimeState SkillBaseState::parkElolVar("PEVar", &SkillBaseState::ParkTolatKanyar1, 200, 0);
+
+MovingState SkillBaseState::ParkTolatKanyar1("P3Tolat", &SkillBaseState::ParkTolatKanyar2, -710, -SKILLPARK, 500, false, false);
+MovingState SkillBaseState::ParkTolatAtlo("P4Tolat", &SkillBaseState::ParkTolatKanyar2, -50, -SKILLPARK, 0, false, false);
+MovingState SkillBaseState::ParkTolatKanyar2("P5Tolat", &SkillBaseState::ParkVar, -710, -0.1, -500, false, false);
+MovingState SkillBaseState::ParkTolatEgyenesen("P6Tolat", &SkillBaseState::ParkVar, -60, -SKILLPARK, 0, false, false);
+
+TimeState SkillBaseState::ParkVar("PVar", &SkillBaseState::ParkKiKanyar1, 125, -0.1);
+
+MovingState SkillBaseState::ParkKiKanyar1("P7Elore", &SkillBaseState::ParkKiAtlo, 500, SKILLPARK, -500, false, false);
+EventBasedState SkillBaseState::ParkKiAtlo("P8Elore", &SkillBaseState::ParkKiTeljesen, 0, SKILLPARK, 0, false, NONE, false);
+EventBasedState SkillBaseState::ParkKiTeljesen("P9Ki", &SkillBaseState::koztes, 1000, SKILLPARK, 0, true, NONE, false);
 
 //giro
-EventBasedState SkillBaseState::giroStart("giroStart", &SkillBaseState::giroFel, 0, SKILLSLOW, 0, true, KERESZT, true);
+EventBasedState SkillBaseState::giroStart("giroSt", &SkillBaseState::giroFel, 0, SKILLSLOW, 0, true, KERESZT, true);
 EventBasedState SkillBaseState::giroFel("giroFel", &SkillBaseState::giroPark, 200, SKILLSLOW, 0, true, KERESZT, true);
 MovingState SkillBaseState::giroPark("giroPark", &SkillBaseState::giro, 100, SKILLSLOW, 0, true, true);
 
 GiroState SkillBaseState::giro("Giro", &SkillBaseState::giroLejon, true, 0);
-MovingState SkillBaseState::giroLejon("giroLejon", &SkillBaseState::koztes, 2000, SKILLSLOW, 0, true, true);
+MovingState SkillBaseState::giroLejon("giroLe", &SkillBaseState::koztes, 1000, SKILLSLOW, 0, true, true);
 
 // határ
-MovingState SkillBaseState::hatarStart("hatarStart", &SkillBaseState::hatarWait, 200, SKILLSLOW, 0, true, true);
-HatarState SkillBaseState::hatarWait("hatarWait", &SkillBaseState::hatarMove);
-MovingState SkillBaseState::hatarMove("hatarMove", &SkillBaseState::libStart, 2000, SKILLSLOW, 0, true, true);
+TimeState SkillBaseState::hTime("hTime", &SkillBaseState::hatarWait, 300, 0);
+
+MovingState SkillBaseState::hatarStart("hStart", &SkillBaseState::hatarWait, 2000, SKILLSLOW, 0, true, true);
+HatarState SkillBaseState::hatarWait("hWait", &SkillBaseState::hatarMove);
+MovingState SkillBaseState::hatarMove("hMove", &SkillBaseState::libStart, 2000, SKILLSLOW, 0, true, true);
 
 //libikoka
 
-LibiState SkillBaseState::libStart("libStart", &SkillBaseState::libPos, &SkillBaseState::libVeg);
+LibiState SkillBaseState::libStart("lStart", &SkillBaseState::libPos, &SkillBaseState::libVeg);
+
+MovingState SkillBaseState::libPos("libPos", &SkillBaseState::libiStop, 1350, SKILLSLOW, 0, true, true);
+
+GiroState SkillBaseState::libikoka("lkoka", &SkillBaseState::libiStop, false, SKILLSLOW);
+TimeState SkillBaseState::libiStop("lStop", &SkillBaseState::lejto, 300, 0.01);
+EventBasedState SkillBaseState::lejto("lLejt", &SkillBaseState::libVeg, 200, SKILLSLOW, 0, true, SZAGGATOTT2VONAL, true);
+
 MovingState SkillBaseState::libVeg("libKi", &SkillBaseState::koztes, 500, SKILLSLOW, 0, true, true);
 
-MovingState SkillBaseState::libPos("libPos", &SkillBaseState::libiStop, 1250, SKILLSLOW, 0, true, true);
-
-GiroState SkillBaseState::libikoka("libikoka", &SkillBaseState::libiStop, false, SKILLSLOW);
-TimeState SkillBaseState::libiStop("libiStop", &SkillBaseState::lejto, 500);
-EventBasedState SkillBaseState::lejto("libLejt", &SkillBaseState::libVeg, 200, SKILLSLOW, 0, true, SZAGGATOTT2VONAL, true);
 
 //lerako
 EventBasedState SkillBaseState::lerakoStart("leStart", &SkillBaseState::lerakoVeg, 1500, SKILLSLOW, 0, true, SZAGGATOTT2VONAL, true);
@@ -102,11 +113,11 @@ SkillTrackEvent SkillBaseState::calculateEvent() {
 
 	if(fal_bal && fal_jobb) {
 		event = TWOWALL;
-	} else if (stable0lines) {
+	} else if (stable0linesForBoth) {
 		event = NOLINE_NOWALLS;
-	} else if (stable1linesForBoth || stable2lines || stable3lines){
+	} else if (stable1lines || stable2lines || stable3lines){
 		//hany vonal van todo
-		if (stable1linesForBoth) {
+		if (stable1lines) {
 				event = NONE;
 
 
@@ -125,7 +136,7 @@ SkillTrackEvent SkillBaseState::calculateEvent() {
 	}
 
 	if (event == lastEvent){
-		if (cntr > 10) {
+		if (cntr > 0) {
 			//cntr = 0;
 			return event;
 		} else {
@@ -172,7 +183,7 @@ void KoztesState::update() {
 			skillStateContext.setState(&SkillBaseState::lerakoStart);
 			break;
 		case HAROMVONAL:
-			skillStateContext.setState(&SkillBaseState::hatarStart);
+			skillStateContext.setState(&SkillBaseState::hTime);
 			break;
 		case TWOWALL:
 			skillStateContext.setState(&SkillBaseState::ParkEloremegy1);
@@ -290,10 +301,11 @@ void GiroState::update() {
 //Idore varo state
 TimeState::TimeState(string stateName,
 		SkillBaseState* nState,
-		int wait) {
+		int wait,
+		float tarSpeed) {
 	name = stateName;
 	stateId = 5;
-	targetSpeed = 0;
+	targetSpeed = tarSpeed;
 	distanceToMove = wait;
 	nextState = nState;
 	started = false;
@@ -307,12 +319,14 @@ extern int timeCounter;
 //ebbe kell, hogy mikor lépjen a következõ eventbe a
 void TimeState::update() {
 	if (!started) {
+
 		startTime = timeCounter;
 		triggerTime = startTime + distanceToMove;
 		started = true;
 	} else {
 		if (timeCounter > triggerTime) {
 			skillStateContext.setState(this->nextState);
+			started = false;
 		}
 	}
 
@@ -331,6 +345,7 @@ HatarState::HatarState(string stateName,
 
 //ebbe kell, hogy mikor lépjen a következõ eventbe a
 void HatarState::update() {
+	giro_start_measurement();
 	if(ReadFrontLeft() < 40)
 	{
 		direction = LEFT;

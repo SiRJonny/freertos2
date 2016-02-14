@@ -28,6 +28,10 @@ extern float speed_global;
 
 extern float SKILLSLOW;
 
+extern float SKILLMEDIUM;
+
+extern float SKILLPARK;
+
 extern bool speed_under_X;
 extern float speed_limit;
 
@@ -84,6 +88,7 @@ extern bool stable2lines;
 extern bool stable3lines;
 
 extern bool stable1linesForBoth;
+extern bool stable0linesForBoth;
 
 extern float activeLine1;  // középsõ vonal kiválasztása
 extern float activeLine2;
@@ -121,5 +126,6 @@ extern SkillTrackEvent currentState;
 extern bool checkDirection;
 
 extern int timeCounter;
+extern bool start_radio_done;
 
 #endif /* CONFIG_H_ */
