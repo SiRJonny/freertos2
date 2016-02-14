@@ -67,6 +67,7 @@ osThreadId BT_TaskHandle;
 osThreadId SendRemoteVar_TaskHandle;
 osThreadId SteerControl_TaskHandle;
 osThreadId BT_Receive_TaskHandle;
+osThreadId Turn_On_TaskHandle;
 
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart3;
@@ -104,6 +105,7 @@ void SendBluetoothTask();
 void SendRemoteVarTask();
 void SteerControlTask();
 void BTReceiveTask();
+void TurnOnTask();
 
 void USART3_UART_Init();
 static void MX_DMA_Init(void);
@@ -211,6 +213,8 @@ int main(void)
   osThreadDef(BTReceiveTask, BTReceiveTask, osPriorityNormal, 0, 128);
   BT_Receive_TaskHandle = osThreadCreate(osThread(BTReceiveTask), NULL);
 
+  osThreadDef(TurnOnTask, TurnOnTask, osPriorityHigh, 0, 128);
+  Turn_On_TaskHandle = osThreadCreate(osThread(TurnOnTask), NULL);
 
 
 
@@ -636,6 +640,9 @@ void SendRemoteVarTask()
 		if (sendRemoteCounter % slowSendMultiplier == 0) {
 			//BT_send_msg(&Distance_sensors[1], "frontSensor");
 
+
+
+
 			dirInt = direction;
 			BT_send_msg(&dirInt, "dirInt");
 
@@ -788,7 +795,7 @@ void sendPIDm() {
 // szabályzó task
 void SteerControlTask()
 {
-
+	bool start_radio_done = false;
 	float speed = 0;
 
 	int led_cntr = 0;
@@ -837,12 +844,23 @@ void SteerControlTask()
 	float error = 0;
 
 
-
+	stateData.event = UNSTABLE;
 
 	osThreadSuspend(SteerControl_TaskHandle);
 
 	for(;;)
 	{
+		// várakozás a startjelre
+		while(!start_radio_done)
+		{
+			if(Radio_get_char() == 48)
+			{
+				start_radio_done = true;
+				stateData.event = RADIOSTART;
+			}
+			osDelay(5);
+		}
+
 
 		//__HAL_TIM_SET_COUNTER(&htim5,0);
 		timeCounter++;
@@ -1048,6 +1066,46 @@ void SteerControlTask()
 		//__HAL_TIM_SET_COUNTER(&htim5,0);
 
 		osDelay(9);
+	}
+}
+
+void TurnOnTask()
+{
+	bool started = false;
+	for(;;)
+	{
+		if(!started)
+		{
+			if(START_PIN())
+			{
+				started = true;
+			}
+		}
+
+		if(started)
+		{
+			osDelay(100);
+			osThreadResume(SteerControl_TaskHandle);
+
+			giro_init();
+
+			osThreadResume(SendRemoteVar_TaskHandle);
+
+			if(DIP(4))
+			{
+				skillTrack = true;
+				HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, GPIO_PIN_SET);
+			}else{
+				skillTrack = false;
+				HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, GPIO_PIN_RESET);
+			}
+
+			stateContext.start(encoderPos);
+			stateData.event = RADIOSTART;
+
+			osThreadSuspend(Turn_On_TaskHandle);
+		}
+		osDelay(100);
 	}
 }
 
