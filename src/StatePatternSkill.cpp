@@ -142,7 +142,7 @@ SkillTrackEvent SkillBaseState::calculateEvent() {
 KoztesState::KoztesState() {
 	name = "koztes";
 	stateId = 1;
-	targetSpeed = SKILLSLOW;
+	targetSpeed = SKILLMEDIUM;
 	distanceToMove = 0;
 	steeringAngle = 1;
 	steeringControlled = true;

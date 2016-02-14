@@ -465,8 +465,8 @@ void StartButtonTask()
 			giro_init();
 
 			stateContext.start(encoderPos);
-			stateData.event = RADIOSTART;
-
+			//stateData.event = RADIOSTART;
+			skillStateContext.setState(&SkillBaseState::koztes);
 			//giro_init();
 
 			osThreadResume(SteerControl_TaskHandle);
@@ -879,7 +879,7 @@ void SteerControlTask()
 
 			// negatív irányt megerõsíteni	// motor bekötéstõl függ!!!
 
-			if(speed_control < 0 && !skillTrack)
+			if(speed_control < 0 && SET_SPEED > -0.1)
 			{
 				//speed_control *= 10;
 				if (speed_control > -80) {

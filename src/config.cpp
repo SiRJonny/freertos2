@@ -24,6 +24,8 @@ float SET_SPEED = 0;
 float speed_global = 0;
 
 float SKILLSLOW = 0.5;
+float SKILLMEDIUM = 1;
+
 
 bool speed_under_X = false;
 float speed_limit = 2;
