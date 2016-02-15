@@ -165,8 +165,10 @@ void ADC2_read()
 	HAL_ADC_Start(&hadc2);
 	for(int i = 0; i<5; i++)
 	{
-		HAL_ADC_PollForConversion(&hadc2,1000);
-		Distance_sensors[i] = HAL_ADC_GetValue(&hadc2);
+		if (HAL_ADC_PollForConversion(&hadc2,1) == HAL_OK)
+		{
+			Distance_sensors[i] = HAL_ADC_GetValue(&hadc2);
+		}
 	}
 	HAL_ADC_Stop(&hadc2);
 }

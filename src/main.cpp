@@ -755,6 +755,17 @@ void SteerControlTask()
 
 	float error = 0;
 
+	// követés szabályzó struktúra
+	PIDk.pGain = -10000;		// 100-> 5m/s hibánál lesz 500 a jel (max)
+	PIDk.iGain = 0;			// pGain/100?
+	PIDk.dGain = 0;
+	PIDk.iMax = 100;
+	PIDk.iMin = 0;
+	PIDk.iState = 0;
+	PIDk.dState = 0;
+
+	float distance_error = 0;
+	float distance = 0;
 
 
 
@@ -792,6 +803,7 @@ void SteerControlTask()
 
 
 		// motor szabályozás
+		if (!safety_car)
 		{
 			speed_error = SET_SPEED - speed;
 			speed_control = UpdatePID1(&PIDm, speed_error, speed);
@@ -813,7 +825,7 @@ void SteerControlTask()
 			// fékezés logika és gyorsulás logika
 			if(last_speed_control > 0 && speed_control < 0)
 			{
-				speed_control = 0;
+				speed_control = 0;	//TODO ez fölösleges, nem?
 			}
 			else if(speed_control > 0 && speed_control > (last_speed_control + ACC_MAX) && last_speed_control >= 0)
 			{
@@ -822,6 +834,30 @@ void SteerControlTask()
 
 			SetServo_motor( (int)speed_control );
 		}
+		else if(safety_car)
+		{
+			// hiba negatív, ha messzebb vagyunk -> negatív PGain
+			ADC2_read();
+			distance = (1.0f/((float)Distance_sensors[1]));
+			distance_error = SET_DISTANCE - distance;
+			speed_control = UpdatePID1(&PIDk, distance_error, speed);
+
+			// negatív irányt megerõsíteni	// motor bekötéstõl függ!!!
+
+			if(speed_control < 0)
+			{
+				//speed_control *= 10;
+				if (speed_control > -80) {
+					speed_control = -80;
+				}
+				if (last_speed_control < 0) {
+					//speed_control = 0;
+				}
+			}
+
+			SetServo_motor( (int)speed_control );
+		}
+
 		//motorszabályzás vége
 
 
@@ -943,7 +979,7 @@ void SteerControlTask()
 			}
 		}
 
-		if(led_cntr == 30)
+		if(led_cntr == 10)
 		{
 			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
 			led_cntr = 0;
@@ -954,10 +990,13 @@ void SteerControlTask()
 		}
 		//osThreadSuspend(SteerControl_TaskHandle);
 
-		//timer = __HAL_TIM_GET_COUNTER(&htim5);
+		timer = __HAL_TIM_GET_COUNTER(&htim5);
+		if (timer > 13000)
+		{
 		//BT_send_msg(&timer, "time:" + std::string(itoa(timer,buffer,10)) + "\n");
-
-		//__HAL_TIM_SET_COUNTER(&htim5,0);
+			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
+		}
+		__HAL_TIM_SET_COUNTER(&htim5,0);
 
 		osDelay(9);
 	}

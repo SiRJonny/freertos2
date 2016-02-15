@@ -23,6 +23,7 @@ extern volatile float SLOW;
 extern volatile float FAST;
 extern float STOP;
 extern float SET_SPEED;
+extern float SET_DISTANCE;
 extern float speed_global;
 
 extern float SKILLSLOW;
@@ -83,8 +84,11 @@ extern float B;	// konstans
 extern bool TunePID;
 extern int pid;
 
+extern bool safety_car;
+
 extern PID_struct PIDs;
 extern PID_struct PIDm;
+extern PID_struct PIDk;
 
 //állapotgépek
 

@@ -20,6 +20,7 @@ volatile float FAST = 4.5;
 float STOP = 0.0;
 
 float SET_SPEED = 0;
+float SET_DISTANCE = 0.011;
 float speed_global = 0;
 
 float SKILLSLOW = 1.0;
@@ -82,8 +83,11 @@ float B = 0.4;	// konstans
 bool TunePID = false;
 int pid = 0;
 
+bool safety_car = true;
+
 PID_struct PIDs;
 PID_struct PIDm;
+PID_struct PIDk;
 
 //állapotgépek
 
