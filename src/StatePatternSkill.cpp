@@ -56,7 +56,7 @@ EventBasedState SkillBaseState::ParkElolTolat("P251T", &SkillBaseState::ParkTola
 
 TimeState SkillBaseState::parkElolVar("PEVar", &SkillBaseState::ParkTolatKanyar1, 200, 0);
 
-MovingState SkillBaseState::ParkTolatKanyar1("P3Tolat", &SkillBaseState::ParkTolatKanyar2, -710, -SKILLPARK, 500, false, false);
+MovingState SkillBaseState::ParkTolatKanyar1("P3Tolat", &SkillBaseState::ParkTolatKanyar2, -720, -SKILLPARK, 500, false, false);
 MovingState SkillBaseState::ParkTolatAtlo("P4Tolat", &SkillBaseState::ParkTolatKanyar2, -50, -SKILLPARK, 0, false, false);
 MovingState SkillBaseState::ParkTolatKanyar2("P5Tolat", &SkillBaseState::ParkVar, -710, -0.1, -500, false, false);
 MovingState SkillBaseState::ParkTolatEgyenesen("P6Tolat", &SkillBaseState::ParkVar, -60, -SKILLPARK, 0, false, false);
