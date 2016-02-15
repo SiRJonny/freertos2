@@ -636,13 +636,19 @@ void SendRemoteVarTask()
 		//BT_send_msg(&Distance_sensors[2], "contLeft");
 		//BT_send_msg(&Distance_sensors[3], "contRight");
 
+		BT_send_msg(&globalLines.numLines1, "contNum1");
+		BT_send_msg(&globalLines.pos1[0], "contPos0");
+		BT_send_msg(&globalLines.pos1[1], "contPos1");
+		BT_send_msg(&globalLines.pos1[2], "contPos2");
+
+
 
 		//minden slowSendMultiplier ciklusban küldi el ezeket
 		if (sendRemoteCounter % slowSendMultiplier == 0) {
-			BT_send_msgInt(ReadFrontMiddle(), "frontSensor");
+			//BT_send_msgInt(ReadFrontMiddle(), "frontSensor");
 
 
-
+/*
 
 			dirInt = direction;
 			BT_send_msg(&dirInt, "dirInt");
@@ -688,6 +694,8 @@ void SendRemoteVarTask()
 			//sendTuning();
 			sendStateData();
 			//sendPIDs();
+
+			 */
 		}
 
 		sendRemoteCounter++;

@@ -43,8 +43,8 @@ MovingState SkillBaseState::startMove("sMove", &SkillBaseState::koztes, 1000, SK
 //Torkolat
 EventBasedState SkillBaseState::TorkFalakKozt("Tork1", &SkillBaseState::TorkFalakElhagyva, 300, SKILLSLOW, 0, false, NOLINE_NOWALLS, true);
 MovingState SkillBaseState::TorkFalakElhagyva("Tork2", &SkillBaseState::TorkVonalKereses, 750, SKILLSLOW, 500, false, true);
-EventBasedState SkillBaseState::TorkVonalKereses("Tork3", &SkillBaseState::TorkVonalKereses2, 0, SKILLSLOW, 0, false, NONE, true);
-MovingState SkillBaseState::TorkVonalKereses2("Tork4", &SkillBaseState::koztes, 1000, SKILLSLOW, 0, true, true);
+EventBasedState SkillBaseState::TorkVonalKereses("Tork3", &SkillBaseState::TorkVonalKereses2 , 0, SKILLSLOW, 0, false, NONE, true);
+MovingState SkillBaseState::TorkVonalKereses2("Tork4", &SkillBaseState::koztes, 500, SKILLSLOW, 0, true, true);
 
 //Parkol
 EventBasedState SkillBaseState::ParkEloremegy1("P1Elore", &SkillBaseState::ParkEloremegy2, 1500, SKILLSLOW, 0, true, TWOWALL, false);
@@ -86,7 +86,7 @@ MovingState SkillBaseState::hatarMove("hMove", &SkillBaseState::libStart, 2000, 
 
 LibiState SkillBaseState::libStart("lStart", &SkillBaseState::libPos, &SkillBaseState::libVeg);
 
-MovingState SkillBaseState::libPos("libPos", &SkillBaseState::libiStop, 1350, SKILLSLOW, 0, true, true);
+MovingState SkillBaseState::libPos("libPos", &SkillBaseState::libiStop, 1250, SKILLSLOW, 0, true, true);
 
 GiroState SkillBaseState::libikoka("lkoka", &SkillBaseState::libiStop, false, SKILLSLOW);
 TimeState SkillBaseState::libiStop("lStop", &SkillBaseState::lejto, 300, 0.01);
@@ -115,9 +115,9 @@ SkillTrackEvent SkillBaseState::calculateEvent() {
 		event = TWOWALL;
 	} else if (stable0linesForBoth) {
 		event = NOLINE_NOWALLS;
-	} else if (stable1lines || stable2lines || stable3lines){
+	} else if (stable1linesForBoth || stable2lines || stable3lines){
 		//hany vonal van todo
-		if (stable1lines) {
+		if (stable1linesForBoth) {
 				event = NONE;
 
 

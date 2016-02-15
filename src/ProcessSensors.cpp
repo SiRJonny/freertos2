@@ -394,7 +394,7 @@ int find3peaks(uint32_t * data, int * peaks, int treshold)
 	// treshold alattiak pozícióját 35-re, sorba rendezésnél elöl lesznek a ténylegesek
 	for(int i = 0; i < 3; i++)
 	{
-		if(peakValue[i] < treshold)
+		if(peakValue[i] < treshold && peakValue[i] < 130)
 		{
 			peaks[i] = 35;
 			numPeaks--;
