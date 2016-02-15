@@ -756,7 +756,7 @@ void SteerControlTask()
 	float error = 0;
 
 	// követés szabályzó struktúra
-	PIDk.pGain = -10000;		// 100-> 5m/s hibánál lesz 500 a jel (max)
+	PIDk.pGain = -15000;		// 100-> 5m/s hibánál lesz 500 a jel (max)
 	PIDk.iGain = 0;			// pGain/100?
 	PIDk.dGain = 0;
 	PIDk.iMax = 100;
@@ -854,7 +854,11 @@ void SteerControlTask()
 					//speed_control = 0;
 				}
 			}
-
+			if (speed_control > 100) {
+				speed_control = 100;
+			} else if (speed_control < -100) {
+				speed_control = -100;
+			}
 			SetServo_motor( (int)speed_control );
 		}
 
