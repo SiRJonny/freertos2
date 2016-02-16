@@ -92,7 +92,8 @@ osSemaphoreDef(ADC1_complete);
 QueueHandle_t xQueue_BT;
 
 
-
+float distance_error = 0;
+float fr_distance = 0;
 
 
 /* Private function prototypes -----------------------------------------------*/
@@ -616,6 +617,9 @@ void SendRemoteVarTask()
 			//BT_send_msg(&globalDistance, "globalDist");
 			//BT_send_msg(&encoderPos, "encoder");
 
+			BT_send_msg(&PIDk.dState, "contDst");
+			BT_send_msg(&fr_distance, "contDist");
+			BT_send_msg(&distance_error, "contErr");
 
 			//BT_send_msg(&timer, "enc:" + std::string(itoa(encoderPos,buffer,10)) + "\n");
 
@@ -809,16 +813,15 @@ void SteerControlTask()
 	float error = 0;
 
 	// követés szabályzó struktúra
-	PIDk.pGain = -15000;		// 100-> 5m/s hibánál lesz 500 a jel (max)
+	PIDk.pGain = -15000.0f;		// 100-> 5m/s hibánál lesz 500 a jel (max)
 	PIDk.iGain = 0;			// pGain/100?
-	PIDk.dGain = -150000;
+	PIDk.dGain = 0;
 	PIDk.iMax = 100;
 	PIDk.iMin = 0;
 	PIDk.iState = 0;
 	PIDk.dState = 0;
 
-	float distance_error = 0;
-	float distance = 0;
+
 
 
 
@@ -892,10 +895,10 @@ void SteerControlTask()
 			{
 				// hiba negatív, ha messzebb vagyunk -> negatív PGain
 				ADC2_read();
-				distance = (1.0f/((float)Distance_sensors[1]));		//getDistance();
+				fr_distance = (1.0f/((float)Distance_sensors[1]));		//getDistance();
 				//BT_send_msg(&distance, "dist");
-				distance_error = SET_DISTANCE - distance;
-				speed_control = UpdatePID1(&PIDk, distance_error, speed);
+				distance_error = SET_DISTANCE - fr_distance;
+				speed_control = UpdatePID1(&PIDk, distance_error, fr_distance);
 
 				// negatív irányt megerõsíteni	// motor bekötéstõl függ!!!
 
@@ -928,7 +931,7 @@ void SteerControlTask()
 
 				float safety_accmax = 2;
 				// fékezés logika és gyorsulás logika
-				if(speed_control > 50 && speed_control > (last_speed_control + safety_accmax) && last_speed_control >= 0)
+				if(speed_control > 0 && speed_control > (last_speed_control + safety_accmax) && last_speed_control >= 0)
 				{
 					speed_control = last_speed_control + safety_accmax; 		// gyorsulás korlát
 				}
