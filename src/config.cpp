@@ -9,6 +9,7 @@
 
 int SERVO_RANGE_MOTOR = 700;	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a max kiadott jel
 int SERVO_RANGE_STEERING = 260;	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a max kiadott jel
+int SERVO_RANGE_SENSOR = 400;
 
 StateData stateData;
 
@@ -24,6 +25,9 @@ float SET_DISTANCE = 0.011;
 float speed_global = 0;
 
 float SKILLSLOW = 1.0;
+
+float SAFETYFAST = 1.7;
+float SAFETYSLOW = 1.2;
 
 bool speed_under_X = false;
 float speed_limit = 2;

@@ -291,6 +291,16 @@ void SetServo_motor(int pos)
 	__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,1500-pos);
 }
 
+// bal = pozitív
+void SetServo_sensor(int pos)
+{
+	if(pos > SERVO_RANGE_SENSOR){pos = SERVO_RANGE_SENSOR;}
+	if(pos < -SERVO_RANGE_SENSOR){pos = -SERVO_RANGE_SENSOR;}
+
+	// 1500 = 1,5ms, ez a 0 pozíció
+	__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_4,1500+pos);
+}
+
 // TODO: sebességmérés külön, és rendes emergency break
 void EmergencyBreak(int time)
 {
@@ -703,6 +713,34 @@ void sendPIDm() {
 	BT_send_msg(&PIDm.dGain, "PIDm_s");
 }
 
+float getDistance() {
+	const int arraySize = 10;
+	static float distanceArray[arraySize];
+	static int index = 0;
+	static float dist = (1.0f/((float)Distance_sensors[1]));
+
+	distanceArray[index] = dist;
+	index++;
+	if (index == arraySize) {
+		index = 0;
+	}
+
+	float min = 100000;
+
+	for(int i = 0; i<arraySize; i++) {
+		if (distanceArray[i] < min) {
+			min = distanceArray[i];
+		}
+	}
+
+	if (min == 0) {
+		min = dist;
+	}
+
+	return min;
+
+}
+
 
 // szabályzó task
 void SteerControlTask()
@@ -838,7 +876,7 @@ void SteerControlTask()
 		{
 			// hiba negatív, ha messzebb vagyunk -> negatív PGain
 			ADC2_read();
-			distance = (1.0f/((float)Distance_sensors[1]));
+			distance = getDistance();
 			distance_error = SET_DISTANCE - distance;
 			speed_control = UpdatePID1(&PIDk, distance_error, speed);
 
@@ -854,11 +892,17 @@ void SteerControlTask()
 					//speed_control = 0;
 				}
 			}
-			if (speed_control > 100) {
-				speed_control = 100;
-			} else if (speed_control < -100) {
-				speed_control = -100;
+
+			if (speed < 0.01 && speed_control < 0) {
+				speed_control = 0;
+			} else {
+				if (SET_SPEED == FAST && speed > SAFETYFAST) {
+					speed_control = 0;
+				} else if (SET_SPEED == SLOW && speed > SAFETYSLOW) {
+					speed_control = 0;
+				}
 			}
+
 			SetServo_motor( (int)speed_control );
 		}
 
