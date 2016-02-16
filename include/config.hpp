@@ -20,6 +20,8 @@ extern int SERVO_RANGE_STEERING;	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a 
 extern int SERVO_RANGE_SENSOR;
 
 //sebességes dolgok
+extern bool speed_control_enabled;
+
 extern volatile float SLOW;
 extern volatile float FAST;
 extern float STOP;
@@ -31,6 +33,7 @@ extern float SKILLSLOW;
 
 extern float SAFETYFAST;
 extern float SAFETYSLOW;
+extern float SAFETY_SPEED_LIMIT;
 
 extern bool speed_under_X;
 extern float speed_limit;

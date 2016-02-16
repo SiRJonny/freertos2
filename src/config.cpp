@@ -14,9 +14,13 @@ int SERVO_RANGE_SENSOR = 400;
 StateData stateData;
 
 //sebességes dolgok
+bool speed_control_enabled = true;
+
 volatile float SLOW = 1.5;
 
 volatile float FAST = 4.5;
+
+float SAFETY_SPEED_LIMIT = 1.7;
 
 float STOP = 0.0;
 

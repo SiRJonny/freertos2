@@ -19,6 +19,22 @@ LassitoState BaseState::lassito;
 StopState BaseState::stopped;
 StartState BaseState::started;
 
+int sensorAngle  = 180;
+
+void moveSensor() {
+	if(safety_car) {
+			if (control > 0) {
+				SetServo_sensor(-sensorAngle);
+			} else {
+				SetServo_sensor(sensorAngle);
+			}
+		}
+}
+
+void resetSensor() {
+	SetServo_sensor(0);
+}
+
 //Kanyar közben
 KanyarState::KanyarState() {
 	stateId = 1;
@@ -28,15 +44,10 @@ KanyarState::KanyarState() {
 }
 
 void KanyarState::handleEvent(StateContext& context, Event event) {
-	if(safety_car) {
-		if (control > 0) {
-			SetServo_sensor(140);
-		} else {
-			SetServo_sensor(-140);
-		}
-	}
+	moveSensor();
 
 	if (event == GYORSITO) {
+		resetSensor();
 		context.setState(&BaseState::gyorsito);
 	}
 }
@@ -92,6 +103,7 @@ StopState::StopState() {
 
 void StopState::handleEvent(StateContext& context, Event event) {
 	if (event == START) {
+		resetSensor();
 		context.setState(&BaseState::started);
 	}
 }
@@ -105,7 +117,11 @@ StartState::StartState() {
 }
 
 void StartState::handleEvent(StateContext& context, Event event) {
+	moveSensor();
+
+
 	if (event == GYORSITO) {
+		resetSensor();
 		context.setState(&BaseState::gyorsito);
 	}
 }
@@ -144,6 +160,9 @@ void StateContext::update(bool stable3lines, int encoderPos){
 				handleEvent(SIMA);
 			}
 		}
+	else {
+		handleEvent(SEMMI);
+	}
 }
 
 float StateContext::getTargetSpeed(){

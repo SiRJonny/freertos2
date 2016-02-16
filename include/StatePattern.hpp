@@ -27,7 +27,8 @@ enum Event {
 	GYORSITO,
 	LASSITO,
 	SIMA,
-	START
+	START,
+	SEMMI
 };
 
 class BaseState {

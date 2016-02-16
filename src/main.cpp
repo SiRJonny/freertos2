@@ -124,6 +124,7 @@ void BT_send_msg(int msg, char* nev);*/
 void BT_send_msg(int * msg, string nev);
 //void BT_send_msg(float * msg, string nev);
 void SetServo_motor(int pos); // -SERVO_RANGE_MOTOR +SERVO_RANGE_MOTOR
+void SetServo_sensor(int pos);
 void SetServo_steering(int pos); // -SERVO_RANGE_STEERING +SERVO_RANGE_STEERING
 void SetServo_steering(float angle);  // kormányzás, szöggel
 void getActiveLinePos(LineState * Lines, float *last_pos1, float *last_pos2, float * active1, float * active2);
@@ -521,12 +522,19 @@ void BTReceiveTask()
 			case 0:
 				//SET_SPEED = 0;
 				//state_struct.state = -1;
-				stateContext.stop();
-				stopped = 1;
-				HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
-				osDelay(500);
-				osThreadSuspend(SteerControl_TaskHandle);
-				SetServo_motor(0);
+				if (safety_car) {
+					stateContext.stop();
+					stopped = 1;
+					HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
+					osDelay(500);
+					osThreadSuspend(SteerControl_TaskHandle);
+					SetServo_motor(0);
+				} else {
+					stopped = 1;
+					speed_control_enabled = false;
+					SetServo_motor(0);
+
+				}
 				break;
 			case 1:
 
@@ -592,16 +600,18 @@ void SendRemoteVarTask()
 
 
 		//minden ciklusban elküldi ezeket
-		BT_send_msg(&speed_global, "speed");
-		BT_send_msg(&speed_control, "control_speed");
-		BT_send_msg(&PIDm.iState, "mIState");
+
+		//BT_send_msg(&PIDm.iState, "mIState");
 		//BT_send_msg(&Distance_sensors[2], "contLeft");
 		//BT_send_msg(&Distance_sensors[3], "contRight");
 
 
 		//minden slowSendMultiplier ciklusban küldi el ezeket
 		if (sendRemoteCounter % slowSendMultiplier == 0) {
+			BT_send_msg(&speed_global, "speed");
+			BT_send_msg(&Distance_sensors[1], "contFont");
 
+			BT_send_msg(&speed_control, "control_speed");
 			//BT_send_msg(&speed_control, "control_speed");
 			//BT_send_msg(&globalDistance, "globalDist");
 			//BT_send_msg(&encoderPos, "encoder");
@@ -614,7 +624,7 @@ void SendRemoteVarTask()
 			//BT_send_msg(&timer, "Z:" + std::string(itoa(giro_get_angle_Z(),buffer,10)) + "\n");
 			//BT_send_msg(&timer, "lim:" + std::string(itoa(speed_under_X,buffer,10)) + "\n");
 			//BT_send_msg(&stopped, "stopped");
-			sendSensors();
+			//sendSensors();
 			//sendDebugVars();
 			//sendTuning();
 			sendStateData();
@@ -714,20 +724,23 @@ void sendPIDm() {
 }
 
 float getDistance() {
-	const int arraySize = 10;
-	static float distanceArray[arraySize];
+
+	static float distanceArray[5];
 	static int index = 0;
-	static float dist = (1.0f/((float)Distance_sensors[1]));
+	static float dist;
+	dist = (1.0f/((float)Distance_sensors[1]));
+
+	if (index == 5) {
+			index = 0;
+		}
 
 	distanceArray[index] = dist;
-	index++;
-	if (index == arraySize) {
-		index = 0;
-	}
 
-	float min = 100000;
 
-	for(int i = 0; i<arraySize; i++) {
+	static float min = 100000;
+	min = 10000;
+
+	for(int i = 0; i<5; i++) {
 		if (distanceArray[i] < min) {
 			min = distanceArray[i];
 		}
@@ -736,6 +749,8 @@ float getDistance() {
 	if (min == 0) {
 		min = dist;
 	}
+
+	index++;
 
 	return min;
 
@@ -796,7 +811,7 @@ void SteerControlTask()
 	// követés szabályzó struktúra
 	PIDk.pGain = -15000;		// 100-> 5m/s hibánál lesz 500 a jel (max)
 	PIDk.iGain = 0;			// pGain/100?
-	PIDk.dGain = 0;
+	PIDk.dGain = -150000;
 	PIDk.iMax = 100;
 	PIDk.iMin = 0;
 	PIDk.iState = 0;
@@ -841,69 +856,86 @@ void SteerControlTask()
 
 
 		// motor szabályozás
-		if (!safety_car)
-		{
-			speed_error = SET_SPEED - speed;
-			speed_control = UpdatePID1(&PIDm, speed_error, speed);
-
-			// negatív irányt megerõsíteni	// motor bekötéstõl függ!!!
-
-			if(speed_control < 0)
+		if (speed_control_enabled) {
+			if (!safety_car)
 			{
-				//speed_control *= 10;
-				if (speed_control > -120) {
-					speed_control = -120;
+				speed_error = SET_SPEED - speed;
+				speed_control = UpdatePID1(&PIDm, speed_error, speed);
+
+				// negatív irányt megerõsíteni	// motor bekötéstõl függ!!!
+
+				if(speed_control < 0)
+				{
+					//speed_control *= 10;
+					if (speed_control > -120) {
+						speed_control = -120;
+					}
+					if (last_speed_control < 0) {
+						//speed_control = 0;
+					}
 				}
-				if (last_speed_control < 0) {
-					//speed_control = 0;
+
+
+				// fékezés logika és gyorsulás logika
+				if(last_speed_control > 0 && speed_control < 0)
+				{
+					speed_control = 0;	//TODO ez fölösleges, nem?
 				}
+				else if(speed_control > 0 && speed_control > (last_speed_control + ACC_MAX) && last_speed_control >= 0)
+				{
+					speed_control = last_speed_control + ACC_MAX; 		// gyorsulás korlát
+				}
+
+				SetServo_motor( (int)speed_control );
 			}
-
-
-			// fékezés logika és gyorsulás logika
-			if(last_speed_control > 0 && speed_control < 0)
+			else if(safety_car)
 			{
-				speed_control = 0;	//TODO ez fölösleges, nem?
-			}
-			else if(speed_control > 0 && speed_control > (last_speed_control + ACC_MAX) && last_speed_control >= 0)
-			{
-				speed_control = last_speed_control + ACC_MAX; 		// gyorsulás korlát
-			}
+				// hiba negatív, ha messzebb vagyunk -> negatív PGain
+				ADC2_read();
+				distance = getDistance();
+				//BT_send_msg(&distance, "dist");
+				distance_error = SET_DISTANCE - distance;
+				speed_control = UpdatePID1(&PIDk, distance_error, speed);
 
-			SetServo_motor( (int)speed_control );
-		}
-		else if(safety_car)
-		{
-			// hiba negatív, ha messzebb vagyunk -> negatív PGain
-			ADC2_read();
-			distance = getDistance();
-			distance_error = SET_DISTANCE - distance;
-			speed_control = UpdatePID1(&PIDk, distance_error, speed);
+				// negatív irányt megerõsíteni	// motor bekötéstõl függ!!!
 
-			// negatív irányt megerõsíteni	// motor bekötéstõl függ!!!
+				/*if(speed_control < 0)
+				{
+					//speed_control *= 10;
+					if (speed_control > -80) {
+						speed_control = -80;
+					}
+					if (last_speed_control < 0) {
+						//speed_control = 0;
+					}
+				}*/
 
-			if(speed_control < 0)
-			{
-				//speed_control *= 10;
-				if (speed_control > -80) {
-					speed_control = -80;
-				}
-				if (last_speed_control < 0) {
-					//speed_control = 0;
-				}
-			}
-
-			if (speed < 0.01 && speed_control < 0) {
-				speed_control = 0;
-			} else {
-				if (SET_SPEED == FAST && speed > SAFETYFAST) {
+				if (speed < 0.01 && speed_control < 0) {
 					speed_control = 0;
-				} else if (SET_SPEED == SLOW && speed > SAFETYSLOW) {
-					speed_control = 0;
+				} else {
+					if (SET_SPEED == FAST ) {
+						if (speed > SAFETYFAST) {
+							speed_control = 30;
+						}
+					} else if (SET_SPEED == SLOW) {
+						if (speed > SAFETYSLOW) {
+							speed_control = 30;
+						}
+					} else {
+						speed_control = 0;
+					}
 				}
-			}
 
-			SetServo_motor( (int)speed_control );
+				float safety_accmax = 5;
+				// fékezés logika és gyorsulás logika
+				if(speed_control > 0 && speed_control > (last_speed_control + safety_accmax) && last_speed_control >= 0)
+				{
+					speed_control = last_speed_control + safety_accmax; 		// gyorsulás korlát
+				}
+
+
+				SetServo_motor( (int)speed_control );
+			}
 		}
 
 		//motorszabályzás vége
