@@ -19,16 +19,19 @@ class LassitoState;
 class StopState;
 class StartState;
 
+class SafetyState;
+
 extern volatile float SLOW;
 extern volatile float FAST;
 extern float SET_SPEED;
 
-enum Event {
+enum SpeedEvent {
 	GYORSITO,
 	LASSITO,
 	SIMA,
 	START,
-	SEMMI
+	SEMMI,
+	SPEEDUP
 };
 
 class BaseState {
@@ -41,14 +44,18 @@ public:
 	static StopState stopped;
 	static StartState started;
 
+	static SafetyState safetySlow;
+	static SafetyState safetyFast;
+
 	int stateId;
 	bool steeringPD;
 	float targetSpeed;
-	int encoderPosDifference;
-	int targetEncoderPos;
+
+	int distanceToMove;
+	int triggerGlobalDistance;
 
 	void stop(StateContext& context);
-	virtual void handleEvent(StateContext& context, Event event) {}
+	virtual void handleEvent(StateContext& context, SpeedEvent event) {}
 	virtual ~BaseState() {}
 
 };
@@ -56,38 +63,50 @@ public:
 class KanyarState : public BaseState {
 public:
 	KanyarState();
-	virtual void handleEvent(StateContext& context, Event event);
+	virtual void handleEvent(StateContext& context, SpeedEvent event);
 };
 
 class GyorsitoState : public BaseState {
 public:
 	GyorsitoState();
-	virtual void handleEvent(StateContext& context, Event event);
+	virtual void handleEvent(StateContext& context, SpeedEvent event);
 };
 
 class GyorsState : public BaseState {
 public:
 	GyorsState();
-	virtual void handleEvent(StateContext& context, Event event);
+	virtual void handleEvent(StateContext& context, SpeedEvent event);
 };
 
 class LassitoState : public BaseState {
 public:
 	LassitoState();
-	virtual void handleEvent(StateContext& context, Event event);
+	virtual void handleEvent(StateContext& context, SpeedEvent event);
 };
 
 
 class StopState : public BaseState {
 public:
 	StopState();
-	virtual void handleEvent(StateContext& context, Event event);
+	virtual void handleEvent(StateContext& context, SpeedEvent event);
 };
 
 class StartState : public BaseState {
 public:
 	StartState();
-	virtual void handleEvent(StateContext& context, Event event);
+	virtual void handleEvent(StateContext& context, SpeedEvent event);
+};
+
+class SafetyState : public BaseState {
+public:
+	bool isSafety;
+	bool isSensorMoved;
+	BaseState* nextState;
+	SpeedEvent triggerEvent;
+
+
+	SafetyState(BaseState* nState, float maxSpeed, int howMuchToMove, bool moveSensor, SpeedEvent triggerSpeedEvent);
+	virtual void handleEvent(StateContext& context, SpeedEvent event);
 };
 
 
@@ -100,7 +119,7 @@ public:
 
 	StateContext();
 
-	void handleEvent(Event event);
+	void handleEvent(SpeedEvent event);
 	void setState(BaseState *newState);
 	void setTargetEncoderPos(int target);
 	void stop();

@@ -9,7 +9,6 @@
 #include "config.hpp"
 
 
-extern void SetServo_motor(int pos);
 extern void SetServo_sensor(int pos);
 
 KanyarState BaseState::kanyar;
@@ -18,6 +17,9 @@ GyorsState BaseState::gyors;
 LassitoState BaseState::lassito;
 StopState BaseState::stopped;
 StartState BaseState::started;
+
+SafetyState BaseState::safetySlow(&BaseState::safetyFast, SAFETYSLOW, 4000, true, GYORSITO);
+SafetyState BaseState::safetyFast(&BaseState::safetySlow, SAFETYFAST, 2000, false, GYORSITO);
 
 int sensorAngle  = 180;
 
@@ -40,10 +42,10 @@ KanyarState::KanyarState() {
 	stateId = 1;
 	steeringPD = false;
 	targetSpeed = SLOW;
-	encoderPosDifference = 3000;
+	distanceToMove = 1000; //encoderPosDifference = 3000;
 }
 
-void KanyarState::handleEvent(StateContext& context, Event event) {
+void KanyarState::handleEvent(StateContext& context, SpeedEvent event) {
 	moveSensor();
 
 	if (event == GYORSITO) {
@@ -58,11 +60,13 @@ GyorsitoState::GyorsitoState() {
 	stateId = 2;
 	steeringPD = false;
 	targetSpeed = SLOW;
-	encoderPosDifference = 1200;
+	distanceToMove = 500; //encoderPosDifference = 1200;
 }
 
-void GyorsitoState::handleEvent(StateContext& context, Event event) {
-	context.setState(&BaseState::gyors);
+void GyorsitoState::handleEvent(StateContext& context, SpeedEvent event) {
+	if (event == SIMA || event == GYORSITO) {
+		context.setState(&BaseState::gyors);
+	}
 }
 
 //Gyors szakaszon
@@ -70,10 +74,10 @@ GyorsState::GyorsState() {
 	stateId = 3;
 	steeringPD = true;
 	targetSpeed = FAST;
-	encoderPosDifference = 2500;
+	distanceToMove = 2000; //encoderPosDifference = 2500;
 }
 
-void GyorsState::handleEvent(StateContext& context, Event event) {
+void GyorsState::handleEvent(StateContext& context, SpeedEvent event) {
 	if (event == GYORSITO) {
 		context.setState(&BaseState::lassito);
 	}
@@ -84,10 +88,10 @@ LassitoState::LassitoState() {
 	stateId = 4;
 	steeringPD = true;
 	targetSpeed = SLOW;
-	encoderPosDifference = 6000;
+	distanceToMove = 3000; //6000;
 }
 
-void LassitoState::handleEvent(StateContext& context, Event event) {
+void LassitoState::handleEvent(StateContext& context, SpeedEvent event) {
 	if (event == SIMA) {
 		context.setState(&BaseState::kanyar);
 		PIDm.iState = 0;
@@ -99,9 +103,10 @@ StopState::StopState() {
 	stateId = -1;
 	steeringPD = false;
 	targetSpeed = 0;
+	distanceToMove = 0;
 }
 
-void StopState::handleEvent(StateContext& context, Event event) {
+void StopState::handleEvent(StateContext& context, SpeedEvent event) {
 	if (event == START) {
 		resetSensor();
 		context.setState(&BaseState::started);
@@ -113,12 +118,11 @@ StartState::StartState() {
 	stateId = 0;
 	steeringPD = false;
 	targetSpeed = SLOW;
-	encoderPosDifference = 0;
+	distanceToMove = 0;
 }
 
-void StartState::handleEvent(StateContext& context, Event event) {
+void StartState::handleEvent(StateContext& context, SpeedEvent event) {
 	moveSensor();
-
 
 	if (event == GYORSITO) {
 		resetSensor();
@@ -126,34 +130,59 @@ void StartState::handleEvent(StateContext& context, Event event) {
 	}
 }
 
+
+//SafetyState
+SafetyState::SafetyState(BaseState* nState, float maxSpeed,int howMuchToMove, bool moveSensor, SpeedEvent triggerSpeedEvent) {
+	stateId = 10;
+	steeringPD = false;
+	targetSpeed = maxSpeed;
+	distanceToMove = howMuchToMove;
+	isSafety = true;
+	isSensorMoved = moveSensor;
+	triggerEvent = triggerSpeedEvent;
+	nextState = nState;
+}
+
+void SafetyState::handleEvent(StateContext& context, SpeedEvent event) {
+	if (isSensorMoved) {
+		moveSensor();
+	}
+
+	if (event == triggerEvent) {
+		resetSensor();
+		context.setState(&BaseState::gyorsito);
+	} else if (event == SPEEDUP) {
+		//todo context.setState(&BaseState::gyorsito);
+	}
+}
+
+
+
+
 //BaseState
 void BaseState::stop(StateContext& context) {
 	context.setState(&BaseState::stopped);
 }
-
-//BaseState::~BaseState() {};
 
 //StateContext
 StateContext::StateContext(){
 	setState(&BaseState::stopped);
 }
 
-void StateContext::handleEvent(Event event) {
+void StateContext::handleEvent(SpeedEvent event) {
 	state->handleEvent(*this, event);
 }
 
 void StateContext::setState(BaseState* newState){
 	state = newState;
-	state->targetEncoderPos = currEncoderPos - state->encoderPosDifference;
+	state->triggerGlobalDistance = globalDistance + state->distanceToMove;
 }
 
 
 void StateContext::update(bool stable3lines, int encoderPos){
 	currEncoderPos = encoderPos;
 
-	if(currEncoderPos <= state->targetEncoderPos)
-		{
-
+	if (globalDistance >= state->triggerGlobalDistance) {
 			if (stable3lines) {
 				handleEvent(GYORSITO);
 			} else {

@@ -916,16 +916,10 @@ void SteerControlTask()
 				if (speed < 0.01 && speed_control < 0) {
 					speed_control = 0;
 				} else {
-					if (SET_SPEED == FAST ) {
-						if (speed > SAFETYFAST) {
-							speed_control = 30;
-						}
-					} else if (SET_SPEED == SLOW) {
-						if (speed > SAFETYSLOW) {
-							speed_control = 30;
-						}
-					} else {
+					if (SET_SPEED == 0) {
 						speed_control = 0;
+					} else if (speed > SET_SPEED) {
+						speed_control = 30;
 					}
 				}
 
