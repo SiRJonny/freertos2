@@ -26,6 +26,10 @@ HAL_StatusTypeDef status;
 
 
 extern void BT_send_msg(int*msg,std::string nev);
+extern float median_filter(float val);
+extern int calculateMovingAverage(float data);
+extern float FrontSensorMedian;
+extern float FrontSensorAverage;
 extern int timer;
 extern char buffer[10];
 
@@ -170,6 +174,8 @@ void ADC2_read()
 			Distance_sensors[i] = HAL_ADC_GetValue(&hadc2);
 		}
 	}
+	FrontSensorMedian = (int)median_filter((float)Distance_sensors[1]);
+	//FrontSensorAverage = calculateMovingAverage(FrontSensorMedian);
 	HAL_ADC_Stop(&hadc2);
 }
 

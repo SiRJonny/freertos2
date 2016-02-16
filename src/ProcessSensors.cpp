@@ -6,6 +6,7 @@
  */
 
 #include "ProcessSensors.h"
+#include <stdlib.h>
 
 #define REFINE_RADIUS 2
 #define NO_LINE_MULTIPLIER 2
@@ -25,6 +26,30 @@ extern bool bordas_bal;
 float refined_max;
 float refined_max2;
 LineState Lines; // TODO: angle nem, másik sor pos igen
+
+float median_filter(float val)
+{
+	static float array[5];
+	static int index = 0;
+
+	array[index] = val;
+	index++;
+	if(index >=5)
+	{
+		index = 0;
+	}
+
+	qsort(array,5,4,compare);
+
+	return array[2];
+}
+
+int compare (const void * a, const void * b)
+{
+  float fa = *(const float*) a;
+  float fb = *(const float*) b;
+  return (fa > fb) - (fa < fb);
+}
 
 int count_between_values(int * array, int N, int min, int max)
 {
@@ -169,6 +194,27 @@ int calculateAverage(uint32_t * data, int datacount)
 		average += data[i];
 	}
 	average /= datacount;
+	return average;
+}
+
+float calculateMovingAverage(float data)
+{
+	static float average = 0;
+	static float array[5];
+	static int index = 0;
+	array[index] = data;
+	index++;
+	if(index >= 5)
+	{
+		index = 0;
+	}
+
+	average = 0;
+	for(int i = 0; i < 5; i++)
+	{
+		average += array[i];
+	}
+	average /= 5.0f;
 	return average;
 }
 
