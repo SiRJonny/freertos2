@@ -892,7 +892,7 @@ void SteerControlTask()
 			{
 				// hiba negatív, ha messzebb vagyunk -> negatív PGain
 				ADC2_read();
-				distance = getDistance();
+				distance = (1.0f/((float)Distance_sensors[1]));		//getDistance();
 				//BT_send_msg(&distance, "dist");
 				distance_error = SET_DISTANCE - distance;
 				speed_control = UpdatePID1(&PIDk, distance_error, speed);
@@ -926,9 +926,9 @@ void SteerControlTask()
 					}
 				}
 
-				float safety_accmax = 5;
+				float safety_accmax = 2;
 				// fékezés logika és gyorsulás logika
-				if(speed_control > 0 && speed_control > (last_speed_control + safety_accmax) && last_speed_control >= 0)
+				if(speed_control > 50 && speed_control > (last_speed_control + safety_accmax) && last_speed_control >= 0)
 				{
 					speed_control = last_speed_control + safety_accmax; 		// gyorsulás korlát
 				}
