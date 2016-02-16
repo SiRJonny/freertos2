@@ -10,7 +10,7 @@
 
 
 extern void SetServo_motor(int pos);
-
+extern void SetServo_sensor(int pos);
 
 KanyarState BaseState::kanyar;
 GyorsitoState BaseState::gyorsito;
@@ -28,6 +28,14 @@ KanyarState::KanyarState() {
 }
 
 void KanyarState::handleEvent(StateContext& context, Event event) {
+	if(safety_car) {
+		if (control > 0) {
+			SetServo_sensor(140);
+		} else {
+			SetServo_sensor(-140);
+		}
+	}
+
 	if (event == GYORSITO) {
 		context.setState(&BaseState::gyorsito);
 	}
