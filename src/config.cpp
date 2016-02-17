@@ -97,7 +97,7 @@ bool safety_car = true;
 
 PID_struct PIDs;
 PID_struct PIDm;
-PID_struct PIDk;
+static PID_struct PIDk;
 
 //állapotgépek
 
