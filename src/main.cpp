@@ -606,7 +606,10 @@ void SendRemoteVarTask()
 			myfloat +=1;
 		}
 
+		BT_send_msg(&speed_global, "speed");
 
+		float asdf = fr_distance*1000;
+					BT_send_msg(&asdf, "contfdist");
 
 		/*BT_send_msg(&speed_global, "speed");
 		float asdf;
@@ -623,7 +626,8 @@ void SendRemoteVarTask()
 
 		//minden slowSendMultiplier ciklusban küldi el ezeket
 		if (sendRemoteCounter % slowSendMultiplier == 0) {
-			BT_send_msg(&speed_global, "speed");
+
+
 			//BT_send_msg(&SET_SPEED, "SET_SPEED");
 			//BT_send_msg(&speed_control, "control_speed");
 			//BT_send_msg(&FrontSensorAverage, "contAvg");
@@ -646,7 +650,7 @@ void SendRemoteVarTask()
 			//BT_send_msg(&timer, "Z:" + std::string(itoa(giro_get_angle_Z(),buffer,10)) + "\n");
 			//BT_send_msg(&timer, "lim:" + std::string(itoa(speed_under_X,buffer,10)) + "\n");
 			//BT_send_msg(&stopped, "stopped");
-			//sendSensors();
+			sendSensors();
 			//sendDebugVars();
 			//sendTuning();
 			//sendStateData();
@@ -798,7 +802,8 @@ void SteerControlTask()
 		numLinesArray[i] = 1;
 	}
 
-
+	float fr_distance_last = 0;
+	float FrontSensorAverage_last;
 	int no_line_cycle_count = 0;
 
 	// állapotgép init
@@ -916,7 +921,18 @@ void SteerControlTask()
 				//fr_distance = (1.0f/((float)Distance_sensors[1]));		//getDistance();
 				//float asdf;
 				FrontSensorAverage = calculateMovingAverage(FrontSensorMedian);
+
+
+
 				fr_distance = (1.0f/FrontSensorAverage);
+
+				//max távolodás
+				static float max_tavolodas = 0.000525f;
+				if(fr_distance > fr_distance_last + max_tavolodas)
+				{
+					fr_distance = fr_distance_last + max_tavolodas;
+				}
+
 				//BT_send_msg(&distance, "dist");
 				distance_error = SET_DISTANCE - fr_distance;
 				speed_control = UpdatePID1(&PIDk, distance_error, fr_distance);
