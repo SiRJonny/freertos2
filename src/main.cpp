@@ -958,8 +958,14 @@ void SteerControlTask()
 					speed_control = last_speed_control + safety_accmax; 		// gyorsulás korlát
 				}
 
-
-				SetServo_motor( (int)speed_control );
+				// túl közel védelem
+				if(Distance_sensors[1] > 230)
+				{
+					SetServo_motor( 0 );
+					osDelay(20);
+				}else{
+					SetServo_motor( (int)speed_control );
+				}
 			}
 		}
 
