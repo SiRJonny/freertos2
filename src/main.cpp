@@ -944,8 +944,10 @@ void SteerControlTask()
 					if (SET_SPEED == 0) {
 						speed_control = 0;
 					} else if (speed > SET_SPEED) {
-						speed_control = SET_SPEED*35.0f;
-
+						if(speed_control > SET_SPEED*35.0f)	// csak ha nagyobbat akarna adni
+						{
+							speed_control = SET_SPEED*35.0f;
+						}
 					} else {
 
 					}
