@@ -200,21 +200,21 @@ int calculateAverage(uint32_t * data, int datacount)
 float calculateMovingAverage(float data)
 {
 	static float average = 0;
-	static float array[5];
+	static float array[10];
 	static int index = 0;
 	array[index] = data;
 	index++;
-	if(index >= 5)
+	if(index >= 10)
 	{
 		index = 0;
 	}
 
 	average = 0;
-	for(int i = 0; i < 5; i++)
+	for(int i = 0; i < 10; i++)
 	{
 		average += array[i];
 	}
-	average /= 5.0f;
+	average /= 10.0f;
 	return average;
 }
 

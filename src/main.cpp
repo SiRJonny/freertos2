@@ -620,21 +620,29 @@ void SendRemoteVarTask()
 		//BT_send_msg(&Distance_sensors[2], "contLeft");
 		//BT_send_msg(&Distance_sensors[3], "contRight");
 
+		BT_send_msg(&speed_global, "speed");
+		BT_send_msg(&speed_control, "control_speed");
+
+		static float lastFr = 0;
+
+		float d = (lastFr - fr_distance)*10000*(-200000);
+		lastFr = fr_distance;
+		BT_send_msg(&d , "contD");
+		float contNew = d + speed_control;
+		BT_send_msg(&contNew , "contNew");
+
 
 		//minden slowSendMultiplier ciklusban küldi el ezeket
 		if (sendRemoteCounter % slowSendMultiplier == 0) {
 
-			BT_send_msg(&speed_global, "speed");
-			BT_send_msg(&Distance_sensors[1], "contFro");
-			float asdf = fr_distance*1000;
-			BT_send_msg(&asdf, "contfdist");
-			BT_send_msg(&SET_SPEED, "SET_SPEED");
+			//BT_send_msg(&Distance_sensors[1], "contFro");
+			//float asdf = fr_distance*1000;
+			//BT_send_msg(&asdf, "contfdist");
+			//BT_send_msg(&SET_SPEED, "SET_SPEED");
 			//BT_send_msg(&FrontSensorAverage, "contAvg");
-			BT_send_msg(&speed_control, "control_speed");
+
+
 			//BT_send_msg(&globalDistance, "globalDist");
-			//BT_send_msg(&encoderPos, "encoder");
-
-
 			//BT_send_msg(&globalLines.numLines1, "contNum1");
 			//BT_send_msg(&globalLines.numLines2, "contNum2");
 
@@ -919,7 +927,7 @@ void SteerControlTask()
 				ADC2_read();
 				fr_distance = (1.0f/((float)Distance_sensors[1]));		//getDistance();
 				//float asdf;
-				FrontSensorAverage = calculateMovingAverage(FrontSensorMedian);
+				FrontSensorAverage = calculateMovingAverage(Distance_sensors[1]);
 
 
 
