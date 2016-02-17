@@ -195,7 +195,7 @@ int main(void)
   osThreadDef(SendRemoteVarTask, SendRemoteVarTask, osPriorityNormal, 0, 128);
   SendRemoteVar_TaskHandle = osThreadCreate(osThread(SendRemoteVarTask), NULL);
 
-  osThreadDef(SteerControlTask, SteerControlTask, osPriorityHigh, 0, 128);
+  osThreadDef(SteerControlTask, SteerControlTask, osPriorityHigh, 0, 192);
   SteerControl_TaskHandle = osThreadCreate(osThread(SteerControlTask), NULL);
 
   osThreadDef(BTReceiveTask, BTReceiveTask, osPriorityNormal, 0, 128);
@@ -599,6 +599,15 @@ void SendRemoteVarTask()
 			myfloat +=1;
 		}
 
+		BT_send_msg(&speed_global, "speed");
+		BT_send_msg(&speed_control, "control_speed");
+		BT_send_msg(&FrontSensorAverage, "contAvg");
+
+		/*BT_send_msg(&speed_global, "speed");
+		float asdf;
+		asdf = calculateMovingAverage(FrontSensorMedian);
+		BT_send_msg(&FrontSensorMedian, "contMed");
+		BT_send_msg(&asdf, "contAwert");*/
 
 		//minden ciklusban elküldi ezeket
 
@@ -609,17 +618,14 @@ void SendRemoteVarTask()
 
 		//minden slowSendMultiplier ciklusban küldi el ezeket
 		if (sendRemoteCounter % slowSendMultiplier == 0) {
-			BT_send_msg(&speed_global, "speed");
-			BT_send_msg(&Distance_sensors[1], "contFont");
 
-			BT_send_msg(&speed_control, "control_speed");
 			//BT_send_msg(&speed_control, "control_speed");
 			//BT_send_msg(&globalDistance, "globalDist");
 			//BT_send_msg(&encoderPos, "encoder");
 
-			BT_send_msg(&PIDk.dState, "contDst");
-			BT_send_msg(&fr_distance, "contDist");
-			BT_send_msg(&distance_error, "contErr");
+			//BT_send_msg(&PIDk.dState, "contDst");
+			//BT_send_msg(&fr_distance, "contDist");
+			//BT_send_msg(&distance_error, "contErr");
 
 			//BT_send_msg(&timer, "enc:" + std::string(itoa(encoderPos,buffer,10)) + "\n");
 
@@ -631,12 +637,12 @@ void SendRemoteVarTask()
 			//sendSensors();
 			//sendDebugVars();
 			//sendTuning();
-			sendStateData();
+			//sendStateData();
 			//sendPIDs();
 		}
 
 		sendRemoteCounter++;
-		osDelay(50);
+		osDelay(15);
 	}
 
 }
@@ -815,7 +821,7 @@ void SteerControlTask()
 	// követés szabályzó struktúra
 	PIDk.pGain = -15000.0f;		// 100-> 5m/s hibánál lesz 500 a jel (max)
 	PIDk.iGain = 0;			// pGain/100?
-	PIDk.dGain = 0;
+	PIDk.dGain = -200000;
 	PIDk.iMax = 100;
 	PIDk.iMin = 0;
 	PIDk.iState = 0;
@@ -895,7 +901,10 @@ void SteerControlTask()
 			{
 				// hiba negatív, ha messzebb vagyunk -> negatív PGain
 				ADC2_read();
-				fr_distance = (1.0f/((float)Distance_sensors[1]));		//getDistance();
+				//fr_distance = (1.0f/((float)Distance_sensors[1]));		//getDistance();
+				//float asdf;
+				FrontSensorAverage = calculateMovingAverage(FrontSensorMedian);
+				fr_distance = (1.0f/FrontSensorAverage);
 				//BT_send_msg(&distance, "dist");
 				distance_error = SET_DISTANCE - fr_distance;
 				speed_control = UpdatePID1(&PIDk, distance_error, fr_distance);
@@ -923,7 +932,7 @@ void SteerControlTask()
 					}
 				}
 
-				float safety_accmax = 2;
+				float safety_accmax = 1000;
 				// fékezés logika és gyorsulás logika
 				if(speed_control > 0 && speed_control > (last_speed_control + safety_accmax) && last_speed_control >= 0)
 				{

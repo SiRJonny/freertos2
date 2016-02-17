@@ -64,6 +64,8 @@ bool fal_jobb = false;
 bool bordas_bal = false;
 bool bordas_jobb = false;
 int Distance_sensors[5];
+float FrontSensorMedian = 100;
+float FrontSensorAverage = 100;
 
 //vonal
 float linePosM;		// vonalpozíció méterben

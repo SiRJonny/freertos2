@@ -65,6 +65,8 @@ extern bool fal_jobb;
 extern bool bordas_bal;
 extern bool bordas_jobb;
 extern int Distance_sensors[5];
+extern float FrontSensorMedian;
+extern float FrontSensorAverage;
 
 //vonal
 extern float linePosM;		// vonalpozíció méterben
