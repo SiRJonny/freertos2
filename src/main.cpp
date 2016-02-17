@@ -835,8 +835,8 @@ void SteerControlTask()
 	float error = 0;
 
 	// követés szabályzó struktúra
-	PIDk.pGain = -7500.0f;		// 100-> 5m/s hibánál lesz 500 a jel (max)
-	PIDk.iGain = -300;			// pGain/100?
+	PIDk.pGain = -10000.0f;		// 100-> 5m/s hibánál lesz 500 a jel (max)
+	PIDk.iGain = -200;			// pGain/100?
 	PIDk.dGain = 0;
 	PIDk.iMax = 0.1;
 	PIDk.iMin = -0.1;
