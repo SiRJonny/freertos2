@@ -628,10 +628,10 @@ void SendRemoteVarTask()
 		if (sendRemoteCounter % slowSendMultiplier == 0) {
 
 
-			//BT_send_msg(&SET_SPEED, "SET_SPEED");
-			//BT_send_msg(&speed_control, "control_speed");
-			//BT_send_msg(&FrontSensorAverage, "contAvg");
-			//BT_send_msg(&speed_control, "control_speed");
+			BT_send_msg(&SET_SPEED, "SET_SPEED");
+			BT_send_msg(&speed_control, "control_speed");
+			BT_send_msg(&FrontSensorAverage, "contAvg");
+			BT_send_msg(&speed_control, "control_speed");
 			//BT_send_msg(&globalDistance, "globalDist");
 			//BT_send_msg(&encoderPos, "encoder");
 
@@ -650,7 +650,7 @@ void SendRemoteVarTask()
 			//BT_send_msg(&timer, "Z:" + std::string(itoa(giro_get_angle_Z(),buffer,10)) + "\n");
 			//BT_send_msg(&timer, "lim:" + std::string(itoa(speed_under_X,buffer,10)) + "\n");
 			//BT_send_msg(&stopped, "stopped");
-			sendSensors();
+			//sendSensors();
 			//sendDebugVars();
 			//sendTuning();
 			//sendStateData();
@@ -836,7 +836,7 @@ void SteerControlTask()
 	float error = 0;
 
 	// követés szabályzó struktúra
-	PIDk.pGain = -15000.0f;		// 100-> 5m/s hibánál lesz 500 a jel (max)
+	PIDk.pGain = -7500.0f;		// 100-> 5m/s hibánál lesz 500 a jel (max)
 	PIDk.iGain = 0;			// pGain/100?
 	PIDk.dGain = -200000;
 	PIDk.iMax = 100;
@@ -933,6 +933,8 @@ void SteerControlTask()
 					fr_distance = fr_distance_last + max_tavolodas;
 				}
 
+				fr_distance_last = fr_distance;
+
 				//BT_send_msg(&distance, "dist");
 				distance_error = SET_DISTANCE - fr_distance;
 				speed_control = UpdatePID1(&PIDk, distance_error, fr_distance);
@@ -978,7 +980,8 @@ void SteerControlTask()
 				if(Distance_sensors[1] > 230)
 				{
 					SetServo_motor( 0 );
-					osDelay(20);
+
+
 				}else{
 					SetServo_motor( (int)speed_control );
 				}
