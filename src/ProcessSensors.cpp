@@ -307,7 +307,7 @@ int find3peaks(uint32_t * data, int * peaks, int treshold)
 	// treshold alattiak pozícióját 35-re, sorba rendezésnél elöl lesznek a ténylegesek
 	for(int i = 0; i < 3; i++)
 	{
-		if(peakValue[i] < treshold)
+		if(peakValue[i] < treshold && peakValue[i] < 130)
 		{
 			peaks[i] = 35;
 			numPeaks--;
@@ -333,7 +333,7 @@ int find3peaks(uint32_t * data, int * peaks, int treshold)
 		swap(&peakValue[1], &peakValue[2]);
 	}
 
-	if(peakMaxValue > calculateAverage(data)*NO_LINE_MULTIPLIER && peakMaxValue > 120) // ha a legnagyobb csúcs nincs az átlag ennyiszerese -> nincs vonal
+	if(peakMaxValue > calculateAverage(data)*NO_LINE_MULTIPLIER && peakMaxValue > 130) // ha a legnagyobb csúcs nincs az átlag ennyiszerese -> nincs vonal
 	{
 		return numPeaks;
 	}else{

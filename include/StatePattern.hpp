@@ -44,7 +44,8 @@ public:
 	static StopState stopped;
 	static StartState started;
 
-	static SafetyState safetySlow;
+	static SafetyState safetyLassit;
+	static SafetyState safetyKanyar;
 	static SafetyState safetyFast;
 
 	int stateId;
@@ -105,7 +106,7 @@ public:
 	SpeedEvent triggerEvent;
 
 
-	SafetyState(BaseState* nState, float maxSpeed, int howMuchToMove, bool moveSensor, SpeedEvent triggerSpeedEvent);
+	SafetyState(int st_id, BaseState* nState, float maxSpeed, int howMuchToMove, bool moveSensor, SpeedEvent triggerSpeedEvent);
 	virtual void handleEvent(StateContext& context, SpeedEvent event);
 };
 

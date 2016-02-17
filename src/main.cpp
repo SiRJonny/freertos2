@@ -523,7 +523,7 @@ void BTReceiveTask()
 			case 0:
 				//SET_SPEED = 0;
 				//state_struct.state = -1;
-				if (safety_car) {
+				if (!safety_car) {
 					stateContext.stop();
 					stopped = 1;
 					HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
@@ -599,9 +599,7 @@ void SendRemoteVarTask()
 			myfloat +=1;
 		}
 
-		BT_send_msg(&speed_global, "speed");
-		BT_send_msg(&speed_control, "control_speed");
-		BT_send_msg(&FrontSensorAverage, "contAvg");
+
 
 		/*BT_send_msg(&speed_global, "speed");
 		float asdf;
@@ -618,10 +616,17 @@ void SendRemoteVarTask()
 
 		//minden slowSendMultiplier ciklusban küldi el ezeket
 		if (sendRemoteCounter % slowSendMultiplier == 0) {
-
+			BT_send_msg(&speed_global, "speed");
+			BT_send_msg(&SET_SPEED, "SET_SPEED");
+			BT_send_msg(&speed_control, "control_speed");
+			BT_send_msg(&FrontSensorAverage, "contAvg");
 			//BT_send_msg(&speed_control, "control_speed");
 			//BT_send_msg(&globalDistance, "globalDist");
 			//BT_send_msg(&encoderPos, "encoder");
+
+
+			BT_send_msg(&globalLines.numLines1, "contNum1");
+			BT_send_msg(&globalLines.numLines2, "contNum2");
 
 			//BT_send_msg(&PIDk.dState, "contDst");
 			//BT_send_msg(&fr_distance, "contDist");
@@ -637,12 +642,12 @@ void SendRemoteVarTask()
 			//sendSensors();
 			//sendDebugVars();
 			//sendTuning();
-			//sendStateData();
+			sendStateData();
 			//sendPIDs();
 		}
 
 		sendRemoteCounter++;
-		osDelay(15);
+		osDelay(50);
 	}
 
 }
@@ -922,17 +927,22 @@ void SteerControlTask()
 					}
 				}*/
 
+
+
 				if (speed < 0.01 && speed_control < 0) {
 					speed_control = 0;
 				} else {
 					if (SET_SPEED == 0) {
 						speed_control = 0;
 					} else if (speed > SET_SPEED) {
-						speed_control = 30;
+						speed_control = SET_SPEED*35.0f;
+
+					} else {
+
 					}
 				}
 
-				float safety_accmax = 1000;
+				float safety_accmax = 20;
 				// fékezés logika és gyorsulás logika
 				if(speed_control > 0 && speed_control > (last_speed_control + safety_accmax) && last_speed_control >= 0)
 				{
@@ -1011,8 +1021,8 @@ void SteerControlTask()
 			SET_SPEED = skillStateContext.state->targetSpeed;
 		}else {
 			stateContext.update(stable3lines, encoderPos);
-			usePD = stateContext.isSteeringPD();
-			SET_SPEED = stateContext.getTargetSpeed();
+			usePD = stateContext.state->steeringPD;
+			SET_SPEED = stateContext.state->targetSpeed;
 		}
 
 		usePD = !speed_under_X;

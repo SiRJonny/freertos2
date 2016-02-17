@@ -18,8 +18,11 @@ LassitoState BaseState::lassito;
 StopState BaseState::stopped;
 StartState BaseState::started;
 
-SafetyState BaseState::safetySlow(&BaseState::safetyFast, SAFETYSLOW, 4000, true, GYORSITO);
-SafetyState BaseState::safetyFast(&BaseState::safetySlow, SAFETYFAST, 2000, false, GYORSITO);
+
+
+SafetyState BaseState::safetyLassit(10, &BaseState::safetyKanyar, SAFETYSLOW, 2000, false, SIMA);
+SafetyState BaseState::safetyKanyar(11,&BaseState::safetyFast, SAFETYSLOW, 1000, true, GYORSITO);
+SafetyState BaseState::safetyFast(12, &BaseState::safetyLassit, SAFETYFAST, 2000, false, GYORSITO);
 
 int sensorAngle  = 180;
 
@@ -42,7 +45,7 @@ KanyarState::KanyarState() {
 	stateId = 1;
 	steeringPD = false;
 	targetSpeed = SLOW;
-	distanceToMove = 1000; //encoderPosDifference = 3000;
+	distanceToMove = 2000; //encoderPosDifference = 3000;
 }
 
 void KanyarState::handleEvent(StateContext& context, SpeedEvent event) {
@@ -60,7 +63,7 @@ GyorsitoState::GyorsitoState() {
 	stateId = 2;
 	steeringPD = false;
 	targetSpeed = SLOW;
-	distanceToMove = 500; //encoderPosDifference = 1200;
+	distanceToMove = 1000; //encoderPosDifference = 1200;
 }
 
 void GyorsitoState::handleEvent(StateContext& context, SpeedEvent event) {
@@ -79,6 +82,7 @@ GyorsState::GyorsState() {
 
 void GyorsState::handleEvent(StateContext& context, SpeedEvent event) {
 	if (event == GYORSITO) {
+		PIDm.iState = 0;
 		context.setState(&BaseState::lassito);
 	}
 }
@@ -132,8 +136,8 @@ void StartState::handleEvent(StateContext& context, SpeedEvent event) {
 
 
 //SafetyState
-SafetyState::SafetyState(BaseState* nState, float maxSpeed,int howMuchToMove, bool moveSensor, SpeedEvent triggerSpeedEvent) {
-	stateId = 10;
+SafetyState::SafetyState(int st_id, BaseState* nState, float maxSpeed,int howMuchToMove, bool moveSensor, SpeedEvent triggerSpeedEvent) {
+	stateId = st_id;
 	steeringPD = false;
 	targetSpeed = maxSpeed;
 	distanceToMove = howMuchToMove;
@@ -150,7 +154,7 @@ void SafetyState::handleEvent(StateContext& context, SpeedEvent event) {
 
 	if (event == triggerEvent) {
 		resetSensor();
-		context.setState(&BaseState::gyorsito);
+		context.setState(nextState);
 	} else if (event == SPEEDUP) {
 		//todo context.setState(&BaseState::gyorsito);
 	}
@@ -209,7 +213,7 @@ void StateContext::stop(){
 
 void StateContext::start(int encoderPos) {
 	currEncoderPos = encoderPos;
-	setState(&BaseState::started);
+	setState(&BaseState::safetyFast);
 }
 
 int StateContext::getStateId() {

@@ -93,7 +93,7 @@ void ReadSensors()
 
 		SetMUX((uint8_t)i);
 
-		ControlTaskDelay(40);	// szenzor felfutásra várakozás
+		ControlTaskDelay(120);	// szenzor felfutásra várakozás
 		//osDelay(10);
 
 
@@ -116,7 +116,7 @@ void ReadSensors()
 		szenzorsor_2[i+16] = amount - ADC1_BUFFER[2];	// jobb hátsó
 
 		SetMUX((uint8_t)i+8);
-		ControlTaskDelay(40);
+		ControlTaskDelay(120);
 		//osDelay(10);
 
 		ADC1_read();
@@ -140,7 +140,11 @@ void ReadSensors()
 	DisableMUX();
 
 
-	szenzorsor_1[7] = (szenzorsor_1[6] + szenzorsor_1[8])/2.0f;
+	szenzorsor_1[7] = ((szenzorsor_1[6] + szenzorsor_1[8])/2.0f)*1.5;
+
+	szenzorsor_2[31] = 0;
+	szenzorsor_2[30] = 0;
+	szenzorsor_2[29] = 0;
 
 
 }
@@ -175,6 +179,10 @@ void ADC2_read()
 		}
 	}
 	FrontSensorMedian = (int)median_filter((float)Distance_sensors[1]);
+
+	if (FrontSensorMedian < 30) {
+		FrontSensorMedian = 30;
+	}
 	//FrontSensorAverage = calculateMovingAverage(FrontSensorMedian);
 	HAL_ADC_Stop(&hadc2);
 }

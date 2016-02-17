@@ -31,10 +31,10 @@ float speed_global = 0;
 float SKILLSLOW = 1.0;
 
 float SAFETYFAST = 1.7;
-float SAFETYSLOW = 1.2;
+float SAFETYSLOW = 1.1;
 
 bool speed_under_X = false;
-float speed_limit = 2;
+float speed_limit = 1.3f;
 
 //kanyarszervo
 int servoOffset = -60;
