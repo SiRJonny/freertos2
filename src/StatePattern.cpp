@@ -26,6 +26,9 @@ SafetyState BaseState::safetyFast(12, &BaseState::safetyLassit, SAFETYFAST, 2000
 
 int sensorAngle  = 180;
 
+int stateCounter = 0;
+int statemax = 20;
+
 void moveSensor() {
 	if(safety_car) {
 			if (control > 0) {
@@ -178,6 +181,7 @@ void StateContext::handleEvent(SpeedEvent event) {
 }
 
 void StateContext::setState(BaseState* newState){
+	stateCounter++;
 	state = newState;
 	state->triggerGlobalDistance = globalDistance + state->distanceToMove;
 }
@@ -185,6 +189,10 @@ void StateContext::setState(BaseState* newState){
 
 void StateContext::update(bool stable3lines, int encoderPos){
 	currEncoderPos = encoderPos;
+
+	if (stateCounter >= statemax) {
+		setState(&BaseState::stopped);
+	}
 
 	if (globalDistance >= state->triggerGlobalDistance) {
 			if (stable3lines) {

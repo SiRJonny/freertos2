@@ -178,11 +178,15 @@ void ADC2_read()
 			Distance_sensors[i] = HAL_ADC_GetValue(&hadc2);
 		}
 	}
-	FrontSensorMedian = (int)median_filter((float)Distance_sensors[1]);
+	if (Distance_sensors[1] < 30) {
+			Distance_sensors[1] = 30;
+		}
 
+	FrontSensorMedian = (int)median_filter((float)Distance_sensors[1]);
+	/*
 	if (FrontSensorMedian < 30) {
 		FrontSensorMedian = 30;
-	}
+	}*/
 	//FrontSensorAverage = calculateMovingAverage(FrontSensorMedian);
 	HAL_ADC_Stop(&hadc2);
 }

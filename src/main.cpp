@@ -556,8 +556,8 @@ void BTReceiveTask()
 				BT_send_msg(&PIDk.pGain, "PIDkP");
 				break;
 			case 3:
-				SLOW = *flt_ptr;
-				BT_send_msg(&SLOW, "SLOW");
+				PIDk.iGain = *flt_ptr;
+				BT_send_msg(&PIDk.iGain, "PIDkI");
 				break;
 			case 4:
 				FAST = *flt_ptr;
@@ -606,10 +606,7 @@ void SendRemoteVarTask()
 			myfloat +=1;
 		}
 
-		BT_send_msg(&speed_global, "speed");
 
-		float asdf = fr_distance*1000;
-					BT_send_msg(&asdf, "contfdist");
 
 		/*BT_send_msg(&speed_global, "speed");
 		float asdf;
@@ -627,10 +624,12 @@ void SendRemoteVarTask()
 		//minden slowSendMultiplier ciklusban küldi el ezeket
 		if (sendRemoteCounter % slowSendMultiplier == 0) {
 
-
+			BT_send_msg(&speed_global, "speed");
+			BT_send_msg(&Distance_sensors[1], "contFro");
+			float asdf = fr_distance*1000;
+			BT_send_msg(&asdf, "contfdist");
 			BT_send_msg(&SET_SPEED, "SET_SPEED");
-			BT_send_msg(&speed_control, "control_speed");
-			BT_send_msg(&FrontSensorAverage, "contAvg");
+			//BT_send_msg(&FrontSensorAverage, "contAvg");
 			BT_send_msg(&speed_control, "control_speed");
 			//BT_send_msg(&globalDistance, "globalDist");
 			//BT_send_msg(&encoderPos, "encoder");
@@ -837,10 +836,10 @@ void SteerControlTask()
 
 	// követés szabályzó struktúra
 	PIDk.pGain = -7500.0f;		// 100-> 5m/s hibánál lesz 500 a jel (max)
-	PIDk.iGain = 0;			// pGain/100?
-	PIDk.dGain = -200000;
-	PIDk.iMax = 100;
-	PIDk.iMin = 0;
+	PIDk.iGain = -300;			// pGain/100?
+	PIDk.dGain = 0;
+	PIDk.iMax = 0.1;
+	PIDk.iMin = -0.1;
 	PIDk.iState = 0;
 	PIDk.dState = 0;
 
@@ -918,13 +917,13 @@ void SteerControlTask()
 			{
 				// hiba negatív, ha messzebb vagyunk -> negatív PGain
 				ADC2_read();
-				//fr_distance = (1.0f/((float)Distance_sensors[1]));		//getDistance();
+				fr_distance = (1.0f/((float)Distance_sensors[1]));		//getDistance();
 				//float asdf;
 				FrontSensorAverage = calculateMovingAverage(FrontSensorMedian);
 
 
 
-				fr_distance = (1.0f/FrontSensorAverage);
+				//fr_distance = (1.0f/FrontSensorAverage);
 
 				//max távolodás
 				static float max_tavolodas = 0.000525f;
@@ -969,7 +968,7 @@ void SteerControlTask()
 					}
 				}
 
-				float safety_accmax = 20;
+				float safety_accmax = 15;
 				// fékezés logika és gyorsulás logika
 				if(speed_control > 0 && speed_control > (last_speed_control + safety_accmax) && last_speed_control >= 0)
 				{

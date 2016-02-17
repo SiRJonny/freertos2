@@ -25,7 +25,7 @@ float SAFETY_SPEED_LIMIT = 1.7;
 float STOP = 0.0;
 
 float SET_SPEED = 0;
-float SET_DISTANCE = 0.011;
+float SET_DISTANCE = 0.010;
 float speed_global = 0;
 
 float SKILLSLOW = 1.0;
