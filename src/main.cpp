@@ -104,6 +104,7 @@ void SendBluetoothTask();
 void SendRemoteVarTask();
 void SteerControlTask();
 void BTReceiveTask();
+bool START_PIN();
 
 void USART3_UART_Init();
 static void MX_DMA_Init(void);
@@ -451,6 +452,14 @@ void StartButtonTask()
 
 		if (wasPressed){
 
+			if(START_PIN() == false)	// ha rajta van a kábel
+			{
+				while(START_PIN() == false)
+				{
+					osDelay(50);
+				}
+			}
+
 			stateContext.start(encoderPos);
 			//stateData.event = PARKOLASSTART;
 
@@ -617,16 +626,16 @@ void SendRemoteVarTask()
 		//minden slowSendMultiplier ciklusban küldi el ezeket
 		if (sendRemoteCounter % slowSendMultiplier == 0) {
 			BT_send_msg(&speed_global, "speed");
-			BT_send_msg(&SET_SPEED, "SET_SPEED");
-			BT_send_msg(&speed_control, "control_speed");
-			BT_send_msg(&FrontSensorAverage, "contAvg");
+			//BT_send_msg(&SET_SPEED, "SET_SPEED");
+			//BT_send_msg(&speed_control, "control_speed");
+			//BT_send_msg(&FrontSensorAverage, "contAvg");
 			//BT_send_msg(&speed_control, "control_speed");
 			//BT_send_msg(&globalDistance, "globalDist");
 			//BT_send_msg(&encoderPos, "encoder");
 
 
-			BT_send_msg(&globalLines.numLines1, "contNum1");
-			BT_send_msg(&globalLines.numLines2, "contNum2");
+			//BT_send_msg(&globalLines.numLines1, "contNum1");
+			//BT_send_msg(&globalLines.numLines2, "contNum2");
 
 			//BT_send_msg(&PIDk.dState, "contDst");
 			//BT_send_msg(&fr_distance, "contDist");
@@ -639,10 +648,10 @@ void SendRemoteVarTask()
 			//BT_send_msg(&timer, "Z:" + std::string(itoa(giro_get_angle_Z(),buffer,10)) + "\n");
 			//BT_send_msg(&timer, "lim:" + std::string(itoa(speed_under_X,buffer,10)) + "\n");
 			//BT_send_msg(&stopped, "stopped");
-			//sendSensors();
+			sendSensors();
 			//sendDebugVars();
 			//sendTuning();
-			sendStateData();
+			//sendStateData();
 			//sendPIDs();
 		}
 
@@ -1098,6 +1107,16 @@ void SteerControlTask()
 	}
 }
 
+// true, ha le van húzva
+bool START_PIN()
+{
+	if(HAL_GPIO_ReadPin(GPIOE,GPIO_PIN_6))
+	{
+		return true;
+	}else{
+		return false;
+	}
+}
 
 void getActiveLinePos(LineState * Lines, float *last_pos1, float *last_pos2, float * active1, float * active2)
 {
