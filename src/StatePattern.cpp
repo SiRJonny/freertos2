@@ -49,6 +49,7 @@ KanyarState::KanyarState() {
 	steeringPD = false;
 	targetSpeed = SLOW;
 	distanceToMove = 1000; //encoderPosDifference = 3000;
+	safety = false;
 }
 
 void KanyarState::handleEvent(StateContext& context, SpeedEvent event) {
@@ -67,6 +68,7 @@ GyorsitoState::GyorsitoState() {
 	steeringPD = false;
 	targetSpeed = SLOW;
 	distanceToMove = 1000; //encoderPosDifference = 1200;
+	safety = false;
 }
 
 void GyorsitoState::handleEvent(StateContext& context, SpeedEvent event) {
@@ -81,6 +83,7 @@ GyorsState::GyorsState() {
 	steeringPD = true;
 	targetSpeed = FAST;
 	distanceToMove = 2000; //encoderPosDifference = 2500;
+	safety = false;
 }
 
 void GyorsState::handleEvent(StateContext& context, SpeedEvent event) {
@@ -96,6 +99,7 @@ LassitoState::LassitoState() {
 	steeringPD = true;
 	targetSpeed = SLOW;
 	distanceToMove = 3000; //6000;
+	safety = false;
 }
 
 void LassitoState::handleEvent(StateContext& context, SpeedEvent event) {
@@ -111,6 +115,7 @@ StopState::StopState() {
 	steeringPD = false;
 	targetSpeed = 0;
 	distanceToMove = 0;
+	safety = false;
 }
 
 void StopState::handleEvent(StateContext& context, SpeedEvent event) {
@@ -126,6 +131,7 @@ StartState::StartState() {
 	steeringPD = false;
 	targetSpeed = SLOW;
 	distanceToMove = 0;
+	safety = false;
 }
 
 void StartState::handleEvent(StateContext& context, SpeedEvent event) {
@@ -148,6 +154,7 @@ SafetyState::SafetyState(int st_id, BaseState* nState, float maxSpeed,int howMuc
 	isSensorMoved = moveSensor;
 	triggerEvent = triggerSpeedEvent;
 	nextState = nState;
+	safety = true;
 }
 
 void SafetyState::handleEvent(StateContext& context, SpeedEvent event) {

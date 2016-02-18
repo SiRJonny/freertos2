@@ -632,6 +632,10 @@ void BT_send_msgInt(int data, string s) {
 	BT_send_msg(&dataInt, s);
 }
 
+extern float pTerm;
+extern float dTerm;
+extern float iTerm;
+
 void SendRemoteVarTask()
 {
 	int sendRemoteCounter = 0;
@@ -664,27 +668,36 @@ void SendRemoteVarTask()
 		//BT_send_msg(&Distance_sensors[3], "contRight");
 
 		BT_send_msg(&speed_global, "speed");
+
+		//BT_send_msg(&pTerm, "contP");
+		//BT_send_msg(&iTerm, "contI");
+		//BT_send_msg(&dTerm, "contD");
+		BT_send_msg(&Distance_sensors[1], "contFront");
 		BT_send_msg(&speed_control, "control_speed");
-
-		static float lastFr = 0;
-
-		float d = (lastFr - fr_distance)*10000*(-200000);
-		lastFr = fr_distance;
-		BT_send_msg(&d , "contD");
-		float contNew = d + speed_control;
-		BT_send_msg(&contNew , "contNew");
 
 
 		//minden slowSendMultiplier ciklusban küldi el ezeket
 		if (sendRemoteCounter % slowSendMultiplier == 0) {
 
-			//BT_send_msg(&Distance_sensors[1], "contFro");
+
+			/*
+			static float lastFr = 0;
+
+			float d = (lastFr - fr_distance)*(-20000);
+			lastFr = fr_distance;
+			BT_send_msg(&d , "contD");
+			float contNew = d + speed_control;
+			BT_send_msg(&contNew , "contNew");
+
+
+			BT_send_msg(&Distance_sensors[1], "contFro");
 			//float asdf = fr_distance*1000;
 			//BT_send_msg(&asdf, "contfdist");
-			//BT_send_msg(&SET_SPEED, "SET_SPEED");
-			//BT_send_msg(&FrontSensorAverage, "contAvg");
+			BT_send_msg(&SET_SPEED, "SET_SPEED");
+			BT_send_msg(safety_car, "safety");
+			BT_send_msg(skillTrack, "skillTr");
 
-
+*/
 			//BT_send_msg(&timer, "tick:" + std::string(itoa(systick_count(),buffer,10)) + "\n");
 			//BT_send_msg(&timer, "radio:" + std::string(itoa(Radio_get_char(),buffer,10)) + "\n");
 			/*BT_send_msg(&globalDistance, "globalDist");
@@ -875,7 +888,7 @@ float getDistance() {
 // szabályzó task
 void SteerControlTask() {
 
-	osThreadSuspend(SteerControl_TaskHandle);
+
 
 	start_radio_done = false;
 	float speed = 0;
@@ -939,7 +952,7 @@ void SteerControlTask() {
 	// követés szabályzó struktúra
 	PIDk.pGain = -10000.0f;		// 100-> 5m/s hibánál lesz 500 a jel (max)
 	PIDk.iGain = -200;			// pGain/100?
-	PIDk.dGain = 0;
+	PIDk.dGain = -200000;
 	PIDk.iMax = 0.1;
 	PIDk.iMin = -0.1;
 	PIDk.iState = 0;
@@ -947,7 +960,7 @@ void SteerControlTask() {
 
 	stateData.event = UNSTABLE;
 
-
+	osThreadSuspend(SteerControl_TaskHandle);
 
 	for (;;) {
 		// várakozás a startjelre
@@ -1000,99 +1013,103 @@ void SteerControlTask() {
 				}
 
 				SetServo_motor((int) speed_control);
-			} else if (!safety_car) {
-				speed_error = SET_SPEED - speed;
-				speed_control = UpdatePID1(&PIDm, speed_error, speed);
+			} else {
+				safety_car = stateContext.state->safety;
+				if (!safety_car) {
+					speed_error = SET_SPEED - speed;
+					speed_control = UpdatePID1(&PIDm, speed_error, speed);
 
-				// negatív irányt megerõsíteni	// motor bekötéstõl függ!!!
+					// negatív irányt megerõsíteni	// motor bekötéstõl függ!!!
 
-				/*if (SET_SPEED == 0) {	//TODO
-				 PIDm.iState = 0;
-				 }*/
+					/*if (SET_SPEED == 0) {	//TODO
+					 PIDm.iState = 0;
+					 }*/
 
-				if (speed_control < 0 && SET_SPEED > -0.05) {
-					//speed_control *= 10;
-					if (speed_control > -80) {
-						speed_control = -80;
-					}
-					if (last_speed_control < 0) {
-						//speed_control = 0;
-					}
-				}
-
-				// fékezés logika és gyorsulás logika
-				if (last_speed_control > 0 && speed_control < 0) {
-					//speed_control = 0;	//TODO ez fölösleges, nem?
-				} else if (speed_control > 0
-						&& speed_control > (last_speed_control + ACC_MAX)
-						&& last_speed_control >= 0) {
-					speed_control = last_speed_control + ACC_MAX; // gyorsulás korlát
-				}
-
-				SetServo_motor((int) speed_control);
-			} else if (safety_car) {
-				// hiba negatív, ha messzebb vagyunk -> negatív PGain
-				ADC2_read();
-				fr_distance = (1.0f / ((float) Distance_sensors[1]));//getDistance();
-				//float asdf;
-				FrontSensorAverage = calculateMovingAverage(Distance_sensors[1]);
-
-				//fr_distance = (1.0f/FrontSensorAverage);
-
-				//max távolodás
-				static float max_tavolodas = 0.000525f;
-				if (fr_distance > fr_distance_last + max_tavolodas) {
-					fr_distance = fr_distance_last + max_tavolodas;
-				}
-
-				fr_distance_last = fr_distance;
-
-				//BT_send_msg(&distance, "dist");
-				distance_error = SET_DISTANCE - fr_distance;
-				speed_control = UpdatePID1(&PIDk, distance_error, fr_distance);
-
-				// negatív irányt megerõsíteni	// motor bekötéstõl függ!!!
-
-				/*if(speed_control < 0)
-				 {
-				 //speed_control *= 10;
-				 if (speed_control > -80) {
-				 speed_control = -80;
-				 }
-				 if (last_speed_control < 0) {
-				 //speed_control = 0;
-				 }
-				 }*/
-
-				if (speed < 0.01 && speed_control < 0) {
-					speed_control = 0;
-				} else {
-					if (SET_SPEED == 0) {
-						speed_control = 0;
-					} else if (speed > SET_SPEED) {
-						if (speed_control > SET_SPEED * 35.0f)// csak ha nagyobbat akarna adni
-								{
-							speed_control = SET_SPEED * 35.0f;
+					if (speed_control < 0 && SET_SPEED > -0.05) {
+						//speed_control *= 10;
+						if (speed_control > -80) {
+							speed_control = -80;
 						}
-					} else {
-
+						if (last_speed_control < 0) {
+							//speed_control = 0;
+						}
 					}
-				}
 
-				float safety_accmax = 15;
-				// fékezés logika és gyorsulás logika
-				if (speed_control > 0
-						&& speed_control > (last_speed_control + safety_accmax)
-						&& last_speed_control >= 0) {
-					speed_control = last_speed_control + safety_accmax; // gyorsulás korlát
-				}
+					// fékezés logika és gyorsulás logika
+					if (last_speed_control > 0 && speed_control < 0) {
+						//speed_control = 0;	//TODO ez fölösleges, nem?
+					} else if (speed_control > 0
+							&& speed_control > (last_speed_control + ACC_MAX)
+							&& last_speed_control >= 0) {
+						speed_control = last_speed_control + ACC_MAX; // gyorsulás korlát
+					}
 
-				// túl közel védelem
-				if (Distance_sensors[1] > 230) {
-					SetServo_motor(0);
-
-				} else {
 					SetServo_motor((int) speed_control);
+				} else if (safety_car) {
+					// hiba negatív, ha messzebb vagyunk -> negatív PGain
+					ADC2_read();
+					fr_distance = (1.0f / ((float) Distance_sensors[1])); //getDistance();
+					//float asdf;
+					FrontSensorAverage = calculateMovingAverage(fr_distance);
+
+					//fr_distance = (1.0f/FrontSensorAverage);
+
+					//max távolodás
+					static float max_tavolodas = 0.000525f;
+					if (fr_distance > fr_distance_last + max_tavolodas) {
+						fr_distance = fr_distance_last + max_tavolodas;
+					}
+
+					fr_distance_last = fr_distance;
+					//BT_send_msg(&distance, "dist");
+					distance_error = SET_DISTANCE - fr_distance;
+					speed_control = UpdatePID1(&PIDk, distance_error,
+							FrontSensorAverage);
+
+					// negatív irányt megerõsíteni	// motor bekötéstõl függ!!!
+
+					/*if(speed_control < 0)
+					 {
+					 //speed_control *= 10;
+					 if (speed_control > -80) {
+					 speed_control = -80;
+					 }
+					 if (last_speed_control < 0) {
+					 //speed_control = 0;
+					 }
+					 }*/
+
+					if (speed < 0.01 && speed_control < 0) {
+						speed_control = 0;
+					} else {
+						if (SET_SPEED == 0) {
+							speed_control = 0;
+						} else if (speed > SET_SPEED) {
+							if (speed_control > SET_SPEED * 35.0f)// csak ha nagyobbat akarna adni
+									{
+								speed_control = SET_SPEED * 35.0f;
+							}
+						} else {
+
+						}
+					}
+
+					float safety_accmax = 15;
+					// fékezés logika és gyorsulás logika
+					if (speed_control > 0
+							&& speed_control
+									> (last_speed_control + safety_accmax)
+							&& last_speed_control >= 0) {
+						speed_control = last_speed_control + safety_accmax; // gyorsulás korlát
+					}
+
+					// túl közel védelem
+					if (Distance_sensors[1] > 230) {
+						SetServo_motor(0);
+
+					} else {
+						SetServo_motor((int) speed_control);
+					}
 				}
 			}
 		}
@@ -1167,6 +1184,7 @@ void SteerControlTask() {
 		} else {
 			steeringControl = true;
 			stateContext.update(stable3lines, encoderPos);
+			SET_SPEED = stateContext.state->targetSpeed;
 			//usePD = stateContext.isSteeringPD();
 			usePD = !speed_under_X;
 		}

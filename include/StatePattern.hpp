@@ -52,6 +52,8 @@ public:
 	bool steeringPD;
 	float targetSpeed;
 
+	bool safety;
+
 	int distanceToMove;
 	int triggerGlobalDistance;
 
