@@ -21,7 +21,6 @@ class LassitoState;
 class TavState;
 
 class StopState;
-class StartState;
 
 class SafetyState;
 
@@ -46,7 +45,7 @@ public:
 	static GyorsState gyors;
 	static LassitoState lassito;
 	static StopState stopped;
-	static StartState started;
+	static KanyarState started;
 
 	static SafetyState safetyLassit;
 	static SafetyState safetyKanyar;
@@ -74,6 +73,8 @@ public:
 	static KanyarState kanyar4;
 	static GyorsitoState gaz4;
 
+	static TavState lap;
+
 	string name;
 	int stateId;
 	bool steeringPD;
@@ -88,6 +89,8 @@ public:
 	BaseState* nextState;
 	SpeedEvent targetEvent;
 
+	bool lapState = false;
+
 	void stop(StateContext& context);
 	virtual void handleEvent(StateContext& context, SpeedEvent event) {}
 	virtual ~BaseState() {}
@@ -96,7 +99,8 @@ public:
 
 class KanyarState : public BaseState {
 public:
-	KanyarState(string stateName,
+	KanyarState(int id,
+			string stateName,
 			BaseState* nState,
 			int minWaitDistance,
 			float tSpeed,
@@ -131,7 +135,8 @@ public:
 	TavState(string stateName,
 			BaseState* nState,
 			int waitDistance,
-			float tSpeed);
+			float tSpeed,
+			bool lap);
 	virtual void handleEvent(StateContext& context, SpeedEvent event);
 };
 
@@ -151,17 +156,6 @@ public:
 	StopState();
 	virtual void handleEvent(StateContext& context, SpeedEvent event);
 };
-
-class StartState : public BaseState {
-public:
-	StartState(string stateName,
-			BaseState* nState,
-			int minWaitDistance,
-			float tSpeed,
-			SpeedEvent tEvent);
-	virtual void handleEvent(StateContext& context, SpeedEvent event);
-};
-
 
 
 class SafetyState : public BaseState {
