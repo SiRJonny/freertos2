@@ -697,7 +697,14 @@ void SendRemoteVarTask()
 			BT_send_msg(safety_car, "safety");
 			BT_send_msg(skillTrack, "skillTr");
 
+
+
 */
+
+
+			BT_send_msg(&activeLine1, "actL1");
+			BT_send_msg(&activeLine2, "actL2");
+			BT_send_msg(&pid, "PD");
 			//BT_send_msg(&timer, "tick:" + std::string(itoa(systick_count(),buffer,10)) + "\n");
 			//BT_send_msg(&timer, "radio:" + std::string(itoa(Radio_get_char(),buffer,10)) + "\n");
 			/*BT_send_msg(&globalDistance, "globalDist");
@@ -736,7 +743,7 @@ void SendRemoteVarTask()
 			//BT_send_msg(&timer, "Z:" + std::string(itoa(giro_get_angle_Z(),buffer,10)) + "\n");
 			//BT_send_msg(&timer, "lim:" + std::string(itoa(speed_under_X,buffer,10)) + "\n");
 			//BT_send_msg(&stopped, "stopped");
-			//sendSensors();
+			sendSensors();
 			//sendDebugVars();
 			//sendTuning();
 			sendStateData();
@@ -950,7 +957,7 @@ void SteerControlTask() {
 	float error = 0;
 
 	// követés szabályzó struktúra
-	PIDk.pGain = -10000.0f;		// 100-> 5m/s hibánál lesz 500 a jel (max)
+	PIDk.pGain = -15000.0f;		// 100-> 5m/s hibánál lesz 500 a jel (max)
 	PIDk.iGain = -200;			// pGain/100?
 	PIDk.dGain = -200000;
 	PIDk.iMax = 0.1;
@@ -1058,6 +1065,8 @@ void SteerControlTask() {
 					static float max_tavolodas = 0.000525f;
 					if (fr_distance > fr_distance_last + max_tavolodas) {
 						fr_distance = fr_distance_last + max_tavolodas;
+					} else if (fr_distance < fr_distance_last - max_tavolodas) {
+						fr_distance = fr_distance_last - max_tavolodas;
 					}
 
 					fr_distance_last = fr_distance;
