@@ -8,6 +8,7 @@
 #ifndef STATEPATTERN_HPP_
 #define STATEPATTERN_HPP_
 
+#include <string>
 using namespace std;
 
 class StateContext;
@@ -16,6 +17,9 @@ class KanyarState;
 class GyorsitoState;
 class GyorsState;
 class LassitoState;
+
+class TavState;
+
 class StopState;
 class StartState;
 
@@ -48,6 +52,29 @@ public:
 	static SafetyState safetyKanyar;
 	static SafetyState safetyFast;
 
+
+	static GyorsState gyors1;
+	static LassitoState lassito1;
+	static KanyarState kanyar1;
+	static GyorsitoState gaz1;
+
+	static GyorsState gyors2;
+	static LassitoState lassito2;
+	static KanyarState kanyar2;
+	static GyorsitoState gaz2;
+
+	static TavState gy3tav;
+	static GyorsState gyors3;
+	static LassitoState lassito3;
+	static KanyarState kanyar3;
+	static GyorsitoState gaz3;
+
+	static GyorsState gyors4;
+	static LassitoState lassito4;
+	static KanyarState kanyar4;
+	static GyorsitoState gaz4;
+
+	string name;
 	int stateId;
 	bool steeringPD;
 	float targetSpeed;
@@ -59,6 +86,7 @@ public:
 	int triggerGlobalDistance;
 
 	BaseState* nextState;
+	SpeedEvent targetEvent;
 
 	void stop(StateContext& context);
 	virtual void handleEvent(StateContext& context, SpeedEvent event) {}
@@ -68,7 +96,11 @@ public:
 
 class KanyarState : public BaseState {
 public:
-	KanyarState();
+	KanyarState(string stateName,
+			BaseState* nState,
+			int minWaitDistance,
+			float tSpeed,
+			SpeedEvent tEvent);
 	virtual void handleEvent(StateContext& context, SpeedEvent event);
 };
 
@@ -76,19 +108,40 @@ public:
 
 class GyorsitoState : public BaseState {
 public:
-	GyorsitoState();
+	GyorsitoState(string stateName,
+			BaseState* nState,
+			int minWaitDistance,
+			float tSpeed,
+			SpeedEvent tEvent);
 	virtual void handleEvent(StateContext& context, SpeedEvent event);
 };
 
 class GyorsState : public BaseState {
 public:
-	GyorsState();
+	GyorsState(string stateName,
+			BaseState* nState,
+			int minWaitDistance,
+			float tSpeed,
+			SpeedEvent tEvent);
+	virtual void handleEvent(StateContext& context, SpeedEvent event);
+};
+
+class TavState : public BaseState {
+public:
+	TavState(string stateName,
+			BaseState* nState,
+			int waitDistance,
+			float tSpeed);
 	virtual void handleEvent(StateContext& context, SpeedEvent event);
 };
 
 class LassitoState : public BaseState {
 public:
-	LassitoState();
+	LassitoState(string stateName,
+			BaseState* nState,
+			int minWaitDistance,
+			float tSpeed,
+			SpeedEvent tEvent);
 	virtual void handleEvent(StateContext& context, SpeedEvent event);
 };
 
@@ -101,7 +154,11 @@ public:
 
 class StartState : public BaseState {
 public:
-	StartState();
+	StartState(string stateName,
+			BaseState* nState,
+			int minWaitDistance,
+			float tSpeed,
+			SpeedEvent tEvent);
 	virtual void handleEvent(StateContext& context, SpeedEvent event);
 };
 
