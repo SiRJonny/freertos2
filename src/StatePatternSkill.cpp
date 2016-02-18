@@ -69,7 +69,7 @@ EventBasedState SkillBaseState::ParkKiTeljesen("P9Ki", &SkillBaseState::koztes, 
 
 //giro
 EventBasedState SkillBaseState::giroStart("giroSt", &SkillBaseState::giroFel, 0, SKILLSLOW, 0, true, KERESZT, true);
-EventBasedState SkillBaseState::giroFel("giroFel", &SkillBaseState::giroPark, 200, SKILLSLOW, 0, true, KERESZT, true);
+EventBasedState SkillBaseState::giroFel("giroFel", &SkillBaseState::giroPark, 350, SKILLSLOW, 0, true, KERESZT, true);
 MovingState SkillBaseState::giroPark("giroPark", &SkillBaseState::giro, 100, SKILLSLOW, 0, true, true);
 
 GiroState SkillBaseState::giro("Giro", &SkillBaseState::giroLejon, true, 0);

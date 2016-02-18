@@ -679,7 +679,8 @@ void SendRemoteVarTask()
 			//BT_send_msg(&dTerm, "contD");
 			BT_send_msg(&Distance_sensors[1], "contFront");
 			BT_send_msg(&speed_control, "control_speed");
-
+			dirInt = direction;
+			BT_send_msg( &dirInt, "dir");
 			/*
 			static float lastFr = 0;
 
@@ -707,15 +708,15 @@ void SendRemoteVarTask()
 			BT_send_msg(&pid, "PD");
 			//BT_send_msg(&timer, "tick:" + std::string(itoa(systick_count(),buffer,10)) + "\n");
 			//BT_send_msg(&timer, "radio:" + std::string(itoa(Radio_get_char(),buffer,10)) + "\n");
-			/*BT_send_msg(&globalDistance, "globalDist");
+			BT_send_msg(&globalDistance, "globalDist");
 			eventInt = stateData.event;
 			BT_send_msg(&eventInt, "eventInt");
-			BT_send_msg(&eventInt, "eInt");*/
+			BT_send_msg(&eventInt, "eInt");
 
 			//BT_send_msg(&index, "index");
 			//BT_send_msg(stable0lines, "stable0lines");
 			//BT_send_msg(stable1lines, "stable1lines");
-			/*BT_send_msgInt(skillStateContext.state->triggerGlobalDistance, "trigDist");
+			BT_send_msgInt(skillStateContext.state->triggerGlobalDistance, "trigDist");
 
 			BT_send_msg(&Distance_sensors[2], "left");
 			BT_send_msg(&Distance_sensors[3], "right");
@@ -724,13 +725,13 @@ void SendRemoteVarTask()
 			BT_send_msg(bordas_jobb, "jBordas");
 			BT_send_msg(fal_bal, "bFal");
 			BT_send_msg(fal_jobb, "jFal");
-			BT_send_msg(&encoderPos, "encoder");
+			//BT_send_msg(&encoderPos, "encoder");
 			BT_send_msg(checkDirection, "checkDir");
 
 			BT_send_msg(giro_fall, "fall");
 			//BT_send_msg(giro_lejto, "lejto");
-			BT_send_msg(giro_emelkedo, "emelked");
-			BT_send_msgFloat(giro_get_angle_Y(), "lejtSzog");*/
+			//BT_send_msg(giro_emelkedo, "emelked");
+			BT_send_msgFloat(giro_get_angle_Y(), "lejtSzog");
 
 			//BT_send_msg(&PIDk.dState, "contDst");
 			//BT_send_msg(&fr_distance, "contDist");
@@ -998,11 +999,11 @@ void SteerControlTask() {
 
 				// negatív irányt megerõsíteni	// motor bekötéstõl függ!!!
 
-				/*if (SET_SPEED == 0) {	//TODO
+				if (SET_SPEED == 0) {	//TODO
 					PIDm.iState = 0;
-				}*/
+				}
 
-				if (speed_control < 0 && SET_SPEED > -0.05) {
+				if (speed_control < 0 && SET_SPEED > -0.1) {
 					//speed_control *= 10;
 					if (speed_control > -80) {
 						speed_control = -80;
