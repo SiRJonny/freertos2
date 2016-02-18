@@ -20,10 +20,13 @@ extern int SERVO_RANGE_STEERING;	// max eltérés 0-tól, 1500us +/- SERVO_RANGE a 
 extern int SERVO_RANGE_SENSOR;
 
 //sebességes dolgok
+extern bool speed_control_enabled;
+
 extern volatile float SLOW;
 extern volatile float FAST;
 extern float STOP;
 extern float SET_SPEED;
+extern float SET_DISTANCE;
 extern float speed_global;
 
 extern float SKILLSLOW;
@@ -31,6 +34,9 @@ extern float SKILLSLOW;
 extern float SKILLMEDIUM;
 
 extern float SKILLPARK;
+extern float SAFETYFAST;
+extern float SAFETYSLOW;
+extern float SAFETY_SPEED_LIMIT;
 
 extern bool speed_under_X;
 extern float speed_limit;
@@ -68,6 +74,8 @@ extern bool bordas_bal;
 extern bool bordas_jobb;
 extern int Distance_sensors[5];
 extern int FrontSensorTurn;
+extern float FrontSensorMedian;
+extern float FrontSensorAverage;
 
 //vonal
 extern float linePosM;		// vonalpozíció méterben
@@ -102,8 +110,11 @@ extern float B;	// konstans
 extern bool TunePID;
 extern int pid;
 
+extern bool safety_car;
+
 extern PID_struct PIDs;
 extern PID_struct PIDm;
+extern PID_struct PIDk;
 
 extern bool steeringControl;
 

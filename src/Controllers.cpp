@@ -8,13 +8,14 @@
 #include "Controllers.h"
 
 
+
 float d5, t5, T, w0, Re_s, kp, kd;
 float kszi = 0.9;
 float L = 0.285;//0.335; // szenzorsor távolsága hátsó tengelytõl
 
 float UpdatePID1(PID_struct * pid, float error, float position)
 {
-	double pTerm, dTerm, iTerm;
+	float pTerm, dTerm, iTerm;
 
 	pTerm = pid->pGain * error;   // calculate the proportional term
 	// calculate the integral state with appropriate limiting

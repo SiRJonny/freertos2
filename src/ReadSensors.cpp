@@ -29,6 +29,10 @@ extern void BT_send_msg(int*msg,std::string nev);
 extern void SetServo_sensor_jobb();
 extern void SetServo_sensor_bal();
 extern void SetServo_sensor(int pos);
+extern float median_filter(float val);
+extern int calculateMovingAverage(float data);
+extern float FrontSensorMedian;
+extern float FrontSensorAverage;
 extern int timer;
 extern char buffer[10];
 
@@ -119,7 +123,7 @@ void ReadSensors()
 
 		SetMUX((uint8_t)i);
 
-		ControlTaskDelay(40);	// szenzor felfutásra várakozás
+		ControlTaskDelay(120);	// szenzor felfutásra várakozás
 		//osDelay(10);
 
 
@@ -142,7 +146,7 @@ void ReadSensors()
 		szenzorsor_2[i+16] = amount - ADC1_BUFFER[2];	// jobb hátsó
 
 		SetMUX((uint8_t)i+8);
-		ControlTaskDelay(40);
+		ControlTaskDelay(120);
 		//osDelay(10);
 
 		ADC1_read();
@@ -165,7 +169,14 @@ void ReadSensors()
 	HAL_TIM_Base_Stop_IT(&htim6);
 	DisableMUX();
 
-	szenzorsor_1[7] = ((szenzorsor_1[6] + szenzorsor_1[8])/2.0f)*1.5f;
+
+	//szenzorsor_1[7] = ((szenzorsor_1[6] + szenzorsor_1[8])/2.0f)*1.5;
+
+	//szenzorsor_2[31] = 0;
+	//szenzorsor_2[30] = 0;
+	//szenzorsor_2[29] = 0;
+
+
 }
 
 
@@ -192,9 +203,21 @@ void ADC2_read()
 	HAL_ADC_Start(&hadc2);
 	for(int i = 0; i<5; i++)
 	{
-		HAL_ADC_PollForConversion(&hadc2,1000);
-		Distance_sensors[i] = HAL_ADC_GetValue(&hadc2);
+		if (HAL_ADC_PollForConversion(&hadc2,1) == HAL_OK)
+		{
+			Distance_sensors[i] = HAL_ADC_GetValue(&hadc2);
+		}
 	}
+	if (Distance_sensors[1] < 30) {
+			Distance_sensors[1] = 30;
+		}
+
+	FrontSensorMedian = (int)median_filter((float)Distance_sensors[1]);
+	/*
+	if (FrontSensorMedian < 30) {
+		FrontSensorMedian = 30;
+	}*/
+	//FrontSensorAverage = calculateMovingAverage(FrontSensorMedian);
 	HAL_ADC_Stop(&hadc2);
 }
 

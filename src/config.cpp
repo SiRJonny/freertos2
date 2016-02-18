@@ -14,13 +14,18 @@ int SERVO_RANGE_SENSOR = 400;
 StateData stateData;
 
 //sebességes dolgok
-volatile float SLOW = 0.8;
+bool speed_control_enabled = true;
+
+volatile float SLOW = 1.5;
 
 volatile float FAST = 4.5;
+
+float SAFETY_SPEED_LIMIT = 1.7;
 
 float STOP = 0.0;
 
 float SET_SPEED = 0;
+float SET_DISTANCE = 0.010;
 float speed_global = 0;
 
 float SKILLSLOW = 0.5;
@@ -28,8 +33,11 @@ float SKILLMEDIUM = 0.8;
 float SKILLPARK = 0.4;
 
 
+float SAFETYFAST = 1.7;
+float SAFETYSLOW = 1.1;
+
 bool speed_under_X = false;
-float speed_limit = 2;
+float speed_limit = 1.3f;
 
 //kanyarszervo
 int servoOffset = -60;
@@ -66,6 +74,8 @@ bool bordas_jobb = false;
 int Distance_sensors[5];
 int FrontSensorTurn = 140;
 
+float FrontSensorMedian = 100;
+float FrontSensorAverage = 100;
 
 //vonal
 float linePosM;		// vonalpozíció méterben
@@ -93,7 +103,7 @@ float activeLine2 = 0;
 
 //szabályzók
 float ACC_MAX = 100;		// egy szabályzó periódusban max ennyivel növekedhet a motor szervo jele
-int NO_LINE_CYCLES = 50000;
+int NO_LINE_CYCLES = 50;
 
 float A = 0.4;	// sebesség függés	// d5% = v*A + B
 float B = 0.4;	// konstans
@@ -101,8 +111,11 @@ float B = 0.4;	// konstans
 bool TunePID = false;
 int pid = 0;
 
+bool safety_car = true;
+
 PID_struct PIDs;
 PID_struct PIDm;
+static PID_struct PIDk;
 
 bool steeringControl = true;
 

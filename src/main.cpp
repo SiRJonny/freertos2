@@ -94,7 +94,8 @@ osSemaphoreDef(ADC1_complete);
 QueueHandle_t xQueue_BT;
 
 
-
+float distance_error = 0;
+float fr_distance = 0;
 
 
 /* Private function prototypes -----------------------------------------------*/
@@ -106,6 +107,7 @@ void SendRemoteVarTask();
 void SteerControlTask();
 void BTReceiveTask();
 void TurnOnTask();
+bool START_PIN();
 
 void USART3_UART_Init();
 static void MX_DMA_Init(void);
@@ -126,8 +128,8 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart);
 void BT_send_msg(int msg, char* nev);*/
 void BT_send_msg(int * msg, string nev);
 //void BT_send_msg(float * msg, string nev);
-void SetServo_sensor(int pos);
 void SetServo_motor(int pos); // -SERVO_RANGE_MOTOR +SERVO_RANGE_MOTOR
+void SetServo_sensor(int pos);
 void SetServo_steering(int pos); // -SERVO_RANGE_STEERING +SERVO_RANGE_STEERING
 void SetServo_steering(float angle);  // kormányzás, szöggel
 void getActiveLinePos(LineState * Lines, float *last_pos1, float *last_pos2, float * active1, float * active2);
@@ -207,7 +209,7 @@ int main(void)
   osThreadDef(SendRemoteVarTask, SendRemoteVarTask, osPriorityNormal, 0, 128);
   SendRemoteVar_TaskHandle = osThreadCreate(osThread(SendRemoteVarTask), NULL);
 
-  osThreadDef(SteerControlTask, SteerControlTask, osPriorityHigh, 0, 128);
+  osThreadDef(SteerControlTask, SteerControlTask, osPriorityHigh, 0, 192);
   SteerControl_TaskHandle = osThreadCreate(osThread(SteerControlTask), NULL);
 
   osThreadDef(BTReceiveTask, BTReceiveTask, osPriorityNormal, 0, 128);
@@ -455,7 +457,6 @@ void StartButtonTask()
 {
 	uint8_t wasPressed = 0;
 
-	int ten = 130;
 
 	for (;;){
 
@@ -466,7 +467,14 @@ void StartButtonTask()
 
 		if (wasPressed){
 
-			giro_init();
+			if(START_PIN() == false)	// ha rajta van a kábel
+			{
+				while(START_PIN() == false)
+				{
+					osDelay(50);
+				}
+			}
+
 
 			stateContext.start(encoderPos);
 			//stateData.event = RADIOSTART;
@@ -538,27 +546,33 @@ void BTReceiveTask()
 			case 0:
 				//SET_SPEED = 0;
 				//state_struct.state = -1;
+				if (!safety_car) {
 				skillStateContext.setState(&SkillBaseState::skillStopped);
-				stateContext.stop();
-				stopped = 1;
-				HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
-				//osDelay(2000);
-				osThreadSuspend(SteerControl_TaskHandle);
+					stateContext.stop();
+					stopped = 1;
+					HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
+					osDelay(500);
+					osThreadSuspend(SteerControl_TaskHandle);
+					SetServo_motor(0);
+				} else {
+					stopped = 1;
+					speed_control_enabled = false;
+					SetServo_motor(0);
+
+				}
 				break;
 			case 1:
 
-				dAlap = *int_ptr;
-
-				BT_send_msg(&dAlap, "dAlap");
+				PIDk.dGain = (float)*int_ptr;
+				BT_send_msg(&PIDk.dGain, "PIDkD");
 				break;
 			case 2:
-				pAlap = *int_ptr;
-
-				BT_send_msg(&pAlap, "pAlap");
+				PIDk.pGain = (float)*int_ptr;
+				BT_send_msg(&PIDk.pGain, "PIDkP");
 				break;
 			case 3:
-				SLOW = *flt_ptr;
-				BT_send_msg(&SLOW, "SLOW");
+				PIDk.iGain = *flt_ptr;
+				BT_send_msg(&PIDk.iGain, "PIDkI");
 				break;
 			case 4:
 				FAST = *flt_ptr;
@@ -569,12 +583,12 @@ void BTReceiveTask()
 				BT_send_msg(&sid, "state");
 				break;
 			case 6:
-				PIDm.iGain = *flt_ptr;
-				BT_send_msg(&PIDm.iGain, "PIDmI");
+				//PIDk.dGain = *flt_ptr;
+				BT_send_msg(&PIDk.dGain, "PIDkD");
 				break;
 			case 7:
-				PIDm.pGain = *flt_ptr;
-				BT_send_msg(&PIDm.pGain, "PIDmP");
+				//PIDk.pGain = *flt_ptr;
+				BT_send_msg(&PIDk.pGain, "PIDkP");
 
 				break;
 			case 8:
@@ -631,31 +645,43 @@ void SendRemoteVarTask()
 		}
 
 
+
+		/*BT_send_msg(&speed_global, "speed");
+		float asdf;
+		asdf = calculateMovingAverage(FrontSensorMedian);
+		BT_send_msg(&FrontSensorMedian, "contMed");
+		BT_send_msg(&asdf, "contAwert");*/
+
 		//minden ciklusban elküldi ezeket
-		BT_send_msg(&speed_global, "speed");
+
+		//BT_send_msg(&PIDm.iState, "mIState");
 		//BT_send_msg(&Distance_sensors[2], "contLeft");
 		//BT_send_msg(&Distance_sensors[3], "contRight");
 
-		BT_send_msg(&globalLines.numLines1, "contNum1");
-		BT_send_msg(&globalLines.pos1[0], "contPos0");
-		BT_send_msg(&globalLines.pos1[1], "contPos1");
-		BT_send_msg(&globalLines.pos1[2], "contPos2");
+		BT_send_msg(&speed_global, "speed");
+		BT_send_msg(&speed_control, "control_speed");
 
+		static float lastFr = 0;
+
+		float d = (lastFr - fr_distance)*10000*(-200000);
+		lastFr = fr_distance;
+		BT_send_msg(&d , "contD");
+		float contNew = d + speed_control;
+		BT_send_msg(&contNew , "contNew");
 
 
 		//minden slowSendMultiplier ciklusban küldi el ezeket
 		if (sendRemoteCounter % slowSendMultiplier == 0) {
-			//BT_send_msgInt(ReadFrontMiddle(), "frontSensor");
 
+			//BT_send_msg(&Distance_sensors[1], "contFro");
+			//float asdf = fr_distance*1000;
+			//BT_send_msg(&asdf, "contfdist");
+			//BT_send_msg(&SET_SPEED, "SET_SPEED");
+			//BT_send_msg(&FrontSensorAverage, "contAvg");
 
-/*
-
-			dirInt = direction;
-			BT_send_msg(&dirInt, "dirInt");
 
 			//BT_send_msg(&timer, "tick:" + std::string(itoa(systick_count(),buffer,10)) + "\n");
 			//BT_send_msg(&timer, "radio:" + std::string(itoa(Radio_get_char(),buffer,10)) + "\n");
-			BT_send_msg(&speed_control, "control_speed");
 			BT_send_msg(&globalDistance, "globalDist");
 			eventInt = stateData.event;
 			BT_send_msg(&eventInt, "eventInt");
@@ -681,6 +707,9 @@ void SendRemoteVarTask()
 			BT_send_msg(giro_emelkedo, "emelked");
 			BT_send_msgFloat(giro_get_angle_Y(), "lejtSzog");
 
+			//BT_send_msg(&PIDk.dState, "contDst");
+			//BT_send_msg(&fr_distance, "contDist");
+			//BT_send_msg(&distance_error, "contErr");
 
 			//BT_send_msg(&timer, "enc:" + std::string(itoa(encoderPos,buffer,10)) + "\n");
 
@@ -694,8 +723,6 @@ void SendRemoteVarTask()
 			//sendTuning();
 			sendStateData();
 			//sendPIDs();
-
-			 */
 		}
 
 		sendRemoteCounter++;
@@ -777,6 +804,9 @@ void sendStateData() {
 	//BT_send_msg(&skillStateContext.state->steeringAngle, "steerAngle");
 	//BT_send_msg(&stAngle, "stAngle");
 
+	stateId = stateContext.getStateId();
+	//string stName = "stnm" + skillStateContext.state->name;
+	//BT_send_msg(&globalDistance, stName);
 
 
 	BT_send_msg(&stateId, "StateID");
@@ -797,6 +827,39 @@ void sendPIDs() {
 void sendPIDm() {
 	BT_send_msg(&PIDm.pGain, "PIDm_p");
 	BT_send_msg(&PIDm.dGain, "PIDm_s");
+}
+
+float getDistance() {
+
+	static float distanceArray[5];
+	static int index = 0;
+	static float dist;
+	dist = (1.0f/((float)Distance_sensors[1]));
+
+	if (index == 5) {
+			index = 0;
+		}
+
+	distanceArray[index] = dist;
+
+
+	static float min = 100000;
+	min = 10000;
+
+	for(int i = 0; i<5; i++) {
+		if (distanceArray[i] < min) {
+			min = distanceArray[i];
+		}
+	}
+
+	if (min == 0) {
+		min = dist;
+	}
+
+	index++;
+
+	return min;
+
 }
 
 
@@ -820,7 +883,8 @@ void SteerControlTask()
 		numLinesArray[i] = 1;
 	}
 
-
+	float fr_distance_last = 0;
+	float FrontSensorAverage_last;
 	int no_line_cycle_count = 0;
 
 	// állapotgép init
@@ -842,15 +906,34 @@ void SteerControlTask()
 
 
 	// motor PI szabályzó struktúra
+	if(skillTrack){
 	PIDm.pGain = 500;		// 100-> 5m/s hibánál lesz 500 a jel (max)
 	PIDm.iGain = 3;			// pGain/100?
+
 	PIDm.dGain = 0;
 	PIDm.iMax = 500;
 	PIDm.iMin = -100;
+	
 	PIDm.iState = 0;
 	PIDm.dState = 0;
+	}else{
+	
+	PIDm.pGain = 400;		// 100-> 5m/s hibánál lesz 500 a jel (max)
+	PIDm.iGain = 0.7;		
+	PIDm.iMin = 0;
+}
 
 	float error = 0;
+
+	// követés szabályzó struktúra
+	PIDk.pGain = -10000.0f;		// 100-> 5m/s hibánál lesz 500 a jel (max)
+	PIDk.iGain = -200;			// pGain/100?
+	PIDk.dGain = 0;
+	PIDk.iMax = 0.1;
+	PIDk.iMin = -0.1;
+	PIDk.iState = 0;
+	PIDk.dState = 0;
+
 
 
 	stateData.event = UNSTABLE;
@@ -860,7 +943,7 @@ void SteerControlTask()
 	for(;;)
 	{
 		// várakozás a startjelre
-		while(!start_radio_done)
+		while(!start_radio_done && skillTrack)
 		{
 			if(Radio_get_char() == 48)
 			{
@@ -904,40 +987,116 @@ void SteerControlTask()
 
 
 		// motor szabályozás
-		{
-			speed_error = SET_SPEED - speed;
-			speed_control = UpdatePID1(&PIDm, speed_error, speed);
+		if (speed_control_enabled) {
+			if (!safety_car)
+			{
+				speed_error = SET_SPEED - speed;
+				speed_control = UpdatePID1(&PIDm, speed_error, speed);
 
-			// negatív irányt megerõsíteni	// motor bekötéstõl függ!!!
+				// negatív irányt megerõsíteni	// motor bekötéstõl függ!!!
 
-			if ( SET_SPEED == 0) {
+			if ( SET_SPEED == 0) {	//TODO
 				PIDm.iState = 0;
 			}
 
-			if(speed_control < 0 && SET_SPEED > -0.1)
-			{
-				//speed_control *= 10;
+			if(speed_control < 0 && SET_SPEED > -0.05)
+				{
+					//speed_control *= 10;
 				if (speed_control > -80) {
 					speed_control = -80;
+					}
+					if (last_speed_control < 0) {
+						//speed_control = 0;
+					}
 				}
-				if (last_speed_control < 0) {
-					//speed_control = 0;
+
+
+				// fékezés logika és gyorsulás logika
+				if(last_speed_control > 0 && speed_control < 0)
+				{
+					//speed_control = 0;	//TODO ez fölösleges, nem?
+				}
+				else if(speed_control > 0 && speed_control > (last_speed_control + ACC_MAX) && last_speed_control >= 0)
+				{
+					speed_control = last_speed_control + ACC_MAX; 		// gyorsulás korlát
+				}
+
+				SetServo_motor( (int)speed_control );
+			}
+			else if(safety_car)
+			{
+				// hiba negatív, ha messzebb vagyunk -> negatív PGain
+				ADC2_read();
+				fr_distance = (1.0f/((float)Distance_sensors[1]));		//getDistance();
+				//float asdf;
+				FrontSensorAverage = calculateMovingAverage(Distance_sensors[1]);
+
+
+
+				//fr_distance = (1.0f/FrontSensorAverage);
+
+				//max távolodás
+				static float max_tavolodas = 0.000525f;
+				if(fr_distance > fr_distance_last + max_tavolodas)
+				{
+					fr_distance = fr_distance_last + max_tavolodas;
+				}
+
+				fr_distance_last = fr_distance;
+
+				//BT_send_msg(&distance, "dist");
+				distance_error = SET_DISTANCE - fr_distance;
+				speed_control = UpdatePID1(&PIDk, distance_error, fr_distance);
+
+				// negatív irányt megerõsíteni	// motor bekötéstõl függ!!!
+
+				/*if(speed_control < 0)
+				{
+					//speed_control *= 10;
+					if (speed_control > -80) {
+						speed_control = -80;
+					}
+					if (last_speed_control < 0) {
+						//speed_control = 0;
+					}
+				}*/
+
+
+
+				if (speed < 0.01 && speed_control < 0) {
+					speed_control = 0;
+				} else {
+					if (SET_SPEED == 0) {
+						speed_control = 0;
+					} else if (speed > SET_SPEED) {
+						if(speed_control > SET_SPEED*35.0f)	// csak ha nagyobbat akarna adni
+						{
+							speed_control = SET_SPEED*35.0f;
+						}
+					} else {
+
+					}
+				}
+
+				float safety_accmax = 15;
+				// fékezés logika és gyorsulás logika
+				if(speed_control > 0 && speed_control > (last_speed_control + safety_accmax) && last_speed_control >= 0)
+				{
+					speed_control = last_speed_control + safety_accmax; 		// gyorsulás korlát
+				}
+
+				// túl közel védelem
+				if(Distance_sensors[1] > 230)
+				{
+					SetServo_motor( 0 );
+
+
+				}else{
+					SetServo_motor( (int)speed_control );
 				}
 			}
-
-
-			// fékezés logika és gyorsulás logika
-			if(last_speed_control > 0 && speed_control < 0)
-			{
-				speed_control = 0;
-			}
-			else if(speed_control > 0 && speed_control > (last_speed_control + ACC_MAX) && last_speed_control >= 0)
-			{
-				speed_control = last_speed_control + ACC_MAX; 		// gyorsulás korlát
-			}
-
-			SetServo_motor( (int)speed_control );
 		}
+
 		//motorszabályzás vége
 
 
@@ -953,22 +1112,48 @@ void SteerControlTask()
 		//ReadSensorsDummy();
 
 
-
+		if(skillTrack){
 		ADC2_read();		// blokkol, 40us
+		
 		wall_detection();	// falas bool-okat állítja
 		wall_borda_detection();
 		giro_integrate();
+		}
 		is_speed_under_X(speed, speed_limit);
 		//update_direction();
-
+		
 
 		// szenzor adatok feldolgozása
 		globalLines = getLinePos(20);
 
+		if(skillTrack){
 		///// stabil vonalszám
 		get_stable_line_count(globalLines.numLines1);
 		get_stable_line_count2(globalLines.numLines1, globalLines.numLines2);
+		}else{
+		
+		///// stabil 3 vonal
+		numLinesArray[numLinesArrayIndex] = globalLines.numLines1;
+		numLinesArrayIndex++;
+		if (numLinesArrayIndex >= 5)
+		{
+			numLinesArrayIndex = 0;
+		}
+		numLinesSum = 0;
+		for(int i = 0; i < 5; i++)
+		{
+			numLinesSum += numLinesArray[i];
+		}
 
+		if (numLinesSum > 12)
+		{
+			stable3lines = true;
+			//HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_SET);
+		}else if (numLinesSum < 8){
+			stable3lines = false;
+			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_RESET);
+		}
+}
 
 		getActiveLinePos(&globalLines, &last_active_line_pos1, &last_active_line_pos2, &activeLine1, &activeLine2);
 		last_active_line_pos1 = activeLine1;
@@ -995,7 +1180,6 @@ void SteerControlTask()
 			stateContext.update(stable3lines, encoderPos);
 			//usePD = stateContext.isSteeringPD();
 			usePD = !speed_under_X;
-			SET_SPEED = stateContext.getTargetSpeed();
 		}
 
 
@@ -1066,7 +1250,7 @@ void SteerControlTask()
 			SetServo_steering(stAngle);
 		}
 
-		if(led_cntr == 30)
+		if(led_cntr == 10)
 		{
 			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
 			led_cntr = 0;
@@ -1077,10 +1261,13 @@ void SteerControlTask()
 		}
 		//osThreadSuspend(SteerControl_TaskHandle);
 
-		//timer = __HAL_TIM_GET_COUNTER(&htim5);
+		timer = __HAL_TIM_GET_COUNTER(&htim5);
+		if (timer > 13000)
+		{
 		//BT_send_msg(&timer, "time:" + std::string(itoa(timer,buffer,10)) + "\n");
-
-		//__HAL_TIM_SET_COUNTER(&htim5,0);
+			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
+		}
+		__HAL_TIM_SET_COUNTER(&htim5,0);
 
 		osDelay(9);
 	}

@@ -25,6 +25,8 @@ typedef struct
 extern void BT_send_msg(int*msg,std::string nev);
 
 int average_difference(int * array, int N);
+float median_filter(float val);
+int compare (const void * a, const void * b);
 int count_between_values(int * array, int N, int min, int max);
 void wall_detection();
 void wall_borda_detection();
@@ -32,7 +34,7 @@ LineState getLinePos(int treshold);
 float calculateAngle(float pos1, float pos2);
 float calculateAngle(void);
 int calculateAverage(uint32_t * data, int datacount = 32);
-int calculateAverage(int * data, int datacount = 32);
+float calculateMovingAverage(float data); // 5
 void subtractFromAll(uint32_t * data, int amount, int datacount = 32);
 void subtractAllFrom(uint32_t * data, int amount, int datacount = 32);
 int findMaxPos(uint32_t * data, int datacount = 32);
