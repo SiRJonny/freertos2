@@ -93,7 +93,7 @@ bool keresztvonal;
 bool stable0lines;
 bool stable1lines;
 bool stable2lines;
-bool stable3lines;
+bool stable3lines = false;
 
 bool stable1linesForBoth;
 bool stable0linesForBoth;
@@ -137,5 +137,5 @@ int stopped = 0;
 
 int timeCounter = 0;
 
-bool start_radio_done;
+bool start_radio_done = false;
 

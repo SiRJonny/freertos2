@@ -48,7 +48,7 @@ KanyarState::KanyarState() {
 	stateId = 1;
 	steeringPD = false;
 	targetSpeed = SLOW;
-	distanceToMove = 2000; //encoderPosDifference = 3000;
+	distanceToMove = 1000; //encoderPosDifference = 3000;
 }
 
 void KanyarState::handleEvent(StateContext& context, SpeedEvent event) {
@@ -159,6 +159,7 @@ void SafetyState::handleEvent(StateContext& context, SpeedEvent event) {
 		resetSensor();
 		context.setState(nextState);
 	} else if (event == SPEEDUP) {
+		safety_car = false;
 		//todo context.setState(&BaseState::gyorsito);
 	}
 }
