@@ -116,7 +116,7 @@ SkillTrackEvent SkillBaseState::calculateEvent() {
 	} else if (stable0linesForBoth) {
 		event = NOLINE_NOWALLS;
 	} else if (stable1linesForBoth || stable2lines || stable3lines){
-		//hany vonal van todo
+
 		if (stable1linesForBoth) {
 				event = NONE;
 

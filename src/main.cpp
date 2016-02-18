@@ -56,8 +56,7 @@ extern "C"
 using namespace std;
 
 int stAngle = 0;
-float pAlap = 30;
-float dAlap = -230;
+
 
 
 
@@ -553,7 +552,7 @@ void BTReceiveTask()
 				//SET_SPEED = 0;
 				//state_struct.state = -1;
 				if (!safety_car) {
-				skillStateContext.setState(&SkillBaseState::skillStopped);
+					skillStateContext.setState(&SkillBaseState::skillStopped);
 					stateContext.stop();
 					stopped = 1;
 					HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
@@ -902,9 +901,10 @@ void SteerControlTask() {
 	//B = 0.4;	// konstans
 
 	// szervo PD szabályzó struktúrája
+
 	PIDs.pGain = 30;
 	PIDs.iGain = 0;
-	PIDs.dGain = -750;
+	PIDs.dGain = -230;
 	PIDs.iMax = 300;
 	PIDs.iMin = -300;
 	PIDs.iState = 0;
@@ -964,35 +964,48 @@ void SteerControlTask() {
 		speed = speed_global;
 		osThreadResumeAll();
 
-		/*
-		 if (speed > 1) {
-		 PIDs.dGain = dAlap * speed/FAST;
-		 PIDs.pGain = pAlap * speed/FAST;
-		 } else {
-		 PIDs.pGain = pAlap;
-		 PIDs.dGain = dAlap;
-		 }
-		 */PIDs.pGain = pAlap;
-		PIDs.dGain = dAlap;
-
-		/*if (SET_SPEED > 2.4)
-		 {
-		 PIDm.iGain = 2;
-		 } else {
-		 PIDm.iGain = 2;
-		 }*/
 
 		// motor szabályozás
 		if (speed_control_enabled) {
-			if (skillTrack ||!safety_car) {
+			if (skillTrack) {
 				speed_error = SET_SPEED - speed;
 				speed_control = UpdatePID1(&PIDm, speed_error, speed);
 
 				// negatív irányt megerõsíteni	// motor bekötéstõl függ!!!
 
-				if (SET_SPEED == 0) {	//TODO
+				/*if (SET_SPEED == 0) {	//TODO
 					PIDm.iState = 0;
+				}*/
+
+				if (speed_control < 0 && SET_SPEED > -0.05) {
+					//speed_control *= 10;
+					if (speed_control > -80) {
+						speed_control = -80;
+					}
+					if (last_speed_control < 0) {
+						//speed_control = 0;
+					}
 				}
+
+				// fékezés logika és gyorsulás logika
+				if (last_speed_control > 0 && speed_control < 0) {
+					//speed_control = 0;	//TODO ez fölösleges, nem?
+				} else if (speed_control > 0
+						&& speed_control > (last_speed_control + ACC_MAX)
+						&& last_speed_control >= 0) {
+					speed_control = last_speed_control + ACC_MAX; // gyorsulás korlát
+				}
+
+				SetServo_motor((int) speed_control);
+			} else if (!safety_car) {
+				speed_error = SET_SPEED - speed;
+				speed_control = UpdatePID1(&PIDm, speed_error, speed);
+
+				// negatív irányt megerõsíteni	// motor bekötéstõl függ!!!
+
+				/*if (SET_SPEED == 0) {	//TODO
+				 PIDm.iState = 0;
+				 }*/
 
 				if (speed_control < 0 && SET_SPEED > -0.05) {
 					//speed_control *= 10;
