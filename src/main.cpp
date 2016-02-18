@@ -108,6 +108,7 @@ void BTReceiveTask();
 void TurnOnTask();
 bool START_PIN();
 void SetSkillTrack();
+bool get_switch();
 
 void USART3_UART_Init();
 static void MX_DMA_Init(void);
@@ -467,6 +468,8 @@ void StartButtonTask()
 		}
 
 		if (wasPressed){
+
+
 			giro_init();
 			HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_SET);
 
@@ -1365,6 +1368,16 @@ uint8_t Radio_get_char()
 		return 77;
 	}else{
 		return 88;
+	}
+}
+
+bool get_switch()
+{
+	if(HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_11))
+	{
+		return true;
+	}else{
+		return false;
 	}
 }
 
