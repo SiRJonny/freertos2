@@ -24,7 +24,7 @@ SafetyState BaseState::safetyLassit(10, &BaseState::safetyKanyar, SAFETYSLOW, 20
 SafetyState BaseState::safetyKanyar(11,&BaseState::safetyFast, SAFETYSLOW, 1000, true, GYORSITO);
 SafetyState BaseState::safetyFast(12, &BaseState::safetyLassit, SAFETYFAST, 2000, false, GYORSITO);
 
-int sensorAngle  = 180;
+int sensorAngle  = 200;
 
 int stateCounter = 0;
 int statemax = 20;

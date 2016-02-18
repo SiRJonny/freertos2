@@ -103,7 +103,7 @@ float activeLine2 = 0;
 
 //szabályzók
 float ACC_MAX = 100;		// egy szabályzó periódusban max ennyivel növekedhet a motor szervo jele
-int NO_LINE_CYCLES = 50;
+int NO_LINE_CYCLES = 0;
 
 float A = 0.4;	// sebesség függés	// d5% = v*A + B
 float B = 0.4;	// konstans

@@ -667,18 +667,18 @@ void SendRemoteVarTask()
 		//BT_send_msg(&Distance_sensors[2], "contLeft");
 		//BT_send_msg(&Distance_sensors[3], "contRight");
 
-		BT_send_msg(&speed_global, "speed");
 
-		//BT_send_msg(&pTerm, "contP");
-		//BT_send_msg(&iTerm, "contI");
-		//BT_send_msg(&dTerm, "contD");
-		BT_send_msg(&Distance_sensors[1], "contFront");
-		BT_send_msg(&speed_control, "control_speed");
 
 
 		//minden slowSendMultiplier ciklusban küldi el ezeket
 		if (sendRemoteCounter % slowSendMultiplier == 0) {
+			BT_send_msg(&speed_global, "speed");
 
+			//BT_send_msg(&pTerm, "contP");
+			//BT_send_msg(&iTerm, "contI");
+			//BT_send_msg(&dTerm, "contD");
+			BT_send_msg(&Distance_sensors[1], "contFront");
+			BT_send_msg(&speed_control, "control_speed");
 
 			/*
 			static float lastFr = 0;
@@ -743,7 +743,7 @@ void SendRemoteVarTask()
 			//BT_send_msg(&timer, "Z:" + std::string(itoa(giro_get_angle_Z(),buffer,10)) + "\n");
 			//BT_send_msg(&timer, "lim:" + std::string(itoa(speed_under_X,buffer,10)) + "\n");
 			//BT_send_msg(&stopped, "stopped");
-			sendSensors();
+			//sendSensors();
 			//sendDebugVars();
 			//sendTuning();
 			sendStateData();
@@ -968,6 +968,8 @@ void SteerControlTask() {
 	stateData.event = UNSTABLE;
 
 	osThreadSuspend(SteerControl_TaskHandle);
+	int ll = -100;
+	BT_send_msg(&ll, "LastLine");
 
 	for (;;) {
 		// várakozás a startjelre
@@ -1062,7 +1064,7 @@ void SteerControlTask() {
 					//fr_distance = (1.0f/FrontSensorAverage);
 
 					//max távolodás
-					static float max_tavolodas = 0.000525f;
+					static float max_tavolodas = 0.000255f;
 					if (fr_distance > fr_distance_last + max_tavolodas) {
 						fr_distance = fr_distance_last + max_tavolodas;
 					} else if (fr_distance < fr_distance_last - max_tavolodas) {
@@ -1264,9 +1266,11 @@ void SteerControlTask() {
 
 		timer = __HAL_TIM_GET_COUNTER(&htim5);
 		if (timer > 13000) {
+			static int ccounter = 0;
 			//BT_send_msg(&timer, "time:" + std::string(itoa(timer,buffer,10)) + "\n");
 			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
-			BT_send_msg(&timer,"cycleTimer");
+			BT_send_msg(&timer,"tCycle" + std::string(itoa(ccounter,buffer,10)));
+			ccounter++;
 		}
 		__HAL_TIM_SET_COUNTER(&htim5, 0);
 
