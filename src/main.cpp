@@ -1027,7 +1027,7 @@ void SteerControlTask() {
 
 				SetServo_motor((int) speed_control);
 			} else {
-				safety_car = stateContext.state->safety;
+				safety_car = stateContext.state->isSafety;
 				if (!safety_car) {
 					speed_error = SET_SPEED - speed;
 					speed_control = UpdatePID1(&PIDm, speed_error, speed);
@@ -1190,7 +1190,7 @@ void SteerControlTask() {
 		linePosM = (activeLine1 - 15.5) * 5.9 / 1000; // pozíció, méterben, középen 0
 
 		if (skillTrack) {
-
+			utanfutoPressed = get_switch();
 			skillStateContext.state->update();
 			usePD = false;
 			SET_SPEED = skillStateContext.state->targetSpeed;

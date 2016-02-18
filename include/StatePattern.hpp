@@ -52,10 +52,13 @@ public:
 	bool steeringPD;
 	float targetSpeed;
 
-	bool safety;
+	bool isSafety;
+	bool isSensorMoved;
 
 	int distanceToMove;
 	int triggerGlobalDistance;
+
+	BaseState* nextState;
 
 	void stop(StateContext& context);
 	virtual void handleEvent(StateContext& context, SpeedEvent event) {}
@@ -100,11 +103,12 @@ public:
 	virtual void handleEvent(StateContext& context, SpeedEvent event);
 };
 
+
+
 class SafetyState : public BaseState {
 public:
-	bool isSafety;
-	bool isSensorMoved;
-	BaseState* nextState;
+
+
 	SpeedEvent triggerEvent;
 
 

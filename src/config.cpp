@@ -139,3 +139,5 @@ int timeCounter = 0;
 
 bool start_radio_done = false;
 
+bool utanfutoPressed = false;
+

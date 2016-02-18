@@ -263,6 +263,15 @@ public:
 };
 
 
+class UtanfutoState : public SkillBaseState {
+public:
+	bool started;
+	int startTime;
+	int triggerTime;
+	UtanfutoState(SkillBaseState* nState, float tSpeed, int waitTime);
+	virtual void update();
+};
+
 class SkillStateContext {
 
 public:

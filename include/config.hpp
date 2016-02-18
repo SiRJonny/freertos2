@@ -139,4 +139,6 @@ extern bool checkDirection;
 extern int timeCounter;
 extern bool start_radio_done;
 
+extern bool utanfutoPressed;
+
 #endif /* CONFIG_H_ */

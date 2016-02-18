@@ -383,6 +383,37 @@ void LibiState::update() {
 
 }
 
+extern bool utanfutoPressed;
+
+//UtanfutoState
+UtanfutoState::UtanfutoState(SkillBaseState* nState, float tSpeed, int waitTime) {
+	stateId = 9;
+	targetSpeed = tSpeed;
+	distanceToMove = waitTime;
+	nextState = nState;
+	triggerTime = 0;
+	startTime = 0;
+	started = false;
+}
+
+void UtanfutoState::update() {
+	if (!started) {
+		startTime = timeCounter;
+		triggerTime = startTime + distanceToMove;
+		started = true;
+	} else {
+		if (timeCounter > triggerTime) {
+			skillStateContext.setState(this->nextState);
+			started = false;
+		} else if (utanfutoPressed) {
+			skillStateContext.setState(this->nextState);
+		}
+	}
+
+
+}
+
+
 //Stop state
 SkillStopState::SkillStopState() {
 	name = "stop";
