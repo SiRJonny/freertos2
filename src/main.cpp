@@ -687,15 +687,15 @@ void SendRemoteVarTask()
 
 			//BT_send_msg(&timer, "tick:" + std::string(itoa(systick_count(),buffer,10)) + "\n");
 			//BT_send_msg(&timer, "radio:" + std::string(itoa(Radio_get_char(),buffer,10)) + "\n");
-			BT_send_msg(&globalDistance, "globalDist");
+			/*BT_send_msg(&globalDistance, "globalDist");
 			eventInt = stateData.event;
 			BT_send_msg(&eventInt, "eventInt");
-			BT_send_msg(&eventInt, "eInt");
+			BT_send_msg(&eventInt, "eInt");*/
 
 			//BT_send_msg(&index, "index");
 			//BT_send_msg(stable0lines, "stable0lines");
 			//BT_send_msg(stable1lines, "stable1lines");
-			BT_send_msgInt(skillStateContext.state->triggerGlobalDistance, "trigDist");
+			/*BT_send_msgInt(skillStateContext.state->triggerGlobalDistance, "trigDist");
 
 			BT_send_msg(&Distance_sensors[2], "left");
 			BT_send_msg(&Distance_sensors[3], "right");
@@ -710,7 +710,7 @@ void SendRemoteVarTask()
 			BT_send_msg(giro_fall, "fall");
 			//BT_send_msg(giro_lejto, "lejto");
 			BT_send_msg(giro_emelkedo, "emelked");
-			BT_send_msgFloat(giro_get_angle_Y(), "lejtSzog");
+			BT_send_msgFloat(giro_get_angle_Y(), "lejtSzog");*/
 
 			//BT_send_msg(&PIDk.dState, "contDst");
 			//BT_send_msg(&fr_distance, "contDist");
@@ -797,9 +797,17 @@ void sendDebugVars() {
 }
 
 void sendStateData() {
-	int stateId = skillStateContext.state->stateId;
-	string stName = "stnm" + skillStateContext.state->name;
-	BT_send_msg(&globalDistance, stName);
+	static int stateId = -10;
+	if (skillTrack) {
+		stateId = skillStateContext.state->stateId;
+		string stName = "stnm" + skillStateContext.state->name;
+		BT_send_msg(&globalDistance, stName);
+	} else {
+		stateId = stateContext.getStateId();
+		BT_send_msg(&stateId, "StateID");
+		BT_send_msg(stable3lines, "stable3lines");
+	}
+
 	//int controlled =0;
 	//if (skillStateContext.state->steeringControlled) {
 		//controlled = 1;
@@ -809,17 +817,12 @@ void sendStateData() {
 	//BT_send_msg(&skillStateContext.state->steeringAngle, "steerAngle");
 	//BT_send_msg(&stAngle, "stAngle");
 
-	stateId = stateContext.getStateId();
+
 	//string stName = "stnm" + skillStateContext.state->name;
 	//BT_send_msg(&globalDistance, stName);
 
 
-	BT_send_msg(&stateId, "StateID");
-	int stableLines = 0;
-	if (stable3lines) {
-		stableLines = 1;
-	}
-	BT_send_msg(&stableLines, "stable3lines");
+
 
 
 }
