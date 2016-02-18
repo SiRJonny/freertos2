@@ -587,7 +587,7 @@ void BTReceiveTask()
 				BT_send_msg(&FAST, "FAST");
 				break;
 			case 5:
-				sid = stateContext.getStateId();
+				sid = stateContext.state->stateId;
 				BT_send_msg(&sid, "state");
 				break;
 			case 6:
@@ -827,7 +827,7 @@ void sendStateData() {
 		string stName = "stnm" + skillStateContext.state->name;
 		BT_send_msg(&globalDistance, stName);
 	} else {
-		stateId = stateContext.getStateId();
+		stateId = stateContext.state->stateId;
 		BT_send_msg(&stateId, "StateID");
 		BT_send_msg(stable3lines, "stable3lines");
 	}

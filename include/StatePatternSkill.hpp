@@ -37,6 +37,7 @@ class SkillBaseState;
 class GiroState;
 class HatarState;
 class LibiState;
+class UtanfutoState;
 
 extern StateData stateData;
 extern SkillStateContext skillStateContext;
@@ -116,6 +117,7 @@ public:
 	static MovingState ParkTolatEgyenesen;
 
 	static TimeState ParkVar;
+	static UtanfutoState utanfutoState;
 
 	static MovingState ParkKiKanyar1;
 	static EventBasedState ParkKiAtlo;

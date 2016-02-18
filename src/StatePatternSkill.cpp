@@ -59,9 +59,10 @@ TimeState SkillBaseState::parkElolVar("PEVar", &SkillBaseState::ParkTolatKanyar1
 MovingState SkillBaseState::ParkTolatKanyar1("P3Tolat", &SkillBaseState::ParkTolatKanyar2, -720, -SKILLPARK, 500, false, false);
 MovingState SkillBaseState::ParkTolatAtlo("P4Tolat", &SkillBaseState::ParkTolatKanyar2, -50, -SKILLPARK, 0, false, false);
 MovingState SkillBaseState::ParkTolatKanyar2("P5Tolat", &SkillBaseState::ParkVar, -710, -0.1, -500, false, false);
-MovingState SkillBaseState::ParkTolatEgyenesen("P6Tolat", &SkillBaseState::ParkVar, -60, -SKILLPARK, 0, false, false);
+MovingState SkillBaseState::ParkTolatEgyenesen("P6Tolat", &SkillBaseState::utanfutoState, -60, -SKILLPARK, 0, false, false);
 
-TimeState SkillBaseState::ParkVar("PVar", &SkillBaseState::ParkKiKanyar1, 125, -0.1);
+UtanfutoState SkillBaseState::utanfutoState(&SkillBaseState::ParkVar, -0.1, 200);
+TimeState SkillBaseState::ParkVar("PVar", &SkillBaseState::ParkKiKanyar1, 125, 0);
 
 MovingState SkillBaseState::ParkKiKanyar1("P7Elore", &SkillBaseState::ParkKiAtlo, 500, SKILLPARK, -500, false, false);
 EventBasedState SkillBaseState::ParkKiAtlo("P8Elore", &SkillBaseState::ParkKiTeljesen, 0, SKILLPARK, 0, false, NONE, false);
@@ -388,6 +389,7 @@ extern bool utanfutoPressed;
 //UtanfutoState
 UtanfutoState::UtanfutoState(SkillBaseState* nState, float tSpeed, int waitTime) {
 	stateId = 9;
+	name = "utan";
 	targetSpeed = tSpeed;
 	distanceToMove = waitTime;
 	nextState = nState;

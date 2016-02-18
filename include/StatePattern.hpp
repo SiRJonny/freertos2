@@ -72,6 +72,8 @@ public:
 	virtual void handleEvent(StateContext& context, SpeedEvent event);
 };
 
+
+
 class GyorsitoState : public BaseState {
 public:
 	GyorsitoState();
@@ -133,9 +135,6 @@ public:
 	void start(int encoderPos);
 	void update(bool stable3lines, int encoderPos);
 
-	float getTargetSpeed();
-	bool isSteeringPD();
-	int getStateId();
 
 
 };

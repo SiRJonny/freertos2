@@ -216,13 +216,6 @@ void StateContext::update(bool stable3lines, int encoderPos){
 	}
 }
 
-float StateContext::getTargetSpeed(){
-	return state->targetSpeed;
-}
-
-bool StateContext::isSteeringPD(){
-	return state->steeringPD;
-}
 
 void StateContext::stop(){
 	state->stop(*this);
@@ -234,8 +227,5 @@ void StateContext::start(int encoderPos) {
 	setState(&BaseState::safetyFast);
 }
 
-int StateContext::getStateId() {
-	return state->stateId;
-}
 
 
