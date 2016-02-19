@@ -40,10 +40,11 @@ enum SpeedEvent {
 class BaseState {
 
 public:
-	static KanyarState kanyar;
-	static GyorsitoState gyorsito;
-	static GyorsState gyors;
-	static LassitoState lassito;
+
+	//static KanyarState kanyar;
+	//static GyorsitoState gyorsito;
+	//static GyorsState gyors;
+	//static LassitoState lassito;
 	static StopState stopped;
 	static KanyarState started;
 
@@ -102,8 +103,8 @@ public:
 	KanyarState(int id,
 			string stateName,
 			BaseState* nState,
-			int minWaitDistance,
 			float tSpeed,
+			int minWaitDistance,
 			SpeedEvent tEvent);
 	virtual void handleEvent(StateContext& context, SpeedEvent event);
 };
@@ -114,8 +115,8 @@ class GyorsitoState : public BaseState {
 public:
 	GyorsitoState(string stateName,
 			BaseState* nState,
-			int minWaitDistance,
 			float tSpeed,
+			int minWaitDistance,
 			SpeedEvent tEvent);
 	virtual void handleEvent(StateContext& context, SpeedEvent event);
 };
@@ -124,8 +125,8 @@ class GyorsState : public BaseState {
 public:
 	GyorsState(string stateName,
 			BaseState* nState,
-			int minWaitDistance,
 			float tSpeed,
+			int minWaitDistance,
 			SpeedEvent tEvent);
 	virtual void handleEvent(StateContext& context, SpeedEvent event);
 };
@@ -134,8 +135,8 @@ class TavState : public BaseState {
 public:
 	TavState(string stateName,
 			BaseState* nState,
-			int waitDistance,
 			float tSpeed,
+			int waitDistance,
 			bool lap);
 	virtual void handleEvent(StateContext& context, SpeedEvent event);
 };
@@ -144,8 +145,8 @@ class LassitoState : public BaseState {
 public:
 	LassitoState(string stateName,
 			BaseState* nState,
-			int minWaitDistance,
 			float tSpeed,
+			int minWaitDistance,
 			SpeedEvent tEvent);
 	virtual void handleEvent(StateContext& context, SpeedEvent event);
 };

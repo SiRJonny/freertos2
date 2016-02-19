@@ -18,7 +18,7 @@ bool speed_control_enabled = true;
 
 volatile float SLOW = 1.5;
 
-volatile float FAST = 4.5;
+volatile float FAST = 3;
 
 float SAFETY_SPEED_LIMIT = 1.7;
 
@@ -38,6 +38,7 @@ float SAFETYSLOW = 1.1;
 
 bool speed_under_X = false;
 float speed_limit = 1.3f;
+
 
 //kanyarszervo
 int servoOffset = -60;
@@ -103,7 +104,7 @@ float activeLine2 = 0;
 
 //szabályzók
 float ACC_MAX = 100;		// egy szabályzó periódusban max ennyivel növekedhet a motor szervo jele
-int NO_LINE_CYCLES = 2000;
+int NO_LINE_CYCLES = 0; //TODO skilltrack függõ
 
 float A = 0.4;	// sebesség függés	// d5% = v*A + B
 float B = 0.4;	// konstans
@@ -144,3 +145,7 @@ bool utanfutoPressed = false;
 float lastSteeringAngle = 0;
 
 bool parkolo = false;
+
+
+int lapCounter = 0;
+int lapMax = 2;

@@ -569,6 +569,7 @@ void BTReceiveTask()
 					speed_control_enabled = false;
 					SetServo_motor(0);
 
+
 				}
 				break;
 			case 1:
@@ -671,21 +672,24 @@ void SendRemoteVarTask()
 		//BT_send_msg(&PIDm.iState, "mIState");
 		//BT_send_msg(&Distance_sensors[2], "contLeft");
 		//BT_send_msg(&Distance_sensors[3], "contRight");
-
+		BT_send_msg(&speed_global, "speed");
+		BT_send_msg(&speed_control, "control_speed");
+		BT_send_msg(&SET_SPEED, "SET_SPEED");
 
 
 
 		//minden slowSendMultiplier ciklusban küldi el ezeket
 		if (sendRemoteCounter % slowSendMultiplier == 0) {
-			BT_send_msg(&speed_global, "speed");
 
+			BT_send_msg(&lapCounter, "lapC");
+			BT_send_msg(&lapMax, "lapMax");
 			//BT_send_msg(&pTerm, "contP");
 			//BT_send_msg(&iTerm, "contI");
 			//BT_send_msg(&dTerm, "contD");
 			//BT_send_msg(&Distance_sensors[1], "contFront");
-			BT_send_msg(&speed_control, "control_speed");
-			dirInt = direction;
-			BT_send_msg( &dirInt, "dirInt");
+
+			//dirInt = direction;
+			//BT_send_msg( &dirInt, "dirInt");
 			/*
 			static float lastFr = 0;
 
@@ -699,13 +703,14 @@ void SendRemoteVarTask()
 			BT_send_msg(&Distance_sensors[1], "contFro");
 			//float asdf = fr_distance*1000;
 			//BT_send_msg(&asdf, "contfdist");
-			BT_send_msg(&SET_SPEED, "SET_SPEED");
+
 			BT_send_msg(safety_car, "safety");
 			BT_send_msg(skillTrack, "skillTr");
 
 
 
 */
+			/*
 			BT_send_msg(&globalLines.numLines1, "numLines1");
 			BT_send_msg(&globalLines.numLines2, "numLines2");
 
@@ -745,13 +750,15 @@ void SendRemoteVarTask()
 			BT_send_msg(fal_jobb, "jFal");
 			//BT_send_msg(&encoderPos, "encoder");
 			//BT_send_msg(checkDirection, "checkDir");
+*/
 
+			/*
 			BT_send_msg(giro_fall, "fall");
 			BT_send_msg(giro_lejto, "lejto");
 			BT_send_msg(giro_emelkedo, "emelked");
 			BT_send_msgFloat(giro_get_angle_Y(), "lejtSzog");
 			BT_send_msgFloat(giro_get_angle_Z(), "szog");
-
+*/
 			//BT_send_msg(&PIDk.dState, "contDst");
 			//BT_send_msg(&fr_distance, "contDist");
 			//BT_send_msg(&distance_error, "contErr");
@@ -837,6 +844,8 @@ void sendStateData() {
 	} else {
 		stateId = stateContext.state->stateId;
 		BT_send_msg(&stateId, "StateID");
+		string stName = "stnm" + stateContext.state->name;
+		BT_send_msg(&globalDistance, stName);
 		BT_send_msg(stable3lines, "stable3lines");
 	}
 
@@ -1045,6 +1054,7 @@ void SteerControlTask() {
 			} else {
 				safety_car = stateContext.state->isSafety;
 				if (!safety_car) {
+					speed_limit = 2;
 					speed_error = SET_SPEED - speed;
 					speed_control = UpdatePID1(&PIDm, speed_error, speed);
 
@@ -1075,6 +1085,7 @@ void SteerControlTask() {
 
 					SetServo_motor((int) speed_control);
 				} else if (safety_car) {
+					speed_limit = 1.3f;
 					// hiba negatív, ha messzebb vagyunk -> negatív PGain
 					ADC2_read();
 					fr_distance = (1.0f / ((float) Distance_sensors[1])); //getDistance();
@@ -1256,12 +1267,16 @@ void SteerControlTask() {
 				no_line_cycle_count++;
 				if (no_line_cycle_count > NO_LINE_CYCLES) {
 					//SET_SPEED = 0;
-					stateContext.stop();
-					SetServo_motor(0);
-					BT_send_msg(&activeLine1, "LastLine");
 
+					stateContext.stop();
+					stopped = 1;
+					HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
+					//osDelay(500);
+					SetServo_motor(0);
 					//osThreadSuspend(SteerControl_TaskHandle);
 					speed_control_enabled = false;
+					BT_send_msg(&activeLine1, "LastLine");
+
 				}
 			}
 		} else {

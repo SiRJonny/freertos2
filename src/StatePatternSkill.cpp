@@ -104,6 +104,8 @@ MovingState SkillBaseState::libVeg("libKi", &SkillBaseState::koztes, 500, SKILLS
 EventBasedState SkillBaseState::lerakoStart("leStart", &SkillBaseState::lerakoVeg, 1500, SKILLSLOW, 0, true, SZAGGATOTT2VONAL, true);
 MovingState SkillBaseState::lerakoVeg("leVeg", &SkillBaseState::koztes, 1000, SKILLSLOW, 0, true, true);
 
+//todo plusz state vegehez
+
 extern bool parkolo;
 
 

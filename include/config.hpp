@@ -144,4 +144,8 @@ extern float lastSteeringAngle;
 
 extern bool parkolo;
 
+
+extern int lapCounter;
+extern int lapMax;
+
 #endif /* CONFIG_H_ */
