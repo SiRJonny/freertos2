@@ -38,6 +38,7 @@ class GiroState;
 class HatarState;
 class LibiState;
 class UtanfutoState;
+class ParkoloState;
 
 extern StateData stateData;
 extern SkillStateContext skillStateContext;
@@ -106,6 +107,7 @@ public:
 	static MovingState TorkVonalKereses2;
 
 	//Parkolas
+	static ParkoloState park;
 	static EventBasedState ParkEloremegy1; 	//masodik 2 falig
 	static MovingState ParkEloremegy2;		//kicsit még elõrébb?
 	static TimeState parkElolVar;
@@ -277,6 +279,14 @@ public:
 	UtanfutoState(SkillBaseState* nState, float tSpeed, int waitTime);
 	virtual void update();
 };
+
+class ParkoloState : public SkillBaseState {
+public:
+
+	ParkoloState(SkillBaseState* nState);
+	virtual void update();
+};
+
 
 class SkillStateContext {
 

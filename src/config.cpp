@@ -142,3 +142,5 @@ bool start_radio_done = false;
 bool utanfutoPressed = false;
 
 float lastSteeringAngle = 0;
+
+bool parkolo = false;

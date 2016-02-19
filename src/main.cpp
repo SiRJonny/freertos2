@@ -199,7 +199,7 @@ int main(void)
 
   /* Create the thread(s) */
   /* definition and creation of defaultTask */
-  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
+  osThreadDef(defaultTask, StartDefaultTask, osPriorityHigh, 0, 128);
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   osThreadDef(ButtonTask, StartButtonTask, osPriorityBelowNormal, 0, 128);
@@ -211,7 +211,7 @@ int main(void)
   osThreadDef(SendRemoteVarTask, SendRemoteVarTask, osPriorityNormal, 0, 128);
   SendRemoteVar_TaskHandle = osThreadCreate(osThread(SendRemoteVarTask), NULL);
 
-  osThreadDef(SteerControlTask, SteerControlTask, osPriorityHigh, 0, 192);
+  osThreadDef(SteerControlTask, SteerControlTask, osPriorityRealtime, 0, 192);
   SteerControl_TaskHandle = osThreadCreate(osThread(SteerControlTask), NULL);
 
   osThreadDef(BTReceiveTask, BTReceiveTask, osPriorityNormal, 0, 128);
@@ -706,7 +706,19 @@ void SendRemoteVarTask()
 
 
 */
+			BT_send_msg(&globalLines.numLines1, "numLines1");
+			BT_send_msg(&globalLines.numLines2, "numLines2");
 
+			BT_send_msg(&globalLines.pos1[0], "contf0");
+			BT_send_msg(&globalLines.pos1[1], "contf1");
+			BT_send_msg(&globalLines.pos1[2], "contf2");
+			BT_send_msg(&globalLines.pos2[0], "contf0");
+			BT_send_msg(&globalLines.pos2[1], "contf1");
+			BT_send_msg(&globalLines.pos2[2], "contf2");
+
+
+			BT_send_msg(&Distance_sensors[2], "contLeft");
+			BT_send_msg(&Distance_sensors[3], "contRight");
 
 			//BT_send_msg(&activeLine1, "actL1");
 			//BT_send_msg(&activeLine2, "actL2");
@@ -724,8 +736,8 @@ void SendRemoteVarTask()
 			//BT_send_msg(stable1lines, "stable1lines");
 			//BT_send_msgInt(skillStateContext.state->triggerGlobalDistance, "trigDist");
 
-			BT_send_msg(&Distance_sensors[2], "left");
-			BT_send_msg(&Distance_sensors[3], "right");
+			//BT_send_msg(&Distance_sensors[2], "left");
+			//BT_send_msg(&Distance_sensors[3], "right");
 
 			BT_send_msg(bordas_bal, "bBordas");
 			BT_send_msg(bordas_jobb, "jBordas");
@@ -813,15 +825,7 @@ void sendDebugVars() {
 	//BT_send_msg(&state_struct.nextState, "nextState");
 
 
-	BT_send_msg(&globalLines.numLines1, "numLines1");
-	BT_send_msg(&globalLines.numLines2, "numLines2");
 
-	BT_send_msg(&globalLines.pos1[0], "front_0");
-	BT_send_msg(&globalLines.pos1[1], "front_1");
-	BT_send_msg(&globalLines.pos1[2], "front_2");
-	BT_send_msg(&globalLines.pos2[0], "back_0");
-	BT_send_msg(&globalLines.pos2[1], "back_1");
-	BT_send_msg(&globalLines.pos2[2], "back_2");
 }
 
 void sendStateData() {
@@ -943,9 +947,8 @@ void SteerControlTask() {
 
 	// motor PI szabályzó struktúra
 	if (skillTrack) {
-		//PIDm.pGain = 500;		// 100-> 5m/s hibánál lesz 500 a jel (max)
+		PIDm.pGain = 500;		// 100-> 5m/s hibánál lesz 500 a jel (max)
 
-		PIDm.pGain = 200;
 		PIDm.iGain = 3;			// pGain/100?
 		PIDm.dGain = 0;
 		PIDm.iMax = 500;
@@ -1003,6 +1006,13 @@ void SteerControlTask() {
 		// motor szabályozás
 		if (speed_control_enabled) {
 			if (skillTrack) {
+
+				if (parkolo) {
+					PIDm.pGain = 200;
+				} else {
+					PIDm.pGain = 500;
+				}
+
 				speed_error = SET_SPEED - speed;
 				speed_control = UpdatePID1(&PIDm, speed_error, speed);
 
@@ -1012,10 +1022,10 @@ void SteerControlTask() {
 					PIDm.iState = 0;
 				}
 
-				if (speed_control < 0 && SET_SPEED > -0.1) {
+				if (speed_control < 0 && SET_SPEED > -0.1 && !parkolo) {
 					//speed_control *= 10;
 					if (speed_control > -80) {
-						//speed_control = -80;
+						speed_control = -80;
 					}
 					if (last_speed_control < 0) {
 						//speed_control = 0;
@@ -1354,11 +1364,11 @@ int systick_count()
 
 void SetServo_sensor_jobb()
 {
-	SetServo_sensor(-1*FrontSensorTurn);
+	SetServo_sensor(-1*FrontSensorTurn-(angle/(3.14f/2)*700.0f));
 }
 void SetServo_sensor_bal()
 {
-	SetServo_sensor(FrontSensorTurn);
+	SetServo_sensor(FrontSensorTurn-(angle/(3.14f/2)*700.0f));
 }
 
 

@@ -104,7 +104,7 @@ void wall_detection()
 	}
 
 	// van-e fal (bármilyen)
-	if(count_between_values(array_j,num_samples_average,40,100) >= 4)
+	if(count_between_values(array_j,num_samples_average,40,250) >= 4)
 	{
 		fal_jobb = true;
 		borda_cntr_j++;		// csak akkor nézzük a bordásságot, ha van fal
@@ -116,7 +116,7 @@ void wall_detection()
 		fal_jobb = false;
 		borda_cntr_j = 0;
 	}
-	if(count_between_values(array_b,num_samples_average,40,100) >= 4)
+	if(count_between_values(array_b,num_samples_average,40,250) >= 4)
 	{
 		fal_bal = true;
 		borda_cntr_b++;

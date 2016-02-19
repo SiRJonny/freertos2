@@ -212,6 +212,7 @@ void ADC2_read()
 			Distance_sensors[1] = 30;
 		}
 
+
 	FrontSensorMedian = (int)median_filter((float)Distance_sensors[1]);
 	/*
 	if (FrontSensorMedian < 30) {

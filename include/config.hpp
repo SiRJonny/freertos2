@@ -142,4 +142,6 @@ extern bool start_radio_done;
 extern bool utanfutoPressed;
 extern float lastSteeringAngle;
 
+extern bool parkolo;
+
 #endif /* CONFIG_H_ */
