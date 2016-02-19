@@ -140,5 +140,6 @@ extern int timeCounter;
 extern bool start_radio_done;
 
 extern bool utanfutoPressed;
+extern float lastSteeringAngle;
 
 #endif /* CONFIG_H_ */

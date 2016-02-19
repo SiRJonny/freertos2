@@ -109,6 +109,8 @@ public:
 	static EventBasedState ParkEloremegy1; 	//masodik 2 falig
 	static MovingState ParkEloremegy2;		//kicsit még elõrébb?
 	static TimeState parkElolVar;
+	static TimeState parkElolVar2;
+
 	static EventBasedState ParkElolTolat;
 
 	static MovingState ParkTolatKanyar1;
@@ -244,7 +246,9 @@ public:
 	TimeState(string stateName,
 			SkillBaseState* nState,
 			int wait,
-			float tarSpeed);
+			float tarSpeed,
+			bool stCont,
+			int stAngle);
 	virtual void update();
 };
 

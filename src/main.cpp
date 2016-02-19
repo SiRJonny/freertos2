@@ -354,6 +354,7 @@ void SetServo_steering(int pos)
 	{
 		//HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_RESET);
 	}
+	lastSteeringAngle = pos;
 	// 1500 = 1,5ms, ez a 0 pozíció
 	__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2, 1500 - pos + servoOffset);
 	//TODO offset
@@ -366,6 +367,7 @@ void SetServo_steering(float angle_rad)
 
 	float pos = (angle_rad / 6.28 * 360) * 10.66666;	// 10.6666 csinál fokból pwm-et
 	int posInt = (int)pos;
+
 	SetServo_steering(posInt);
 	/*
 	if(pos > SERVO_RANGE_STEERING)
@@ -680,10 +682,10 @@ void SendRemoteVarTask()
 			//BT_send_msg(&pTerm, "contP");
 			//BT_send_msg(&iTerm, "contI");
 			//BT_send_msg(&dTerm, "contD");
-			BT_send_msg(&Distance_sensors[1], "contFront");
+			//BT_send_msg(&Distance_sensors[1], "contFront");
 			BT_send_msg(&speed_control, "control_speed");
 			dirInt = direction;
-			BT_send_msg( &dirInt, "dir");
+			BT_send_msg( &dirInt, "dirInt");
 			/*
 			static float lastFr = 0;
 
@@ -706,8 +708,8 @@ void SendRemoteVarTask()
 */
 
 
-			BT_send_msg(&activeLine1, "actL1");
-			BT_send_msg(&activeLine2, "actL2");
+			//BT_send_msg(&activeLine1, "actL1");
+			//BT_send_msg(&activeLine2, "actL2");
 			BT_send_msg(&pid, "PD");
 			//BT_send_msg(&timer, "tick:" + std::string(itoa(systick_count(),buffer,10)) + "\n");
 			//BT_send_msg(&timer, "radio:" + std::string(itoa(Radio_get_char(),buffer,10)) + "\n");
@@ -715,11 +717,12 @@ void SendRemoteVarTask()
 			eventInt = stateData.event;
 			BT_send_msg(&eventInt, "eventInt");
 			BT_send_msg(&eventInt, "eInt");
+			BT_send_msg(utanfutoPressed, "utPress");
 
 			//BT_send_msg(&index, "index");
 			//BT_send_msg(stable0lines, "stable0lines");
 			//BT_send_msg(stable1lines, "stable1lines");
-			BT_send_msgInt(skillStateContext.state->triggerGlobalDistance, "trigDist");
+			//BT_send_msgInt(skillStateContext.state->triggerGlobalDistance, "trigDist");
 
 			BT_send_msg(&Distance_sensors[2], "left");
 			BT_send_msg(&Distance_sensors[3], "right");
@@ -729,12 +732,13 @@ void SendRemoteVarTask()
 			BT_send_msg(fal_bal, "bFal");
 			BT_send_msg(fal_jobb, "jFal");
 			//BT_send_msg(&encoderPos, "encoder");
-			BT_send_msg(checkDirection, "checkDir");
+			//BT_send_msg(checkDirection, "checkDir");
 
 			BT_send_msg(giro_fall, "fall");
-			//BT_send_msg(giro_lejto, "lejto");
-			//BT_send_msg(giro_emelkedo, "emelked");
+			BT_send_msg(giro_lejto, "lejto");
+			BT_send_msg(giro_emelkedo, "emelked");
 			BT_send_msgFloat(giro_get_angle_Y(), "lejtSzog");
+			BT_send_msgFloat(giro_get_angle_Z(), "szog");
 
 			//BT_send_msg(&PIDk.dState, "contDst");
 			//BT_send_msg(&fr_distance, "contDist");
@@ -939,7 +943,9 @@ void SteerControlTask() {
 
 	// motor PI szabályzó struktúra
 	if (skillTrack) {
-		PIDm.pGain = 500;		// 100-> 5m/s hibánál lesz 500 a jel (max)
+		//PIDm.pGain = 500;		// 100-> 5m/s hibánál lesz 500 a jel (max)
+
+		PIDm.pGain = 200;
 		PIDm.iGain = 3;			// pGain/100?
 		PIDm.dGain = 0;
 		PIDm.iMax = 500;
@@ -1009,7 +1015,7 @@ void SteerControlTask() {
 				if (speed_control < 0 && SET_SPEED > -0.1) {
 					//speed_control *= 10;
 					if (speed_control > -80) {
-						speed_control = -80;
+						//speed_control = -80;
 					}
 					if (last_speed_control < 0) {
 						//speed_control = 0;
@@ -1190,7 +1196,10 @@ void SteerControlTask() {
 		linePosM = (activeLine1 - 15.5) * 5.9 / 1000; // pozíció, méterben, középen 0
 
 		if (skillTrack) {
-			utanfutoPressed = get_switch();
+			if (!utanfutoPressed) {
+				utanfutoPressed = get_switch();
+			}
+
 			skillStateContext.state->update();
 			usePD = false;
 			SET_SPEED = skillStateContext.state->targetSpeed;
@@ -1225,6 +1234,7 @@ void SteerControlTask() {
 					}
 
 					control = UpdateStateSpace(A, B, speed, linePosM, angle);
+
 					SetServo_steering(control);
 					HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_RESET);
 				}
