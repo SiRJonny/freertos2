@@ -574,28 +574,28 @@ void BTReceiveTask()
 				break;
 			case 1:
 
-				PIDk.dGain = (float)*int_ptr;
-				BT_send_msg(&PIDk.dGain, "PIDkD");
+				PIDs.pGain = *flt_ptr;
+				BT_send_msg(&PIDs.pGain, "PIDsP");
 				break;
 			case 2:
-				PIDk.pGain = (float)*int_ptr;
-				BT_send_msg(&PIDk.pGain, "PIDkP");
+				PIDs.iGain = *flt_ptr;
+				BT_send_msg(&PIDs.pGain, "PIDsI");
 				break;
 			case 3:
-				PIDk.iGain = *flt_ptr;
-				BT_send_msg(&PIDk.iGain, "PIDkI");
+				PIDs.dGain = *flt_ptr;
+				BT_send_msg(&PIDs.dGain, "PIDsD");
 				break;
 			case 4:
-				FAST = *flt_ptr;
-				BT_send_msg(&FAST, "FAST");
+				PIDm.pGain = *flt_ptr;
+				BT_send_msg(&PIDm.pGain, "PIDmP");
 				break;
 			case 5:
-				sid = stateContext.state->stateId;
-				BT_send_msg(&sid, "state");
+				PIDm.iGain = *flt_ptr;
+				BT_send_msg(&PIDm.iGain, "PIDmI");
 				break;
 			case 6:
-				//PIDk.dGain = *flt_ptr;
-				BT_send_msg(&PIDk.dGain, "PIDkD");
+				PIDm.dGain = *flt_ptr;
+				BT_send_msg(&PIDm.dGain, "PIDmD");
 				break;
 			case 7:
 				//PIDk.pGain = *flt_ptr;
@@ -674,15 +674,17 @@ void SendRemoteVarTask()
 		//BT_send_msg(&Distance_sensors[3], "contRight");
 		BT_send_msg(&speed_global, "speed");
 		BT_send_msg(&speed_control, "control_speed");
-		BT_send_msg(&SET_SPEED, "SET_SPEED");
-
-
+		BT_send_msg(&activeLine1, "contL1");
+		//BT_send_msg(&activeLine2, "contL2");
+		BT_send_msg(&control, "contCont");
 
 		//minden slowSendMultiplier ciklusban küldi el ezeket
 		if (sendRemoteCounter % slowSendMultiplier == 0) {
-
+			BT_send_msg(&SET_SPEED, "SET_SPEED");
 			BT_send_msg(&lapCounter, "lapC");
 			BT_send_msg(&lapMax, "lapMax");
+
+
 			//BT_send_msg(&pTerm, "contP");
 			//BT_send_msg(&iTerm, "contI");
 			//BT_send_msg(&dTerm, "contD");
@@ -725,8 +727,7 @@ void SendRemoteVarTask()
 			BT_send_msg(&Distance_sensors[2], "contLeft");
 			BT_send_msg(&Distance_sensors[3], "contRight");
 
-			//BT_send_msg(&activeLine1, "actL1");
-			//BT_send_msg(&activeLine2, "actL2");
+
 			BT_send_msg(&pid, "PD");
 			//BT_send_msg(&timer, "tick:" + std::string(itoa(systick_count(),buffer,10)) + "\n");
 			//BT_send_msg(&timer, "radio:" + std::string(itoa(Radio_get_char(),buffer,10)) + "\n");
@@ -946,9 +947,9 @@ void SteerControlTask() {
 
 	// szervo PD szabályzó struktúrája
 
-	PIDs.pGain = 30;
+	PIDs.pGain = 25;
 	PIDs.iGain = 0;
-	PIDs.dGain = -230;
+	PIDs.dGain = -190;
 	PIDs.iMax = 300;
 	PIDs.iMin = -300;
 	PIDs.iState = 0;
@@ -966,10 +967,10 @@ void SteerControlTask() {
 		PIDm.dState = 0;
 	} else {
 
-		PIDm.pGain = 400;		// 100-> 5m/s hibánál lesz 500 a jel (max)
-		PIDm.iGain = 0.7;
+		PIDm.pGain = 500;		// 100-> 5m/s hibánál lesz 500 a jel (max)
+		PIDm.iGain = 30;
 		PIDm.dGain = 0;
-		PIDm.iMax = 100;
+		PIDm.iMax = 5;
 		PIDm.iMin = 0;
 		PIDm.iState = 0;
 		PIDm.dState = 0;
@@ -1236,7 +1237,7 @@ void SteerControlTask() {
 
 		// vonalkövetés szabályozó
 
-		if (steeringControl) {
+		if (!skillTrack || steeringControl) {
 			if (globalLines.numLines1 != -1)	// ha látunk vonalat
 					{
 				if (usePD) {

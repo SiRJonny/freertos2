@@ -197,7 +197,7 @@ LassitoState::LassitoState(string stateName,
 void LassitoState::handleEvent(StateContext& context, SpeedEvent event) {
 	if (event == targetEvent) {
 		context.setState(nextState);
-		PIDm.iState = 0;
+
 	}
 }
 

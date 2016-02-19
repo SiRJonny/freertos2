@@ -18,7 +18,7 @@ bool speed_control_enabled = true;
 
 volatile float SLOW = 1.5;
 
-volatile float FAST = 3;
+volatile float FAST = 4;
 
 float SAFETY_SPEED_LIMIT = 1.7;
 
@@ -104,7 +104,7 @@ float activeLine2 = 0;
 
 //szabályzók
 float ACC_MAX = 100;		// egy szabályzó periódusban max ennyivel növekedhet a motor szervo jele
-int NO_LINE_CYCLES = 0; //TODO skilltrack függõ
+int NO_LINE_CYCLES = 50; //TODO skilltrack függõ
 
 float A = 0.4;	// sebesség függés	// d5% = v*A + B
 float B = 0.4;	// konstans
