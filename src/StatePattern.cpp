@@ -26,14 +26,14 @@ SafetyState BaseState::safetyKanyar(11,&BaseState::safetyFast, &SAFETYSLOW, 1000
 SafetyState BaseState::safetyFast(12, &BaseState::safetyLassit, &SAFETYFAST, 2000, false, GYORSITO);
 
 
-SafetyState BaseState::safetyFast1(12, &BaseState::safetyLassit1, &SAFETYFAST, 2000, false, GYORSITO);
-SafetyState BaseState::safetyLassit1(10, &BaseState::safetyKanyar1, &SAFETYSLOW, 2000, false, SIMA);
-SafetyState BaseState::safetyKanyar1(11,&BaseState::safetyFast2, &SAFETYSLOW, 1000, true, GYORSITO);
-SafetyState BaseState::safetyFast2(12, &BaseState::safetyLassit2, &SAFETYFAST, 2000, false, GYORSITO);
-SafetyState BaseState::safetyLassit2(10, &BaseState::safetyKanyar2, &SAFETYSLOW, 2000, false, SIMA);
-SafetyState BaseState::safetyKanyar2(11,&BaseState::gaz4, &SAFETYSLOW, 1000, true, GYORSITO);
+SafetyState BaseState::safetyFast1(21, &BaseState::safetyLassit1, &SAFETYFAST, 2000, false, GYORSITO);
+SafetyState BaseState::safetyLassit1(22, &BaseState::safetyKanyar1, &SAFETYSLOW, 2000, false, SIMA);
+SafetyState BaseState::safetyKanyar1(23,&BaseState::safetyFast2, &SAFETYSLOW, 3000, true, GYORSITO);
+SafetyState BaseState::safetyFast2(24, &BaseState::safetyLassit2, &SAFETYFAST, 4000, false, GYORSITO);
+SafetyState BaseState::safetyLassit2(25, &BaseState::safetyKanyar2, &SAFETYSLOW, 2000, false, SIMA);
+SafetyState BaseState::safetyKanyar2(26,&BaseState::gaz4, &SAFETYSLOW, 1000, true, GYORSITO);
 
-int tavFekDist = 1500;
+int tavFekDist = 1700;
 
 GyorsState BaseState::gyors1("gyors1", &BaseState::tav1, &FAST, 2000, GYORSITO);
 TavState BaseState::tav1("tav1", &BaseState::lassito1, &MEDIUM, tavFekDist, false );

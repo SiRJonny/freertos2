@@ -24,7 +24,7 @@ float MEDIUM = 2.0;
 
 float KANYAR1 = 1.6;
 float KANYAR2 = 1.4;
-float KANYAR3 = 1.5;
+float KANYAR3 = 1.4;
 float KANYAR4 = 1.6;
 
 float GYORS1 = 4;
