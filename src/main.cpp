@@ -653,123 +653,6 @@ void SendRemoteVarTask()
 	for(;;)
 	{
 
-		if (!stopped) {
-			//BT_send_msg(&myfloat, "myfloat");
-			myfloat +=1;
-		}
-
-
-
-		/*BT_send_msg(&speed_global, "speed");
-		float asdf;
-		asdf = calculateMovingAverage(FrontSensorMedian);
-		BT_send_msg(&FrontSensorMedian, "contMed");
-		BT_send_msg(&asdf, "contAwert");*/
-
-		//minden ciklusban elküldi ezeket
-
-		//BT_send_msg(&PIDm.iState, "mIState");
-		//BT_send_msg(&Distance_sensors[2], "contLeft");
-		//BT_send_msg(&Distance_sensors[3], "contRight");
-
-
-
-
-		//minden slowSendMultiplier ciklusban küldi el ezeket
-		if (sendRemoteCounter % slowSendMultiplier == 0) {
-			BT_send_msg(&speed_global, "speed");
-
-			//BT_send_msg(&pTerm, "contP");
-			//BT_send_msg(&iTerm, "contI");
-			//BT_send_msg(&dTerm, "contD");
-			//BT_send_msg(&Distance_sensors[1], "contFront");
-			//BT_send_msg(&speed_control, "control_speed");
-			dirInt = direction;
-			BT_send_msg( &dirInt, "dirInt");
-			/*
-			static float lastFr = 0;
-
-			float d = (lastFr - fr_distance)*(-20000);
-			lastFr = fr_distance;
-			BT_send_msg(&d , "contD");
-			float contNew = d + speed_control;
-			BT_send_msg(&contNew , "contNew");
-
-
-			BT_send_msg(&Distance_sensors[1], "contFro");
-			//float asdf = fr_distance*1000;
-			//BT_send_msg(&asdf, "contfdist");
-			BT_send_msg(&SET_SPEED, "SET_SPEED");
-			BT_send_msg(safety_car, "safety");
-			BT_send_msg(skillTrack, "skillTr");
-
-
-
-*/
-			BT_send_msg(&globalLines.numLines1, "numLines1");
-			BT_send_msg(&globalLines.numLines2, "numLines2");
-
-			BT_send_msg(&globalLines.pos1[0], "contf0");
-			BT_send_msg(&globalLines.pos1[1], "contf1");
-			BT_send_msg(&globalLines.pos1[2], "contf2");
-			BT_send_msg(&globalLines.pos2[0], "contf0");
-			BT_send_msg(&globalLines.pos2[1], "contf1");
-			BT_send_msg(&globalLines.pos2[2], "contf2");
-
-
-			BT_send_msg(&Distance_sensors[2], "contLeft");
-			BT_send_msg(&Distance_sensors[3], "contRight");
-
-			//BT_send_msg(&activeLine1, "actL1");
-			//BT_send_msg(&activeLine2, "actL2");
-			//BT_send_msg(&pid, "PD");
-			//BT_send_msg(&timer, "tick:" + std::string(itoa(systick_count(),buffer,10)) + "\n");
-			//BT_send_msg(&timer, "radio:" + std::string(itoa(Radio_get_char(),buffer,10)) + "\n");
-			BT_send_msg(&globalDistance, "globalDist");
-			eventInt = stateData.event;
-			BT_send_msg(&eventInt, "eventInt");
-			BT_send_msg(&eventInt, "eInt");
-			BT_send_msg(utanfutoPressed, "utPress");
-
-			//BT_send_msg(&index, "index");
-			//BT_send_msg(stable0lines, "stable0lines");
-			//BT_send_msg(stable1lines, "stable1lines");
-			//BT_send_msgInt(skillStateContext.state->triggerGlobalDistance, "trigDist");
-
-			//BT_send_msg(&Distance_sensors[2], "left");
-			//BT_send_msg(&Distance_sensors[3], "right");
-
-			BT_send_msg(bordas_bal, "bBordas");
-			BT_send_msg(bordas_jobb, "jBordas");
-			BT_send_msg(fal_bal, "bFal");
-			BT_send_msg(fal_jobb, "jFal");
-			//BT_send_msg(&encoderPos, "encoder");
-			//BT_send_msg(checkDirection, "checkDir");
-
-			BT_send_msg(giro_fall, "fall");
-			BT_send_msg(giro_lejto, "lejto");
-			BT_send_msg(giro_emelkedo, "emelked");
-			BT_send_msgFloat(giro_get_angle_Y(), "lejtSzog");
-			BT_send_msgFloat(giro_get_angle_Z(), "szog");
-
-			//BT_send_msg(&PIDk.dState, "contDst");
-			//BT_send_msg(&fr_distance, "contDist");
-			//BT_send_msg(&distance_error, "contErr");
-
-			//BT_send_msg(&timer, "enc:" + std::string(itoa(encoderPos,buffer,10)) + "\n");
-
-			//BT_send_msg(&timer, "fal:" + std::string(itoa(vanfal,buffer,10)) + "\n");
-			//BT_send_msg(&timer, "borda:" + std::string(itoa(bordas_bal,buffer,10)) + "\n");
-			//BT_send_msg(&timer, "Z:" + std::string(itoa(giro_get_angle_Z(),buffer,10)) + "\n");
-			//BT_send_msg(&timer, "lim:" + std::string(itoa(speed_under_X,buffer,10)) + "\n");
-			//BT_send_msg(&stopped, "stopped");
-			//sendSensors();
-			//sendDebugVars();
-			//sendTuning();
-			sendStateData();
-			//sendPIDs();
-		}
-
 		sendRemoteCounter++;
 		osDelay(50);
 	}
@@ -1293,7 +1176,7 @@ void SteerControlTask() {
 			static int ccounter = 0;
 			//BT_send_msg(&timer, "time:" + std::string(itoa(timer,buffer,10)) + "\n");
 			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
-			BT_send_msg(&timer,"tCycle" + std::string(itoa(ccounter,buffer,10)));
+			//BT_send_msg(&timer,"tCycle" + std::string(itoa(ccounter,buffer,10)));
 			ccounter++;
 		}
 		__HAL_TIM_SET_COUNTER(&htim5, 0);
