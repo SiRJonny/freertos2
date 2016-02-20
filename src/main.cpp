@@ -656,10 +656,7 @@ void SendRemoteVarTask()
 	for(;;)
 	{
 
-		if (!stopped) {
-			//BT_send_msg(&myfloat, "myfloat");
-			myfloat +=1;
-		}
+
 
 
 
@@ -674,15 +671,15 @@ void SendRemoteVarTask()
 		//BT_send_msg(&PIDm.iState, "mIState");
 		//BT_send_msg(&Distance_sensors[2], "contLeft");
 		//BT_send_msg(&Distance_sensors[3], "contRight");
-		BT_send_msg(&speed_global, "speed");
+		/*BT_send_msg(&speed_global, "speed");
 		BT_send_msg(&speed_control, "control_speed");
-		BT_send_msg(&activeLine1, "contL1");
+		BT_send_msg(&activeLine1, "contL1");*/
 		//BT_send_msg(&activeLine2, "contL2");
 		//BT_send_msg(&control, "contCont");
 		//BT_send_msg(&numLinesSum, "contSum");
 
 		//minden slowSendMultiplier ciklusban küldi el ezeket
-		if (sendRemoteCounter % slowSendMultiplier == 0) {
+		/*if (sendRemoteCounter % slowSendMultiplier == 0) {
 			BT_send_msg(&SET_SPEED, "SET_SPEED");
 			BT_send_msg(&lapCounter, "lapC");
 			BT_send_msg(&lapMax, "lapMax");
@@ -777,11 +774,11 @@ void SendRemoteVarTask()
 			//sendSensors();
 			//sendDebugVars();
 			//sendTuning();
-			sendStateData();
+			/*sendStateData();
 			//sendPIDs();
 		}
 
-		sendRemoteCounter++;
+		sendRemoteCounter++;*/
 		osDelay(50);
 	}
 
@@ -1283,7 +1280,7 @@ void SteerControlTask() {
 					SetServo_motor(0);
 					//osThreadSuspend(SteerControl_TaskHandle);
 					speed_control_enabled = false;
-					BT_send_msg(&activeLine1, "LastLine");
+					//BT_send_msg(&activeLine1, "LastLine");
 
 				}
 			}
@@ -1316,7 +1313,7 @@ void SteerControlTask() {
 			static int ccounter = 0;
 			//BT_send_msg(&timer, "time:" + std::string(itoa(timer,buffer,10)) + "\n");
 			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
-			BT_send_msg(&timer,"tCycle" + std::string(itoa(ccounter,buffer,10)));
+			//BT_send_msg(&timer,"tCycle" + std::string(itoa(ccounter,buffer,10)));
 			ccounter++;
 		}
 		__HAL_TIM_SET_COUNTER(&htim5, 0);
