@@ -35,7 +35,7 @@ SafetyState BaseState::safetyKanyar2(26,&BaseState::gaz4, &SAFETYSLOW, 1000, tru
 
 int tavFekDist = 1700;
 
-GyorsState BaseState::gyors1("gyors1", &BaseState::tav1, &FAST, 2000, GYORSITO);
+GyorsState BaseState::gyors1("gyors1", &BaseState::tav1, &GYORS1, 2000, GYORSITO);
 TavState BaseState::tav1("tav1", &BaseState::lassito1, &MEDIUM, tavFekDist, false );
 
 LassitoState BaseState::lassito1("las1", &BaseState::kanyar1, &SLOW, 0, SIMA);
