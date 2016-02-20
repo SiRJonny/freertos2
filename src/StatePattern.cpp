@@ -116,6 +116,8 @@ void KanyarState::handleEvent(StateContext& context, SpeedEvent event) {
 	if (event == targetEvent) {
 		resetSensor();
 		context.setState(nextState);
+	} else if (triggerGlobalDistance + distanceToMove){
+		context.setState(nextState);
 	}
 }
 
