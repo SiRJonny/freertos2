@@ -16,11 +16,22 @@ StateData stateData;
 //sebességes dolgok
 bool speed_control_enabled = true;
 
-static float SLOW = 1.6;
+float SLOW = 1.6;
 
-static float FAST = 4;
+float FAST = 4;
 
-static float MEDIUM = 2.0;
+float MEDIUM = 2.0;
+
+float KANYAR1 = 1.6;
+float KANYAR2 = 1.6;
+float KANYAR3 = 1.6;
+float KANYAR4 = 1.6;
+
+float GYORS1 = 4;
+float GYORS2 = 4;
+float GYORS3 = 4;
+float GYORS4 = 4;
+
 
 float SAFETY_SPEED_LIMIT = 1.7;
 
@@ -151,4 +162,6 @@ bool parkolo = false;
 
 
 int lapCounter = 0;
-int lapMax = 5;
+int lapMax = 3;
+
+float szorzo = 1;

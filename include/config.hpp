@@ -26,6 +26,16 @@ extern float SLOW;
 extern float FAST;
 extern float MEDIUM;
 
+extern float KANYAR1;
+extern float KANYAR2;
+extern float KANYAR3;
+extern float KANYAR4;
+
+extern float GYORS1;
+extern float GYORS2;
+extern float GYORS3;
+extern float GYORS4;
+
 extern float STOP;
 extern float SET_SPEED;
 extern float SET_DISTANCE;
@@ -151,5 +161,6 @@ extern bool parkolo;
 
 extern int lapCounter;
 extern int lapMax;
+extern float szorzo;
 
 #endif /* CONFIG_H_ */

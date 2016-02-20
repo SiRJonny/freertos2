@@ -17,7 +17,7 @@ GyorsState BaseState::gyors("gy2", &BaseState::lassito, FAST, 2000, GYORSITO);
 LassitoState BaseState::lassito("lass", &BaseState::kanyar, SLOW, 3000, GYORSITO);
 */
 StopState BaseState::stopped;
-KanyarState BaseState::started(0, "start1", &BaseState::gaz4, &SLOW, 0, GYORSITO);
+KanyarState BaseState::started(0, "start1", &BaseState::lap, &SLOW, 0, GYORSITO);
 
 
 
@@ -25,30 +25,49 @@ SafetyState BaseState::safetyLassit(10, &BaseState::safetyKanyar, &SAFETYSLOW, 2
 SafetyState BaseState::safetyKanyar(11,&BaseState::safetyFast, &SAFETYSLOW, 1000, true, GYORSITO);
 SafetyState BaseState::safetyFast(12, &BaseState::safetyLassit, &SAFETYFAST, 2000, false, GYORSITO);
 
-GyorsState BaseState::gyors1("gyors1", &BaseState::lap, &FAST, 2000, GYORSITO);
+
+SafetyState BaseState::safetyFast1(12, &BaseState::safetyLassit1, &SAFETYFAST, 2000, false, GYORSITO);
+SafetyState BaseState::safetyLassit1(10, &BaseState::safetyKanyar1, &SAFETYSLOW, 2000, false, SIMA);
+SafetyState BaseState::safetyKanyar1(11,&BaseState::safetyFast2, &SAFETYSLOW, 1000, true, GYORSITO);
+SafetyState BaseState::safetyFast2(12, &BaseState::safetyLassit2, &SAFETYFAST, 2000, false, GYORSITO);
+SafetyState BaseState::safetyLassit2(10, &BaseState::safetyKanyar2, &SAFETYSLOW, 2000, false, SIMA);
+SafetyState BaseState::safetyKanyar2(11,&BaseState::gaz4, &SAFETYSLOW, 1000, true, GYORSITO);
+
+
+GyorsState BaseState::gyors1("gyors1", &BaseState::tav1, &FAST, 2000, GYORSITO);
 TavState BaseState::tav1("tav1", &BaseState::lassito1, &MEDIUM, 2000, false );
 
 LassitoState BaseState::lassito1("las1", &BaseState::kanyar1, &SLOW, 0, SIMA);
+KanyarTavState BaseState::kanyarTav1("kanyt1", &BaseState::kanyar1, &SLOW, 1010);
 KanyarState BaseState::kanyar1(110, "kany1", &BaseState::gaz1, &SLOW, 1010, GYORSITO);
 GyorsitoState BaseState::gaz1("gaz1", &BaseState::gyors2, &SLOW, 1000, GYORSITO);
 
-GyorsState BaseState::gyors2("gyors2", &BaseState::lassito2, &FAST, 2000, GYORSITO);
-LassitoState BaseState::lassito2("las2", &BaseState::kanyar2, &SLOW, 3000, SIMA);
-KanyarState BaseState::kanyar2(111, "kany2", &BaseState::gaz2, &SLOW, 1000, GYORSITO);
+GyorsState BaseState::gyors2("gyors2", &BaseState::tav2, &FAST, 2000, GYORSITO);
+TavState BaseState::tav2("tav2", &BaseState::lassito2, &MEDIUM, 2000, false );
+
+LassitoState BaseState::lassito2("las2", &BaseState::kanyar2, &SLOW, 0, SIMA);
+KanyarTavState BaseState::kanyarTav2("kanyt2", &BaseState::kanyar2, &SLOW, 1010);
+KanyarState BaseState::kanyar2(111, "kany2", &BaseState::gaz2, &SLOW, 1010, GYORSITO);
 GyorsitoState BaseState::gaz2("gaz2", &BaseState::gyors3, &SLOW, 1000, GYORSITO);
 
 TavState BaseState::gy3tav("gy3tav", &BaseState::gyors3, &FAST, 2000, false);
-GyorsState BaseState::gyors3("gyors3", &BaseState::lassito3, &FAST, 2000, GYORSITO);
-LassitoState BaseState::lassito3("las3", &BaseState::kanyar3, &SLOW, 3000, SIMA);
-KanyarState BaseState::kanyar3(112, "kany3", &BaseState::gaz3, &SLOW, 1000, GYORSITO);
+GyorsState BaseState::gyors3("gyors3", &BaseState::tav3, &FAST, 2000, GYORSITO);
+
+TavState BaseState::tav3("tav3", &BaseState::lassito3, &MEDIUM, 2000, false );
+LassitoState BaseState::lassito3("las3", &BaseState::kanyar3, &SLOW, 0, SIMA);
+KanyarTavState BaseState::kanyarTav3("kanyt3", &BaseState::kanyar3, &SLOW, 1010);
+KanyarState BaseState::kanyar3(112, "kany3", &BaseState::gaz3, &SLOW, 1010, GYORSITO);
 GyorsitoState BaseState::gaz3("gaz3", &BaseState::gyors4, &SLOW, 1000, GYORSITO);
 
-GyorsState BaseState::gyors4("gyors4", &BaseState::lassito4, &FAST, 2000, GYORSITO);
-LassitoState BaseState::lassito4("las4", &BaseState::kanyar4, &SLOW, 3000, SIMA);
-KanyarState BaseState::kanyar4(13, "kany4", &BaseState::gaz4, &SLOW, 1000, GYORSITO);
+GyorsState BaseState::gyors4("gyors4", &BaseState::tav4, &FAST, 2000, GYORSITO);
+
+TavState BaseState::tav4("tav4", &BaseState::lassito4, &MEDIUM, 2000, false );
+LassitoState BaseState::lassito4("las4", &BaseState::kanyar4, &SLOW, 0, SIMA);
+KanyarTavState BaseState::kanyarTav4("kanyt4", &BaseState::kanyar4, &SLOW, 1010);
+KanyarState BaseState::kanyar4(13, "kany4", &BaseState::gaz4, &SLOW, 1010, GYORSITO);
 GyorsitoState BaseState::gaz4("gaz4", &BaseState::gyors1, &SLOW, 1000, GYORSITO);
 
-TavState BaseState::lap("lap", &BaseState::tav1, &SLOW, 0, true);
+TavState BaseState::lap("lap", &BaseState::gaz4, &SLOW, 0, true);
 
 
 
@@ -178,6 +197,28 @@ void TavState::handleEvent(StateContext& context, SpeedEvent event) {
 	}
 }
 
+//Tav alapu kanyar
+KanyarTavState::KanyarTavState(string stateName,
+		BaseState* nState,
+		float *tSpeed,
+		int minWaitDistance) {
+	stateId = 66;
+	steeringPD = true;
+	targetSpeed = tSpeed;
+	distanceToMove = minWaitDistance; //encoderPosDifference = 2500;
+	isSafety = false;
+
+	nextState = nState;
+	name = stateName;
+	isSensorMoved = false;
+}
+
+void KanyarTavState::handleEvent(StateContext& context, SpeedEvent event) {
+	if (event != SEMMI) {
+		context.setState(nextState);
+	}
+}
+
 //Lassításkor
 LassitoState::LassitoState(string stateName,
 		BaseState* nState,
@@ -197,6 +238,10 @@ LassitoState::LassitoState(string stateName,
 }
 
 void LassitoState::handleEvent(StateContext& context, SpeedEvent event) {
+	if (lapCounter >= lapMax+1 ) {
+		context.setState(&BaseState::stopped);
+	}
+
 	if (event == targetEvent) {
 		context.setState(nextState);
 
@@ -272,12 +317,16 @@ void StateContext::setState(BaseState* newState){
 	state->triggerGlobalDistance = globalDistance + state->distanceToMove;
 }
 
-
+extern float szorzo;
 void StateContext::update(bool stable3lines, int encoderPos){
 	currEncoderPos = encoderPos;
 
-	if (lapCounter >= lapMax ) {
-		setState(&BaseState::stopped);
+	if (lapCounter == 1) {
+		//szorzo = 0.8;
+	} else if (lapCounter == 2) {
+		//szorzo = 0.9;
+	} else if (lapCounter == 3) {
+		//szorzo = 1;
 	}
 
 	if (state->isSensorMoved) {
@@ -303,7 +352,7 @@ void StateContext::stop(){
 
 void StateContext::start(int encoderPos) {
 	currEncoderPos = encoderPos;
-	setState(&BaseState::safetyFast);
+	setState(&BaseState::safetyFast1);
 }
 
 

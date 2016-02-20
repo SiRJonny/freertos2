@@ -1237,7 +1237,7 @@ void SteerControlTask() {
 			steeringControl = true;
 
 			stateContext.update(stable3lines, encoderPos);
-			SET_SPEED = *stateContext.state->targetSpeed;
+			SET_SPEED = (*stateContext.state->targetSpeed)*szorzo;
 			usePD = true;//stateContext.state->steeringPD;
 			//usePD = !speed_under_X;
 		}

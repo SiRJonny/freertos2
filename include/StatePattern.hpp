@@ -19,6 +19,7 @@ class GyorsState;
 class LassitoState;
 
 class TavState;
+class KanyarTavState;
 
 class StopState;
 
@@ -26,7 +27,18 @@ class SafetyState;
 
 extern float SLOW;
 extern float FAST;
+extern float MEDIUM;
 extern float SET_SPEED;
+
+extern float KANYAR1;
+extern float KANYAR2;
+extern float KANYAR3;
+extern float KANYAR4;
+
+extern float GYORS1;
+extern float GYORS2;
+extern float GYORS3;
+extern float GYORS4;
 
 enum SpeedEvent {
 	GYORSITO,
@@ -53,27 +65,44 @@ public:
 	static SafetyState safetyFast;
 
 
+	static SafetyState safetyFast1;
+	static SafetyState safetyLassit1;
+	static SafetyState safetyKanyar1;
+	static SafetyState safetyFast2;
+	static SafetyState safetyLassit2;
+	static SafetyState safetyKanyar2;
+
 	static GyorsState gyors1;
 
 	static TavState tav1;
 
 	static LassitoState lassito1;
+	static KanyarTavState kanyarTav1;
 	static KanyarState kanyar1;
 	static GyorsitoState gaz1;
 
 	static GyorsState gyors2;
+
+	static TavState tav2;
+
 	static LassitoState lassito2;
+	static KanyarTavState kanyarTav2;
 	static KanyarState kanyar2;
 	static GyorsitoState gaz2;
 
 	static TavState gy3tav;
 	static GyorsState gyors3;
+
+	static TavState tav3;
 	static LassitoState lassito3;
+	static KanyarTavState kanyarTav3;
 	static KanyarState kanyar3;
 	static GyorsitoState gaz3;
 
 	static GyorsState gyors4;
+	static TavState tav4;
 	static LassitoState lassito4;
+	static KanyarTavState kanyarTav4;
 	static KanyarState kanyar4;
 	static GyorsitoState gaz4;
 
@@ -141,6 +170,15 @@ public:
 			float *tSpeed,
 			int waitDistance,
 			bool lap);
+	virtual void handleEvent(StateContext& context, SpeedEvent event);
+};
+
+class KanyarTavState : public BaseState {
+public:
+	KanyarTavState(string stateName,
+			BaseState* nState,
+			float *tSpeed,
+			int waitDistance);
 	virtual void handleEvent(StateContext& context, SpeedEvent event);
 };
 
