@@ -26,7 +26,7 @@ SafetyState BaseState::safetyKanyar(11,&BaseState::safetyFast, &SAFETYSLOW, 1000
 SafetyState BaseState::safetyFast(12, &BaseState::safetyLassit, &SAFETYFAST, 2000, false, GYORSITO);
 
 GyorsState BaseState::gyors1("gyors1", &BaseState::lap, &FAST, 2000, GYORSITO);
-TavState BaseState::tav1("tav1", &BaseState::lassito1, &SLOW, 2000, false );
+TavState BaseState::tav1("tav1", &BaseState::lassito1, &MEDIUM, 2000, false );
 
 LassitoState BaseState::lassito1("las1", &BaseState::kanyar1, &SLOW, 0, SIMA);
 KanyarState BaseState::kanyar1(110, "kany1", &BaseState::gaz1, &SLOW, 1010, GYORSITO);

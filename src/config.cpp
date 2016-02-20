@@ -16,11 +16,11 @@ StateData stateData;
 //sebességes dolgok
 bool speed_control_enabled = true;
 
-static float SLOW = 1.5;
+static float SLOW = 1.6;
 
-static float FAST = 1.5;
+static float FAST = 4;
 
-static float MEDIUM = 1.5;
+static float MEDIUM = 2.0;
 
 float SAFETY_SPEED_LIMIT = 1.7;
 
@@ -44,7 +44,6 @@ float speed_limit = 1.3f;
 
 //kanyarszervo
 int servoOffset = -60;
-
 
 //encoder
 int encoderPos = 1000000000;
