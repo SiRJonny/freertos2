@@ -683,7 +683,7 @@ void SendRemoteVarTask()
 			//BT_send_msg(&iTerm, "contI");
 			//BT_send_msg(&dTerm, "contD");
 			//BT_send_msg(&Distance_sensors[1], "contFront");
-			BT_send_msg(&speed_control, "control_speed");
+			//BT_send_msg(&speed_control, "control_speed");
 			dirInt = direction;
 			BT_send_msg( &dirInt, "dirInt");
 			/*
@@ -722,7 +722,7 @@ void SendRemoteVarTask()
 
 			//BT_send_msg(&activeLine1, "actL1");
 			//BT_send_msg(&activeLine2, "actL2");
-			BT_send_msg(&pid, "PD");
+			//BT_send_msg(&pid, "PD");
 			//BT_send_msg(&timer, "tick:" + std::string(itoa(systick_count(),buffer,10)) + "\n");
 			//BT_send_msg(&timer, "radio:" + std::string(itoa(Radio_get_char(),buffer,10)) + "\n");
 			BT_send_msg(&globalDistance, "globalDist");

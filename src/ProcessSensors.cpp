@@ -7,6 +7,7 @@
 
 #include "ProcessSensors.h"
 #include <stdlib.h>
+#include <string>
 
 #define REFINE_RADIUS 2
 #define NO_LINE_MULTIPLIER 2
@@ -22,6 +23,11 @@ extern bool fal_jobb;
 extern bool fal_bal;
 extern bool bordas_jobb;
 extern bool bordas_bal;
+
+extern void BT_send_msg(int * msg, std::string nev);
+
+int aveDiffRight;
+int aveDiffLeft;
 
 float refined_max;
 float refined_max2;
@@ -175,10 +181,12 @@ void wall_borda_detection() {
 	static int index = 0;
 
 	static int prevPos = globalDistance;
-	static int borda_array_j[20];
-	static int borda_array_b[20];
+	static int borda_array_j[25];
+	static int borda_array_b[25];
 	static bool checking = true;
-	static int arraySize = 20;
+	static int arraySize = 25;
+
+
 
 	int distanceRight = 0;
 	int distanceLeft = 0;
@@ -212,8 +220,11 @@ void wall_borda_detection() {
 		int bordaTresholdMin = 5;
 		int bordaTresholdMax = 30;
 
-		int aveDiffRight = average_difference(borda_array_j, arraySize);
-		int aveDiffLeft = average_difference(borda_array_b, arraySize);
+		aveDiffRight = average_difference(&borda_array_j[5], arraySize-5);
+		aveDiffLeft = average_difference(&borda_array_b[5], arraySize-5);
+
+		BT_send_msg(&aveDiffRight, "aveRight");
+		BT_send_msg(&aveDiffLeft, "aveLeft");
 
 		if ( aveDiffRight > bordaTresholdMin && aveDiffRight < bordaTresholdMax) {
 			direction = LEFT;
