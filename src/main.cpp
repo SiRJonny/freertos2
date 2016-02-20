@@ -686,7 +686,7 @@ void SendRemoteVarTask()
 			BT_send_msg(&SET_SPEED, "SET_SPEED");
 			BT_send_msg(&lapCounter, "lapC");
 			BT_send_msg(&lapMax, "lapMax");
-
+			BT_send_msg(&globalDistance, "distance");
 
 			//BT_send_msg(&pTerm, "contP");
 			//BT_send_msg(&iTerm, "contI");
