@@ -117,6 +117,9 @@ extern int pid;
 extern bool safety_car;
 
 extern PID_struct PIDs;
+extern PID_struct PIDskanyar;
+
+
 extern PID_struct PIDm;
 extern PID_struct PIDk;
 

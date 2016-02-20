@@ -931,6 +931,7 @@ void SteerControlTask() {
 	int numLinesArrayIndex = 0;
 
 	bool usePD = true;
+	bool usePDkanyar = true;
 
 	//LineS
 	for (int i = 0; i < 5; i++) {
@@ -957,6 +958,14 @@ void SteerControlTask() {
 	PIDs.iMin = -300;
 	PIDs.iState = 0;
 	PIDs.dState = 0;
+
+	PIDskanyar.pGain = 25;
+	PIDskanyar.iGain = 0;
+	PIDskanyar.dGain = -190;
+	PIDskanyar.iMax = 300;
+	PIDskanyar.iMin = -300;
+	PIDskanyar.iState = 0;
+	PIDskanyar.dState = 0;
 
 	// motor PI szabályzó struktúra
 	if (skillTrack) {
@@ -991,8 +1000,8 @@ void SteerControlTask() {
 	PIDk.iState = 0;
 	PIDk.dState = 0;
 
-	A = 0.5;
-	B = 0;
+	A = 0.4;
+	B = 0.4;
 
 	stateData.event = UNSTABLE;
 
@@ -1235,10 +1244,10 @@ void SteerControlTask() {
 			checkDirection = skillStateContext.state->chkDir;
 		} else {
 			steeringControl = true;
-
+			usePD = true;
 			stateContext.update(stable3lines, encoderPos);
 			SET_SPEED = *stateContext.state->targetSpeed;
-			usePD = true;//stateContext.state->steeringPD;
+			usePDkanyar = !stateContext.state->steeringPD;
 			//usePD = !speed_under_X;
 		}
 
@@ -1250,12 +1259,32 @@ void SteerControlTask() {
 				if (usePD) {
 					pid = 1;
 					error = activeLine1 - 15.5;
+
+					if (usePDkanyar) {
+						PIDs.pGain = 0;
+						PIDs.iGain = 0;
+						PIDs.dGain = 0;
+						PIDs.iMax = 300;
+						PIDs.iMin = -300;
+						PIDs.iState = 0;
+						PIDs.dState = 0;
+					} else {
+						PIDs.pGain = 25;
+						PIDs.iGain = 0;
+						PIDs.dGain = -190;
+						PIDs.iMax = 300;
+						PIDs.iMin = -300;
+						PIDs.iState = 0;
+						PIDs.dState = 0;
+					}
 					control = UpdatePID1(&PIDs, error, globalLines.pos1[0]);
 					if (speed > 2) {
 						//control /= (speed/2.0);
 					}
 					SetServo_steering((int) control); // PID-hez
 					HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_SET);
+
+
 				} else {
 					pid = 0;
 					if (speed < 0.2) {

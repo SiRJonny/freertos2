@@ -119,6 +119,8 @@ int pid = 0;
 bool safety_car = true;
 
 PID_struct PIDs;
+
+PID_struct PIDskanyar;
 PID_struct PIDm;
 static PID_struct PIDk;
 
