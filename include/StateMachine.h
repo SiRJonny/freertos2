@@ -10,8 +10,8 @@
 
 #include "ProcessSensors.h"
 
-extern volatile float SLOW;
-extern volatile float FAST;
+extern float SLOW;
+extern float FAST;
 extern float SET_SPEED;
 
 typedef struct

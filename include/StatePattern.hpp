@@ -24,8 +24,8 @@ class StopState;
 
 class SafetyState;
 
-extern volatile float SLOW;
-extern volatile float FAST;
+extern float SLOW;
+extern float FAST;
 extern float SET_SPEED;
 
 enum SpeedEvent {
@@ -54,6 +54,9 @@ public:
 
 
 	static GyorsState gyors1;
+
+	static TavState tav1;
+
 	static LassitoState lassito1;
 	static KanyarState kanyar1;
 	static GyorsitoState gaz1;
@@ -79,7 +82,7 @@ public:
 	string name;
 	int stateId;
 	bool steeringPD;
-	float targetSpeed;
+	float * targetSpeed;
 
 	bool isSafety;
 	bool isSensorMoved;
@@ -103,7 +106,7 @@ public:
 	KanyarState(int id,
 			string stateName,
 			BaseState* nState,
-			float tSpeed,
+			float *tSpeed,
 			int minWaitDistance,
 			SpeedEvent tEvent);
 	virtual void handleEvent(StateContext& context, SpeedEvent event);
@@ -115,7 +118,7 @@ class GyorsitoState : public BaseState {
 public:
 	GyorsitoState(string stateName,
 			BaseState* nState,
-			float tSpeed,
+			float *tSpeed,
 			int minWaitDistance,
 			SpeedEvent tEvent);
 	virtual void handleEvent(StateContext& context, SpeedEvent event);
@@ -125,7 +128,7 @@ class GyorsState : public BaseState {
 public:
 	GyorsState(string stateName,
 			BaseState* nState,
-			float tSpeed,
+			float *tSpeed,
 			int minWaitDistance,
 			SpeedEvent tEvent);
 	virtual void handleEvent(StateContext& context, SpeedEvent event);
@@ -135,7 +138,7 @@ class TavState : public BaseState {
 public:
 	TavState(string stateName,
 			BaseState* nState,
-			float tSpeed,
+			float *tSpeed,
 			int waitDistance,
 			bool lap);
 	virtual void handleEvent(StateContext& context, SpeedEvent event);
@@ -145,7 +148,7 @@ class LassitoState : public BaseState {
 public:
 	LassitoState(string stateName,
 			BaseState* nState,
-			float tSpeed,
+			float *tSpeed,
 			int minWaitDistance,
 			SpeedEvent tEvent);
 	virtual void handleEvent(StateContext& context, SpeedEvent event);
@@ -166,7 +169,7 @@ public:
 	SpeedEvent triggerEvent;
 
 
-	SafetyState(int st_id, BaseState* nState, float maxSpeed, int howMuchToMove, bool moveSensor, SpeedEvent triggerSpeedEvent);
+	SafetyState(int st_id, BaseState* nState, float *maxSpeed, int howMuchToMove, bool moveSensor, SpeedEvent triggerSpeedEvent);
 	virtual void handleEvent(StateContext& context, SpeedEvent event);
 };
 

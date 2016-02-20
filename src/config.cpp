@@ -16,9 +16,11 @@ StateData stateData;
 //sebességes dolgok
 bool speed_control_enabled = true;
 
-volatile float SLOW = 1.5;
+static float SLOW = 1.5;
 
-volatile float FAST = 4;
+static float FAST = 1.5;
+
+static float MEDIUM = 1.5;
 
 float SAFETY_SPEED_LIMIT = 1.7;
 
@@ -90,6 +92,8 @@ float last_active_line_pos2 = 15.5;
 
 LineState globalLines;
 
+int numLinesSum = 0;
+
 bool keresztvonal;
 bool stable0lines;
 bool stable1lines;
@@ -148,4 +152,4 @@ bool parkolo = false;
 
 
 int lapCounter = 0;
-int lapMax = 2;
+int lapMax = 5;

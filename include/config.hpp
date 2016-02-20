@@ -22,8 +22,10 @@ extern int SERVO_RANGE_SENSOR;
 //sebességes dolgok
 extern bool speed_control_enabled;
 
-extern volatile float SLOW;
-extern volatile float FAST;
+extern float SLOW;
+extern float FAST;
+extern float MEDIUM;
+
 extern float STOP;
 extern float SET_SPEED;
 extern float SET_DISTANCE;
@@ -86,6 +88,8 @@ extern float speed_control;
 extern float last_speed_control;
 extern float last_active_line_pos1;
 extern float last_active_line_pos2;
+
+extern int numLinesSum;
 
 extern LineState globalLines;
 

@@ -598,8 +598,10 @@ void BTReceiveTask()
 				BT_send_msg(&PIDm.dGain, "PIDmD");
 				break;
 			case 7:
-				//PIDk.pGain = *flt_ptr;
-				BT_send_msg(&PIDk.pGain, "PIDkP");
+				SLOW = *flt_ptr;
+				FAST = *flt_ptr;
+				BT_send_msg(&SLOW, "SLOW");
+				BT_send_msg(&FAST, "FAST");
 
 				break;
 			case 8:
@@ -676,7 +678,8 @@ void SendRemoteVarTask()
 		BT_send_msg(&speed_control, "control_speed");
 		BT_send_msg(&activeLine1, "contL1");
 		//BT_send_msg(&activeLine2, "contL2");
-		BT_send_msg(&control, "contCont");
+		//BT_send_msg(&control, "contCont");
+		//BT_send_msg(&numLinesSum, "contSum");
 
 		//minden slowSendMultiplier ciklusban küldi el ezeket
 		if (sendRemoteCounter % slowSendMultiplier == 0) {
@@ -844,7 +847,7 @@ void sendStateData() {
 		BT_send_msg(&globalDistance, stName);
 	} else {
 		stateId = stateContext.state->stateId;
-		BT_send_msg(&stateId, "StateID");
+		BT_send_msg(&stateId, "contStID");
 		string stName = "stnm" + stateContext.state->name;
 		BT_send_msg(&globalDistance, stName);
 		BT_send_msg(stable3lines, "stable3lines");
@@ -926,7 +929,7 @@ void SteerControlTask() {
 
 	int numLinesArray[5];
 	int numLinesArrayIndex = 0;
-	int numLinesSum = 0;
+
 	bool usePD = true;
 
 	//LineS
@@ -968,7 +971,7 @@ void SteerControlTask() {
 	} else {
 
 		PIDm.pGain = 500;		// 100-> 5m/s hibánál lesz 500 a jel (max)
-		PIDm.iGain = 30;
+		PIDm.iGain = 40;
 		PIDm.dGain = 0;
 		PIDm.iMax = 5;
 		PIDm.iMin = 0;
@@ -987,6 +990,9 @@ void SteerControlTask() {
 	PIDk.iMin = -0.1;
 	PIDk.iState = 0;
 	PIDk.dState = 0;
+
+	A = 0.5;
+	B = 0;
 
 	stateData.event = UNSTABLE;
 
@@ -1199,7 +1205,7 @@ void SteerControlTask() {
 				numLinesSum += numLinesArray[i];
 			}
 
-			if (numLinesSum > 12) {
+			if (numLinesSum > 9) {
 				stable3lines = true;
 				//HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_SET);
 			} else if (numLinesSum < 8) {
@@ -1229,10 +1235,11 @@ void SteerControlTask() {
 			checkDirection = skillStateContext.state->chkDir;
 		} else {
 			steeringControl = true;
+
 			stateContext.update(stable3lines, encoderPos);
-			SET_SPEED = stateContext.state->targetSpeed;
-			//usePD = stateContext.isSteeringPD();
-			usePD = !speed_under_X;
+			SET_SPEED = *stateContext.state->targetSpeed;
+			usePD = true;//stateContext.state->steeringPD;
+			//usePD = !speed_under_X;
 		}
 
 		// vonalkövetés szabályozó
